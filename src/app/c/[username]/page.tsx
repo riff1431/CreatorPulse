@@ -97,7 +97,7 @@ export default function CreatorProfilePage() {
       <RoleSwitcher />
       <Navbar />
 
-      <div className="max-w-7xl mx-auto w-full flex-1 flex gap-6 px-4 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex theme-layout-wrapper theme-gap px-4 lg:px-8 py-6">
         <Sidebar />
 
         <main className="flex-1 space-y-6 max-w-3xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">

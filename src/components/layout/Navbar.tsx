@@ -12,13 +12,20 @@ import { Button } from '../ui/Button';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
+import { useNavigation } from '@/lib/navigation/navigation-context';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 import { useTheme } from '@/lib/extensions/theme-engine';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { activeTheme } = useTheme();
   const { user, role, isAuthenticated, logout } = useAuth();
+  const { getHeaderItems } = useNavigation();
+  const { settings } = useSiteSettings();
+  const { activeTheme } = useTheme();
+
+  const headerNavItems = getHeaderItems ? getHeaderItems(role || 'guest') : [];
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -73,54 +80,59 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const isAdminRoute = pathname?.startsWith('/admin');
-  const logoUrl = activeTheme?.settings?.logoUrl;
-  const headerStyle = activeTheme?.settings?.headerStyle || 'fixed';
-  const headerStyleClass = !isAdminRoute && headerStyle === 'floating'
-    ? 'theme-header-floating'
-    : !isAdminRoute && headerStyle === 'simple'
-    ? 'theme-header-simple'
-    : 'theme-header-fixed';
+  const logoUrl = settings.logo_url || activeTheme?.settings?.logoUrl;
+  const siteName = settings.site_name || 'CreatorPulse';
 
   return (
-    <header className={`bg-white/85 backdrop-blur-xl border-b border-[#F3DCE8] ${headerStyleClass} z-40 px-4 lg:px-8 py-3 transition-all duration-300 ${
-      isScrolled ? 'shadow-md shadow-[#EC4899]/5 py-2.5 bg-white/95' : ''
-    }`}>
+    <header className="bg-[var(--color-surface)]/90 backdrop-blur-xl border-b border-[var(--color-border)] sticky top-0 z-40 px-4 lg:px-8 py-3 transition-all duration-300 shadow-xs">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand Logo */}
-        <Link href="/feed" className="flex items-center gap-2.5 group">
-          {!isAdminRoute && logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-9 w-auto max-w-[150px] object-contain rounded-xl" />
+        <Link href="/feed" className="flex items-center gap-2.5 group shrink-0">
+          {logoUrl ? (
+            <img src={logoUrl} alt={siteName} className="h-9 w-auto max-w-[160px] object-contain rounded-xl" />
           ) : (
-            <>
+            <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
                 <Sparkles className="text-white" size={20} />
               </div>
               <div>
                 <span className="text-lg font-black tracking-tight text-[#18181B] flex items-center gap-1">
-                  Creator<span className="gradient-text">Pulse</span>
+                  {siteName}
                 </span>
-                <span className="text-[10px] text-[#71717A] block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
+                <span className="text-[10px] text-[#71717A] block -mt-1 font-medium tracking-wide">{settings.tagline || 'Creator SaaS Platform'}</span>
               </div>
-            </>
+            </div>
           )}
         </Link>
 
+        {/* Dynamic Header Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1">
+          {headerNavItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.url}
+              target={item.target || '_self'}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+            >
+              {item.title}
+            </Link>
+          ))}
+        </nav>
+
         {/* Global Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-md relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
+        <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-xs relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={15} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search creators, topics, vertical shorts, or posts..."
-            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] focus:border-[#EC4899] focus:bg-white rounded-xl pl-10 pr-4 py-2 text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-3 focus:ring-[#EC4899]/15 transition-all shadow-inner font-medium"
+            placeholder="Search creators, posts..."
+            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] focus:border-[#EC4899] focus:bg-white rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#EC4899]/15 transition-all font-medium"
           />
         </form>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Dynamic Plugin Actions Hook */}
           <HookPoint name="navbar_actions" />
 
           {/* Role specific quick action */}
@@ -155,21 +167,14 @@ export const Navbar: React.FC = () => {
               <div className="absolute right-0 mt-2 w-80 bg-white border border-[#F3DCE8] rounded-2xl p-4 space-y-3 z-50 shadow-xl shadow-[#EC4899]/10 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-2">
                   <h4 className="font-bold text-sm text-[#18181B]">Notifications</h4>
-                  <span className="text-[10px] text-[#DB2777] bg-[#FCE7F3] px-2 py-0.5 rounded-full font-bold">3 New</span>
+                  <span className="text-[10px] text-[#DB2777] bg-[#FCE7F3] px-2 py-0.5 rounded-full font-bold">2 New</span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="p-2.5 rounded-xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-start gap-2.5 hover:border-[#F472B6]/40 transition-colors">
                     <Avatar alt="Sarah Jenkins" size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" />
                     <div>
-                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Sarah Jenkins</strong> published a new member post: &quot;Modern Micro-Interactions&quot;</p>
+                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Sarah Jenkins</strong> published a new member post</p>
                       <span className="text-[10px] text-[#A1A1AA] mt-1 block">10 minutes ago</span>
-                    </div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-start gap-2.5 hover:border-[#F472B6]/40 transition-colors">
-                    <Avatar alt="Marcus Vance" size="sm" src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150" />
-                    <div>
-                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Marcus Vance</strong> added a new 24h Story</p>
-                      <span className="text-[10px] text-[#A1A1AA] mt-1 block">1 hour ago</span>
                     </div>
                   </div>
                 </div>
@@ -200,11 +205,6 @@ export const Navbar: React.FC = () => {
                     <span className="inline-block text-[10px] uppercase font-bold text-[#BE185D] bg-[#FCE7F3] px-2.5 py-0.5 rounded-full border border-[#FBCFE8]">
                       Role: {role}
                     </span>
-                    {currentUser.isVerified && (
-                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
-                        Verified
-                      </span>
-                    )}
                   </div>
                 </div>
 

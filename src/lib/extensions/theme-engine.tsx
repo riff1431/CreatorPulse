@@ -38,7 +38,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_THEMES_KEY = 'creatorpulse_themes_v2';
 const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id_v2';
-const CURRENT_APP_VERSION = '1.0.0';
+export const CURRENT_APP_VERSION = '1.0.0';
 
 // Fixed Admin Control Panel tokens (Permanently isolated and immune from frontend themes)
 export const ADMIN_LOCKED_TOKENS: ThemeTokens = {

@@ -86,8 +86,9 @@ export interface PluginManifest {
 export interface AuditLogEntry {
   id: string;
   action: 'THEME_ACTIVATED' | 'THEME_INSTALLED' | 'THEME_CUSTOMIZED' | 'THEME_DELETED' | 'THEME_ROLLBACK' |
-          'PLUGIN_ACTIVATED' | 'PLUGIN_DEACTIVATED' | 'PLUGIN_INSTALLED' | 'PLUGIN_UPDATED' | 'PLUGIN_DELETED' | 'PLUGIN_CONFIG_SAVED' | 'PLUGIN_ERROR';
-  entityType: 'theme' | 'plugin' | 'system';
+          'PLUGIN_ACTIVATED' | 'PLUGIN_DEACTIVATED' | 'PLUGIN_INSTALLED' | 'PLUGIN_UPDATED' | 'PLUGIN_DELETED' | 'PLUGIN_CONFIG_SAVED' | 'PLUGIN_ERROR' |
+          'USER_MODERATION' | 'USER_DELETED' | (string & {});
+  entityType: 'theme' | 'plugin' | 'system' | 'user' | (string & {});
   entityName: string;
   details: string;
   user: string;

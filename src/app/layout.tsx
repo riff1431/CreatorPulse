@@ -4,7 +4,15 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { ThemeProvider } from "@/lib/extensions/theme-engine";
 import { PluginProvider } from "@/lib/extensions/plugin-engine";
+import { SiteSettingsProvider } from "@/lib/settings/site-settings-context";
+import { NavigationProvider } from "@/lib/navigation/navigation-context";
+import { CMSProvider } from "@/lib/cms/cms-context";
+import { AnnouncementProvider } from "@/lib/notifications/announcement-context";
+import { FeatureModuleProvider } from "@/lib/modules/feature-module-context";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AnnouncementBanner } from "@/components/announcements/AnnouncementBanner";
+import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
+import { MaintenanceOverlay } from "@/components/common/MaintenanceOverlay";
 import { cookies } from 'next/headers';
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AUTH_ACCOUNTS } from "@/lib/auth/users";
@@ -125,15 +133,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${plusJakartaSans.variable} font-sans h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#FFF9FC] text-[#18181B] selection:bg-[#FCE7F3] selection:text-[#DB2777]">
-        <ThemeProvider>
-          <PluginProvider>
-            <AuthProvider initialUser={initialUser} initialRole={initialRole}>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </AuthProvider>
-          </PluginProvider>
-        </ThemeProvider>
+        <SiteSettingsProvider>
+          <NavigationProvider>
+            <CMSProvider>
+              <AnnouncementProvider>
+                <FeatureModuleProvider>
+                  <ThemeProvider>
+                    <PluginProvider>
+                      <AuthProvider initialUser={initialUser} initialRole={initialRole}>
+                        <ToastProvider>
+                          <AnnouncementBanner />
+                          <MaintenanceOverlay />
+                          <AnnouncementModal />
+                          {children}
+                        </ToastProvider>
+                      </AuthProvider>
+                    </PluginProvider>
+                  </ThemeProvider>
+                </FeatureModuleProvider>
+              </AnnouncementProvider>
+            </CMSProvider>
+          </NavigationProvider>
+        </SiteSettingsProvider>
       </body>
     </html>
   );

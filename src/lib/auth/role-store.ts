@@ -392,3 +392,123 @@ export const assignRoleToUsers = (
     return { success: false, error: 'Failed to assign role' };
   }
 };
+
+export const updateUserStatusBulk = (
+  userIds: string[],
+  nextStatus: 'active' | 'suspended' | 'banned',
+  actor: { fullName: string; role: string }
+): { success: boolean; error?: string } => {
+  if (typeof window === 'undefined') return { success: false, error: 'Server context' };
+
+  try {
+    const users = getUsers();
+    const updated = users.map((u) => {
+      if (userIds.includes(u.id)) {
+        logAuditEvent({
+          action: 'PLUGIN_CONFIG_SAVED',
+          entityType: 'system',
+          entityName: `User: @${u.username}`,
+          details: `Updated account status for "${u.name}" to ${nextStatus.toUpperCase()}`,
+          user: actor.fullName,
+          role: actor.role,
+          severity: nextStatus === 'banned' ? 'error' : 'warning'
+        });
+        return { ...u, status: nextStatus };
+      }
+      return u;
+    });
+
+    saveUsers(updated);
+    window.dispatchEvent(new CustomEvent('creatorpulse_users_updated'));
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: 'Failed to update user statuses' };
+  }
+};
+
+export const deleteUsersBulk = (
+  userIds: string[],
+  actor: { fullName: string; role: string }
+): { success: boolean; error?: string } => {
+  if (typeof window === 'undefined') return { success: false, error: 'Server context' };
+
+  try {
+    const users = getUsers();
+    const targetUsers = users.filter((u) => userIds.includes(u.id));
+
+    // Prevent deleting admins
+    const containsAdmin = targetUsers.some((u) => u.role === 'admin');
+    if (containsAdmin) {
+      return { success: false, error: 'Protected Accounts: Cannot delete accounts with Super Admin privileges.' };
+    }
+
+    const updated = users.filter((u) => !userIds.includes(u.id));
+
+    targetUsers.forEach((u) => {
+      logAuditEvent({
+        action: 'PLUGIN_DELETED',
+        entityType: 'system',
+        entityName: `User: @${u.username}`,
+        details: `Deleted user profile "${u.name}" (${u.email})`,
+        user: actor.fullName,
+        role: actor.role,
+        severity: 'warning'
+      });
+    });
+
+    saveUsers(updated);
+    window.dispatchEvent(new CustomEvent('creatorpulse_users_updated'));
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: 'Failed to delete users' };
+  }
+};
+
+export interface UserActivityItem {
+  id: string;
+  action: string;
+  description: string;
+  timestamp: string;
+  type: 'auth' | 'content' | 'role' | 'financial' | 'system';
+}
+
+export const getUserActivityLogs = (user: UserDirectoryItem): UserActivityItem[] => {
+  return [
+    {
+      id: 'act-1',
+      action: 'Account Registration',
+      description: `Registered user account @${user.username} with email ${user.email}`,
+      timestamp: `${user.joined} 09:12:00`,
+      type: 'auth'
+    },
+    {
+      id: 'act-2',
+      action: 'Authentication Login',
+      description: `User authenticated successfully from IP 192.168.1.100`,
+      timestamp: '2026-08-14 18:22:40',
+      type: 'auth'
+    },
+    {
+      id: 'act-3',
+      action: 'Role Assignment',
+      description: `Current role authorization set to "${user.role.toUpperCase()}"`,
+      timestamp: '2026-08-14 12:00:00',
+      type: 'role'
+    },
+    {
+      id: 'act-4',
+      action: 'Wallet Transaction',
+      description: `Available balance balance reported as ${user.balance}`,
+      timestamp: '2026-08-13 15:45:10',
+      type: 'financial'
+    },
+    {
+      id: 'act-5',
+      action: 'Content Activity',
+      description: `Published platform posts and interactive content`,
+      timestamp: '2026-08-12 11:30:00',
+      type: 'content'
+    }
+  ];
+};
+

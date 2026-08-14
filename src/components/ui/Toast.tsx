@@ -11,8 +11,15 @@ export interface ToastMessage {
   type: ToastType;
 }
 
+export interface ToastOptions {
+  title?: string;
+  message: string;
+  type?: ToastType;
+}
+
 interface ToastContextType {
   showToast: (message: string, type?: ToastType) => void;
+  addToast: (options: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -37,12 +44,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 3000);
   }, []);
 
+  const addToast = useCallback(({ title, message, type = 'success' }: ToastOptions) => {
+    const fullMessage = title ? `${title}: ${message}` : message;
+    showToast(fullMessage, type);
+  }, [showToast]);
+
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, addToast }}>
       {children}
       {/* Toast container */}
       <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0">

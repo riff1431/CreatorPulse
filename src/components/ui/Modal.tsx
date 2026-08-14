@@ -42,25 +42,25 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   return (
     <div
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md transition-opacity duration-300 animate-fade-in"
     >
       <div
         ref={dialogRef}
-        className="w-full sm:max-w-lg bg-white/95 backdrop-blur-md rounded-t-[24px] sm:rounded-[24px] border-t sm:border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto transform transition-transform duration-300 animate-slide-up sm:animate-scale-up"
+        className="w-full sm:max-w-lg theme-modal backdrop-blur-md rounded-t-[var(--radius-modal,24px)] sm:rounded-[var(--radius-modal,24px)] border-t sm:border shadow-2xl p-6 space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto transform transition-transform duration-300 animate-slide-up sm:animate-scale-up"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-[#F3DCE8]">
-          <h2 className="text-base font-extrabold text-[#18181B] tracking-tight">{title}</h2>
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
+          <h2 className="text-base font-extrabold text-[var(--color-text-primary)] tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-[#FDF2F8] text-[#71717A] hover:text-[#DB2777] transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-[var(--color-soft-primary)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-all cursor-pointer"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="text-xs text-[#71717A] leading-relaxed space-y-3">
+        <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed space-y-3">
           {children}
         </div>
       </div>

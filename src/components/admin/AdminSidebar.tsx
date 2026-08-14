@@ -8,7 +8,7 @@ import {
   AlertTriangle, CreditCard, Star, Receipt, TrendingUp, Wallet,
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
-  Shield
+  Shield, Mail, Image as ImageIcon, Wrench, Bell
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,11 +34,13 @@ const allAdminNavGroups: NavGroup[] = [
     ],
   },
   {
-    title: 'Themes & Plugins',
+    title: 'Dynamic Managers',
     items: [
-      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'indigo' },
-      { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
-      { label: 'System Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck },
+      { label: 'Site Settings', href: '/admin/settings', icon: Settings, badge: 'Dynamic', badgeVariant: 'indigo' },
+      { label: 'Menu & Navigation', href: '/admin/navigation', icon: Menu },
+      { label: 'Pages & CMS', href: '/admin/cms', icon: FileText },
+      { label: 'Announcements', href: '/admin/announcements', icon: Bell, badge: 'Live', badgeVariant: 'emerald' },
+      { label: 'Feature Modules', href: '/admin/modules', icon: Puzzle, badge: 'New', badgeVariant: 'amber' },
     ],
   },
   {
@@ -51,12 +53,21 @@ const allAdminNavGroups: NavGroup[] = [
     ],
   },
   {
-    title: 'Content & Moderation',
+    title: 'Content & Media',
     items: [
+      { label: 'Media Manager', href: '/admin/media', icon: ImageIcon, badge: 'Pro', badgeVariant: 'indigo' },
+      { label: 'Email Templates', href: '/admin/email-templates', icon: Mail },
       { label: 'Posts', href: '/admin/posts', icon: FileText },
       { label: 'Reels & Shorts', href: '/admin/reels', icon: Film },
       { label: '24h Stories', href: '/admin/stories', icon: Clock },
       { label: 'Abuse Reports', href: '/admin/reports', icon: AlertTriangle, badge: 2, badgeVariant: 'amber' },
+    ],
+  },
+  {
+    title: 'Themes & Add-ons',
+    items: [
+      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'indigo' },
+      { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
     ],
   },
   {
@@ -69,10 +80,11 @@ const allAdminNavGroups: NavGroup[] = [
     ],
   },
   {
-    title: 'System & Database',
+    title: 'System & Maintenance',
     items: [
+      { label: 'System Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck },
+      { label: 'Maintenance & Tools', href: '/admin/maintenance', icon: Wrench, badge: 'Live', badgeVariant: 'emerald' },
       { label: 'Categories & Tags', href: '/admin/categories', icon: Layers },
-      { label: 'Platform Settings', href: '/admin/settings', icon: Settings },
       { label: 'Database Schema', href: '/database', icon: Database },
     ],
   },
