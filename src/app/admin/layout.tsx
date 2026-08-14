@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <RoleGuard
-            allowedRoles={['admin']}
+            allowedRoles={['admin', 'super_admin']}
             fallbackTitle="Administrator Clearance Required"
             fallbackMessage="This administrative console is restricted to platform administrators. Please authenticate with an admin account or switch role in the sandbox."
           >

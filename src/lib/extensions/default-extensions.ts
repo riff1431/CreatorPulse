@@ -417,6 +417,273 @@ export const DEFAULT_PLUGINS: PluginManifest[] = [
     changelog: [
       { version: '1.2.1', date: '2026-08-11', changes: ['Added payout 2FA challenge'] }
     ]
+  },
+  {
+    id: 'plugin-stripe',
+    name: 'Stripe Payment Gateway',
+    slug: 'stripe-payments',
+    description: 'Enables fans to check out with credit cards, dynamic billing subscriptions, and direct wallet deposits via Stripe.',
+    version: '1.2.0',
+    author: 'Stripe Labs',
+    authorUrl: 'https://stripe.com',
+    iconUrl: '💳',
+    category: 'Monetization',
+    tags: ['Payments', 'Stripe', 'Credit Card', 'Subscriptions'],
+    minAppVersion: '1.0.0',
+    permissions: ['payment_hooks', 'network_requests'],
+    hooks: ['payment_gateway_methods'],
+    isEnabled: true,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-10',
+    updatedAt: '2026-08-14',
+    settingsSchema: [
+      { id: 'mode', label: 'Stripe Mode', type: 'select', defaultValue: 'sandbox', options: [
+        { label: 'Sandbox (Testing)', value: 'sandbox' },
+        { label: 'Live (Production)', value: 'live' }
+      ]},
+      { id: 'publishableKey', label: 'Stripe Publishable Key', type: 'text', defaultValue: 'pk_test_stripe_pub_key_123', placeholder: 'pk_test_...' },
+      { id: 'secretKey', label: 'Stripe Secret Key (Confidential Server-Side Only)', type: 'password', defaultValue: '••••••••', placeholder: 'sk_test_...' },
+      { id: 'webhookSecret', label: 'Stripe Webhook Signing Secret (Confidential Server-Side Only)', type: 'password', defaultValue: '••••••••', placeholder: 'whsec_...' },
+      { id: 'supportedCurrencies', label: 'Supported Currencies', type: 'select', defaultValue: 'USD', options: [
+        { label: 'USD ($)', value: 'USD' },
+        { label: 'EUR (€)', value: 'EUR' },
+        { label: 'GBP (£)', value: 'GBP' }
+      ]},
+      { id: 'isDefault', label: 'Set as Default Payment Gateway', type: 'boolean', defaultValue: true },
+      { id: 'transactionStatusMapping', label: 'Stripe-to-Ledger Status Mapping Rules (JSON)', type: 'textarea', defaultValue: '{\n  "succeeded": "Completed",\n  "processing": "Pending",\n  "failed": "Failed"\n}' }
+    ],
+    settingsValues: {
+      mode: 'sandbox',
+      publishableKey: 'pk_test_stripe_pub_key_123',
+      secretKey: '••••••••',
+      webhookSecret: '••••••••',
+      supportedCurrencies: 'USD',
+      isDefault: true,
+      transactionStatusMapping: '{\n  "succeeded": "Completed",\n  "processing": "Pending",\n  "failed": "Failed"\n}'
+    },
+    changelog: [
+      { version: '1.2.0', date: '2026-08-14', changes: ['Added full subscription webhook handling', 'Optimized sandbox card decline simulation'] }
+    ]
+  },
+  {
+    id: 'plugin-paypal',
+    name: 'PayPal Smart Buttons',
+    slug: 'paypal-payments',
+    description: 'Integrates PayPal checkout, credit/debit smart buttons, recurring billing agreements, and payouts.',
+    version: '1.1.0',
+    author: 'PayPal Inc.',
+    authorUrl: 'https://paypal.com',
+    iconUrl: '🅿️',
+    category: 'Monetization',
+    tags: ['Payments', 'PayPal', 'Smart Buttons', 'Billing'],
+    minAppVersion: '1.0.0',
+    permissions: ['payment_hooks', 'network_requests'],
+    hooks: ['payment_gateway_methods'],
+    isEnabled: false,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-11',
+    updatedAt: '2026-08-14',
+    settingsSchema: [
+      { id: 'mode', label: 'PayPal Mode', type: 'select', defaultValue: 'sandbox', options: [
+        { label: 'Sandbox (Testing)', value: 'sandbox' },
+        { label: 'Live (Production)', value: 'live' }
+      ]},
+      { id: 'clientId', label: 'PayPal Client ID', type: 'text', defaultValue: 'paypal_client_id_abc', placeholder: 'PayPal Client ID' },
+      { id: 'clientSecret', label: 'PayPal Client Secret (Confidential Server-Side Only)', type: 'password', defaultValue: '••••••••', placeholder: 'PayPal Secret' },
+      { id: 'supportedCurrencies', label: 'Supported Currencies', type: 'select', defaultValue: 'USD', options: [
+        { label: 'USD ($)', value: 'USD' },
+        { label: 'EUR (€)', value: 'EUR' }
+      ]},
+      { id: 'isDefault', label: 'Set as Default Payment Gateway', type: 'boolean', defaultValue: false },
+      { id: 'transactionStatusMapping', label: 'PayPal-to-Ledger Status Mapping Rules (JSON)', type: 'textarea', defaultValue: '{\n  "COMPLETED": "Completed",\n  "PENDING": "Pending",\n  "FAILED": "Failed"\n}' }
+    ],
+    settingsValues: {
+      mode: 'sandbox',
+      clientId: 'paypal_client_id_abc',
+      clientSecret: '••••••••',
+      supportedCurrencies: 'USD',
+      isDefault: false,
+      transactionStatusMapping: '{\n  "COMPLETED": "Completed",\n  "PENDING": "Pending",\n  "FAILED": "Failed"\n}'
+    },
+    changelog: [
+      { version: '1.1.0', date: '2026-08-14', changes: ['Upgraded to PayPal Smart Buttons API v2'] }
+    ]
+  },
+  {
+    id: 'plugin-mock',
+    name: 'Developer Sandbox (Mock)',
+    slug: 'mock-payments',
+    description: 'Instant sandbox gateway for local testing. Requires zero credentials and completes simulated charges immediately.',
+    version: '1.0.0',
+    author: 'CreatorPulse Core Team',
+    authorUrl: 'https://creatorpulse.com',
+    iconUrl: '🔌',
+    category: 'Monetization',
+    tags: ['Payments', 'Mock', 'Testing', 'Offline'],
+    minAppVersion: '1.0.0',
+    permissions: ['payment_hooks'],
+    hooks: ['payment_gateway_methods'],
+    isEnabled: true,
+    autoUpdate: false,
+    hasUpdate: false,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    settingsSchema: [
+      { id: 'isDefault', label: 'Set as Default Payment Gateway', type: 'boolean', defaultValue: false },
+      { id: 'supportedCurrencies', label: 'Supported Currencies', type: 'select', defaultValue: 'USD', options: [
+        { label: 'USD ($)', value: 'USD' },
+        { label: 'EUR (€)', value: 'EUR' }
+      ]}
+    ],
+    settingsValues: {
+      isDefault: false,
+      supportedCurrencies: 'USD'
+    },
+    changelog: [
+      { version: '1.0.0', date: '2026-08-14', changes: ['Initial release for developer tests'] }
+    ]
+  }
+];
+
+
+export const PLUGIN_LIBRARY_CATALOG: PluginManifest[] = [
+  {
+    id: 'plugin-discord-sync',
+    name: 'Discord VIP Community Role Sync',
+    slug: 'discord-sync',
+    description: 'Instantly grants or revokes Discord server VIP roles when members subscribe, upgrade, or cancel their tiers.',
+    version: '1.2.0',
+    author: 'BotForge Labs',
+    authorUrl: 'https://botforge.dev',
+    iconUrl: '💬',
+    category: 'Community & Media',
+    tags: ['Discord', 'Roles', 'Automation', 'Community'],
+    minAppVersion: '1.0.0',
+    permissions: ['network_requests', 'notifications_send'],
+    hooks: ['after_user_signup', 'creator_dashboard_widgets'],
+    isEnabled: false,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    isLibraryItem: true,
+    settingsSchema: [
+      { id: 'botToken', label: 'Discord Bot Token', type: 'password', defaultValue: '', placeholder: 'Bot token from Discord Developer Portal' },
+      { id: 'guildId', label: 'Discord Server (Guild) ID', type: 'text', defaultValue: '', placeholder: '123456789012345678' },
+      { id: 'autoKickExpired', label: 'Automatically Remove Role on Subscription Expiration', type: 'boolean', defaultValue: true }
+    ],
+    settingsValues: {
+      botToken: '',
+      guildId: '',
+      autoKickExpired: true
+    },
+    changelog: [
+      { version: '1.2.0', date: '2026-08-14', changes: ['Added instant role sync webhook handler', 'Multi-guild support'] }
+    ]
+  },
+  {
+    id: 'plugin-podcast-audio',
+    name: 'Audio Waveform & Podcast Master',
+    slug: 'podcast-audio',
+    description: 'Embeds interactive audio waveform players, background playback, and chapter markers on creator audio posts.',
+    version: '2.0.1',
+    author: 'SonicWave Audio',
+    authorUrl: 'https://sonicwave.io',
+    iconUrl: '🎙️',
+    category: 'Community & Media',
+    tags: ['Audio', 'Podcast', 'Waveform', 'Music'],
+    minAppVersion: '1.0.0',
+    permissions: ['media_transform', 'storage_access'],
+    hooks: ['post_card_footer', 'member_dashboard_widgets'],
+    isEnabled: false,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    isLibraryItem: true,
+    settingsSchema: [
+      { id: 'waveformColor', label: 'Waveform Accent Color', type: 'text', defaultValue: '#EC4899' },
+      { id: 'enableDownloadForVIP', label: 'Allow MP3 Download for VIP Members', type: 'boolean', defaultValue: true }
+    ],
+    settingsValues: {
+      waveformColor: '#EC4899',
+      enableDownloadForVIP: true
+    },
+    changelog: [
+      { version: '2.0.1', date: '2026-08-14', changes: ['High-precision audio scrubbing', 'FLAC lossless support'] }
+    ]
+  },
+  {
+    id: 'plugin-zapier-webhooks',
+    name: 'Zapier & Webhook Payload Dispatcher',
+    slug: 'zapier-webhooks',
+    description: 'Sends real-time JSON webhooks to Zapier, Make, and custom HTTP endpoints on signups, tips, and purchases.',
+    version: '1.3.4',
+    author: 'IntegrateCloud',
+    authorUrl: 'https://integratecloud.net',
+    iconUrl: '⚡',
+    category: 'Marketing & SEO',
+    tags: ['Webhooks', 'Zapier', 'Integrations', 'Automation'],
+    minAppVersion: '1.0.0',
+    permissions: ['network_requests', 'security_audit'],
+    hooks: ['after_user_signup', 'before_post_publish'],
+    isEnabled: false,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    isLibraryItem: true,
+    settingsSchema: [
+      { id: 'webhookUrl', label: 'Webhook Endpoint Target URL', type: 'text', defaultValue: '', placeholder: 'https://hooks.zapier.com/hooks/catch/...' },
+      { id: 'retryAttempts', label: 'Max Retry Attempts on Failure', type: 'number', defaultValue: 3 },
+      { id: 'secretKey', label: 'HMAC Signing Secret Key', type: 'password', defaultValue: '' }
+    ],
+    settingsValues: {
+      webhookUrl: '',
+      retryAttempts: 3,
+      secretKey: ''
+    },
+    changelog: [
+      { version: '1.3.4', date: '2026-08-14', changes: ['HMAC SHA-256 header signatures added'] }
+    ]
+  },
+  {
+    id: 'plugin-crypto-tips',
+    name: 'USDC & Web3 Instant Tipping',
+    slug: 'crypto-tips',
+    description: 'Enables zero-commission fan tips via USDC, Solana, and Ethereum directly to creator wallets with on-chain proofs.',
+    version: '1.0.8',
+    author: 'ChainPay Protocol',
+    authorUrl: 'https://chainpay.xyz',
+    iconUrl: '🪙',
+    category: 'Monetization',
+    tags: ['Web3', 'Crypto', 'USDC', 'Solana'],
+    minAppVersion: '1.0.0',
+    permissions: ['payment_hooks', 'network_requests'],
+    hooks: ['post_card_footer', 'payment_gateway_methods'],
+    isEnabled: false,
+    autoUpdate: false,
+    hasUpdate: false,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    isLibraryItem: true,
+    settingsSchema: [
+      { id: 'acceptedCurrencies', label: 'Accepted Currencies', type: 'select', defaultValue: 'usdc', options: [
+        { label: 'USDC Only (Zero Volatility)', value: 'usdc' },
+        { label: 'USDC + Solana (SOL)', value: 'usdc_sol' },
+        { label: 'Multi-Chain (USDC, SOL, ETH)', value: 'all' }
+      ]},
+      { id: 'minTipUsdc', label: 'Minimum Tip in USDC ($)', type: 'number', defaultValue: 1.00 }
+    ],
+    settingsValues: {
+      acceptedCurrencies: 'usdc',
+      minTipUsdc: 1.00
+    },
+    changelog: [
+      { version: '1.0.8', date: '2026-08-14', changes: ['Solana Pay QR code integration'] }
+    ]
   }
 ];
 

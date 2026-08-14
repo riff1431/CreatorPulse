@@ -35,6 +35,20 @@ export interface PluginChangelog {
   changes: string[];
 }
 
+export interface PluginDatabaseMigration {
+  version: string;
+  description: string;
+  sql?: string;
+}
+
+export interface PluginLifecycleMethods {
+  onInstall?: string;
+  onActivate?: string;
+  onDeactivate?: string;
+  onUpdate?: string;
+  onUninstall?: string;
+}
+
 export interface PluginManifest {
   id: string;
   name: string;
@@ -52,6 +66,9 @@ export interface PluginManifest {
   settingsSchema: PluginSettingField[];
   settingsValues: Record<string, unknown>;
   changelog: PluginChangelog[];
+  lifecycle?: PluginLifecycleMethods;
+  dependencies?: { plugins?: string[]; services?: string[] };
+  databaseMigrations?: PluginDatabaseMigration[];
   isEnabled: boolean;
   autoUpdate: boolean;
   hasUpdate?: boolean;
@@ -60,12 +77,13 @@ export interface PluginManifest {
   updatedAt: string;
   hasError?: boolean;
   errorMessage?: string;
+  isLibraryItem?: boolean;
 }
 
 export interface AuditLogEntry {
   id: string;
   action: 'THEME_ACTIVATED' | 'THEME_INSTALLED' | 'THEME_CUSTOMIZED' | 'THEME_DELETED' | 'THEME_ROLLBACK' |
-          'PLUGIN_ACTIVATED' | 'PLUGIN_DEACTIVATED' | 'PLUGIN_INSTALLED' | 'PLUGIN_UPDATED' | 'PLUGIN_CONFIG_SAVED' | 'PLUGIN_ERROR';
+          'PLUGIN_ACTIVATED' | 'PLUGIN_DEACTIVATED' | 'PLUGIN_INSTALLED' | 'PLUGIN_UPDATED' | 'PLUGIN_DELETED' | 'PLUGIN_CONFIG_SAVED' | 'PLUGIN_ERROR';
   entityType: 'theme' | 'plugin' | 'system';
   entityName: string;
   details: string;

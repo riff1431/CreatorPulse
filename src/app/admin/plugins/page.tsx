@@ -1,51 +1,87 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Puzzle, Upload, Sparkles, Check, RefreshCw, Settings, 
-  Trash2, ShieldCheck, ArrowUpCircle, Info, X, CheckCircle2, AlertTriangle, Key, Search, ToggleLeft, ToggleRight
+import Link from 'next/link';
+import {
+  Puzzle, Upload, CheckCircle2, AlertTriangle, Settings, RefreshCw,
+  Trash2, Plus, Info, ExternalLink, Shield, Code, Download, X,
+  Search, SlidersHorizontal, Check, Zap, Sparkles, Lock, ArrowUpRight,
+  BookOpen, Terminal, Layers, ArrowRight, Play, Eye
 } from 'lucide-react';
 import { usePlugins } from '@/lib/extensions/plugin-engine';
-import { PluginManifest, PluginSettingField } from '@/lib/extensions/plugin-types';
+import { PluginManifest, PluginHookType, PluginPermission } from '@/lib/extensions/plugin-types';
 import { validatePluginPackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
 export default function AdminPluginsPage() {
-  const { 
-    plugins, 
-    activePlugins, 
-    togglePlugin, 
-    updatePluginSettings, 
-    toggleAutoUpdate, 
-    updatePluginVersion, 
-    installPlugin, 
-    deletePlugin 
+  const {
+    plugins,
+    activePlugins,
+    libraryPlugins,
+    togglePlugin,
+    updatePluginSettings,
+    updatePluginVersion,
+    installPlugin,
+    installFromLibrary,
+    deletePlugin
   } = usePlugins();
 
+  const [activeTab, setActiveTab] = useState<'installed' | 'active' | 'inactive' | 'updates' | 'library'>('installed');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Modals
   const [configuringPlugin, setConfiguringPlugin] = useState<PluginManifest | null>(null);
   const [configDraft, setConfigDraft] = useState<Record<string, unknown>>({});
-  const [permissionsPlugin, setPermissionsPlugin] = useState<PluginManifest | null>(null);
-  const [changelogPlugin, setChangelogPlugin] = useState<PluginManifest | null>(null);
-
-  // Upload modal state
+  const [detailsPlugin, setDetailsPlugin] = useState<PluginManifest | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isDocsOpen, setIsDocsOpen] = useState(false);
+
+  // Upload state
   const [uploadText, setUploadText] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
 
-  const categories = ['All', 'Monetization', 'Security & DRM', 'Marketing & SEO', 'AI & Automation', 'Community & Media'];
+  const triggerNotice = (msg: string) => {
+    setActionNotice(msg);
+    setTimeout(() => setActionNotice(''), 3500);
+  };
 
-  const filteredPlugins = plugins.filter((p) => {
-    const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCat && matchesSearch;
+  // Filter plugins based on tab, search, and category
+  const filteredInstalledPlugins = plugins.filter((p) => {
+    // Tab filter
+    if (activeTab === 'active' && !p.isEnabled) return false;
+    if (activeTab === 'inactive' && p.isEnabled) return false;
+    if (activeTab === 'updates' && !p.hasUpdate) return false;
+
+    // Search query
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Category filter
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
   });
+
+  const filteredLibraryPlugins = libraryPlugins.filter((p) => {
+    const isAlreadyInstalled = plugins.some((installed) => installed.id === p.id);
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+
+    return !isAlreadyInstalled && matchesSearch && matchesCategory;
+  });
+
+  const updateCount = plugins.filter((p) => p.hasUpdate).length;
 
   const openConfigModal = (plugin: PluginManifest) => {
     setConfiguringPlugin(plugin);
@@ -56,9 +92,10 @@ export default function AdminPluginsPage() {
     if (!configuringPlugin) return;
     updatePluginSettings(configuringPlugin.id, configDraft);
     setConfiguringPlugin(null);
+    triggerNotice(`Saved settings for ${configuringPlugin.name}`);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
     setUploadSuccess(false);
     const file = e.target.files?.[0];
@@ -76,14 +113,21 @@ export default function AdminPluginsPage() {
           return;
         }
 
+        // Check duplicate ID
+        if (plugins.some((p) => p.id === result.plugin!.id)) {
+          setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
+          return;
+        }
+
         installPlugin(result.plugin);
         setUploadSuccess(true);
+        triggerNotice(`Installed "${result.plugin.name}" successfully!`);
         setTimeout(() => {
           setIsUploadOpen(false);
           setUploadSuccess(false);
         }, 1200);
-      } catch (err) {
-        setUploadError('Invalid file format. Please upload a valid JSON plugin manifest or ZIP package.');
+      } catch (err: any) {
+        setUploadError('Invalid package format. Please provide a valid plugin JSON manifest or ZIP.');
       }
     };
     reader.readAsText(file);
@@ -99,17 +143,66 @@ export default function AdminPluginsPage() {
         setUploadError(result.error || 'Validation error');
         return;
       }
+
+      if (plugins.some((p) => p.id === result.plugin!.id)) {
+        setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
+        return;
+      }
+
       installPlugin(result.plugin);
       setUploadSuccess(true);
+      triggerNotice(`Installed "${result.plugin.name}"!`);
       setTimeout(() => {
         setIsUploadOpen(false);
         setUploadSuccess(false);
         setUploadText('');
       }, 1200);
-    } catch (e) {
-      const errMsg = e instanceof Error ? e.message : 'Unknown syntax error';
-      setUploadError('JSON syntax error: ' + errMsg);
+    } catch (e: any) {
+      setUploadError('JSON syntax error: ' + e.message);
     }
+  };
+
+  const handleDownloadStarter = () => {
+    const starterManifest = {
+      id: 'plugin-starter-example',
+      name: 'CreatorPulse Starter Plugin',
+      slug: 'starter-example',
+      description: 'Official template demonstrating Plugin SDK v1.0 with hook listeners, settings schema, and lifecycle hooks.',
+      version: '1.0.0',
+      author: 'Your Dev Studio',
+      authorUrl: 'https://yourdevstudio.com',
+      iconUrl: '🚀',
+      category: 'Community & Media',
+      tags: ['Starter', 'SDK v1.0', 'Example'],
+      minAppVersion: '1.0.0',
+      permissions: ['storage_access', 'notifications_send'],
+      hooks: ['post_card_footer', 'navbar_actions'],
+      settingsSchema: [
+        { id: 'customText', label: 'Badge Text', type: 'text', defaultValue: 'Verified Add-on' },
+        { id: 'enableFeature', label: 'Enable Feature', type: 'boolean', defaultValue: true }
+      ],
+      settingsValues: {
+        customText: 'Verified Add-on',
+        enableFeature: true
+      },
+      lifecycle: {
+        onInstall: 'console.log("Plugin installed successfully")',
+        onActivate: 'console.log("Plugin activated")',
+        onDeactivate: 'console.log("Plugin deactivated")'
+      },
+      changelog: [
+        { version: '1.0.0', date: new Date().toISOString().split('T')[0], changes: ['Initial starter release'] }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(starterManifest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'creatorpulse-plugin-starter-v1.0.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    triggerNotice('Downloaded CreatorPulse Plugin SDK v1.0 Starter Template!');
   };
 
   return (
@@ -119,225 +212,380 @@ export default function AdminPluginsPage() {
         <div>
           <div className="flex items-center gap-2">
             <Puzzle className="text-[#EC4899]" size={24} />
-            <h1 className="text-2xl font-black text-[#18181B]">Plugins & Add-on Engine</h1>
+            <h1 className="text-2xl font-black text-[#18181B]">Plugin Management</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Extend platform monetization, DRM security, AI assistants, and analytics without modifying core code.
+            Extend platform capabilities modularly without modifying core code. Standard Plugin SDK v1.0 compliant.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<BookOpen size={14} />}
+            onClick={() => setIsDocsOpen(true)}
+          >
+            Developer SDK Docs
+          </Button>
           <Button
             variant="primary"
             size="sm"
             leftIcon={<Upload size={14} />}
             onClick={() => setIsUploadOpen(true)}
           >
-            Upload Add-on (ZIP / JSON)
+            Upload Plugin (.ZIP / JSON)
           </Button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-[#71717A] font-bold uppercase tracking-wider">Installed Add-ons</span>
-            <p className="text-2xl font-black text-[#18181B] mt-1">{plugins.length}</p>
+      {/* Notice Banner */}
+      {actionNotice && (
+        <div className="p-3.5 bg-[#FFF1F7] border border-[#FBCFE8] rounded-2xl text-xs text-[#BE185D] font-bold flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-[#EC4899]" />
+            <span>{actionNotice}</span>
           </div>
-          <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-[#EC4899] flex items-center justify-center font-bold">
-            <Puzzle size={20} />
-          </div>
-        </Card>
+          <button onClick={() => setActionNotice('')} className="text-[#A1A1AA] hover:text-[#18181B]">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
-        <Card className="p-4 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-[#71717A] font-bold uppercase tracking-wider">Active Hooks & Extenders</span>
-            <p className="text-2xl font-black text-emerald-600 mt-1">{activePlugins.length}</p>
-          </div>
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 size={20} />
-          </div>
-        </Card>
+      {/* Navigation Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F3DCE8] pb-3">
+        <div className="flex items-center gap-2 text-xs font-bold">
+          <button
+            onClick={() => setActiveTab('installed')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'installed'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>All Installed</span>
+            <span className="text-[10px] bg-white text-[#BE185D] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+              {plugins.length}
+            </span>
+          </button>
 
-        <Card className="p-4 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-[#71717A] font-bold uppercase tracking-wider">Updates Available</span>
-            <p className="text-2xl font-black text-[#BE185D] mt-1">
-              {plugins.filter(p => p.hasUpdate).length}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#BE185D] flex items-center justify-center font-bold">
-            <ArrowUpCircle size={20} />
-          </div>
-        </Card>
-      </div>
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'active'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Active</span>
+            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full border border-emerald-200">
+              {activePlugins.length}
+            </span>
+          </button>
 
-      {/* Search & Category Filter Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                  : 'bg-white text-[#71717A] border border-[#F3DCE8] hover:text-[#18181B]'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          <button
+            onClick={() => setActiveTab('inactive')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'inactive'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>Inactive</span>
+            <span className="text-[10px] bg-[#FFF9FC] text-[#71717A] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+              {plugins.length - activePlugins.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('updates')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'updates'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>Updates</span>
+            {updateCount > 0 && (
+              <span className="text-[10px] bg-[#F43F5E] text-white px-1.5 py-0.5 rounded-full font-bold">
+                {updateCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'library'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <Sparkles size={13} className="text-[#EC4899]" />
+            <span>Plugin Library</span>
+            <span className="text-[10px] bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white px-1.5 py-0.5 rounded-full">
+              New
+            </span>
+          </button>
         </div>
 
-        <div className="relative min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={14} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search add-ons or hooks..."
-            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
-          />
+        {/* Search & Filter Bar */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-60">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
+            <input
+              type="text"
+              placeholder="Search add-ons..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium"
+            />
+          </div>
+
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+          >
+            <option value="all">All Categories</option>
+            <option value="Monetization">Monetization</option>
+            <option value="Security & DRM">Security & DRM</option>
+            <option value="Marketing & SEO">Marketing & SEO</option>
+            <option value="AI & Automation">AI & Automation</option>
+            <option value="Community & Media">Community & Media</option>
+          </select>
         </div>
       </div>
 
-      {/* Plugins Table & Grid */}
-      <div className="space-y-4">
-        {filteredPlugins.map((plugin) => {
-          return (
-            <Card key={plugin.id} className="p-5 transition-all duration-300 hover:border-[#F472B6]/40">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Plugin Info */}
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-center justify-center text-2xl shrink-0 shadow-xs">
-                    {plugin.iconUrl}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-sm text-[#18181B]">{plugin.name}</h3>
-                      <Badge variant="pink" size="sm">v{plugin.version}</Badge>
-                      <span className="text-[10px] text-[#71717A] bg-[#FFF9FC] px-2 py-0.5 rounded-full border border-[#F3DCE8] font-bold">
+      {/* Main Content Area */}
+      {activeTab !== 'library' ? (
+        /* Installed Plugins List */
+        <div className="space-y-4">
+          {filteredInstalledPlugins.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-3xl border border-[#F3DCE8] p-8 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-[#EC4899] flex items-center justify-center mx-auto text-xl">
+                🔌
+              </div>
+              <h3 className="font-bold text-sm text-[#18181B]">No Plugins Found</h3>
+              <p className="text-xs text-[#71717A] max-w-sm mx-auto">
+                No add-ons match the selected tab and filter criteria. You can browse the Plugin Library to install new features.
+              </p>
+              <Button variant="primary" size="sm" onClick={() => setActiveTab('library')}>
+                Browse Plugin Library
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredInstalledPlugins.map((plugin) => (
+                <Card
+                  key={plugin.id}
+                  className={`p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg ${
+                    plugin.isEnabled ? 'border-[#F3DCE8] bg-white' : 'border-[#F3DCE8]/60 bg-[#FFF9FC]/50 opacity-90'
+                  }`}
+                >
+                  <div className="space-y-4">
+                    {/* Top Row: Icon & Status Toggle */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-2xl flex items-center justify-center border border-[#F3DCE8] shrink-0 shadow-xs">
+                          {plugin.iconUrl}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-[#18181B] leading-tight">{plugin.name}</h3>
+                          <p className="text-[11px] text-[#71717A] font-medium">By {plugin.author}</p>
+                        </div>
+                      </div>
+
+                      {/* Active Toggle Switch */}
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={plugin.isEnabled}
+                          onChange={(e) => togglePlugin(plugin.id, e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-10 h-5.5 bg-[#E4E4E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E4E4E7] after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#EC4899]"></div>
+                      </label>
+                    </div>
+
+                    <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">
+                      {plugin.description}
+                    </p>
+
+                    {/* Metadata Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8]">
                         {plugin.category}
                       </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
+                        v{plugin.version}
+                      </span>
                       {plugin.hasUpdate && (
-                        <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-bold flex items-center gap-1">
-                          <ArrowUpCircle size={10} /> Update to v{plugin.latestVersion}
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3] flex items-center gap-1">
+                          <Zap size={10} /> v{plugin.latestVersion} Available
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#71717A] leading-relaxed max-w-2xl font-medium">{plugin.description}</p>
-                    <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-[#A1A1AA]">
-                      <span>By <strong className="text-[#71717A]">{plugin.author}</strong></span>
-                      <span>•</span>
-                      <span>Hooks: <strong className="text-[#EC4899]">{plugin.hooks.join(', ')}</strong></span>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-[#F3DCE8]">
+                    <div className="flex items-center gap-1">
+                      {plugin.settingsSchema.length > 0 && (
+                        <button
+                          onClick={() => openConfigModal(plugin)}
+                          className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                          title="Configure Settings"
+                        >
+                          <Settings size={15} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setDetailsPlugin(plugin)}
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                        title="View Manifest & Changelog"
+                      >
+                        <Info size={15} />
+                      </button>
+                      <button
+                        onClick={() => deletePlugin(plugin.id)}
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
+                        title="Uninstall Plugin"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
+
+                    {plugin.hasUpdate ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => updatePluginVersion(plugin.id)}
+                        leftIcon={<RefreshCw size={12} />}
+                      >
+                        Update to v{plugin.latestVersion}
+                      </Button>
+                    ) : (
+                      <span className="text-[11px] text-[#A1A1AA] font-medium flex items-center gap-1">
+                        <CheckCircle2 size={13} className="text-emerald-500" /> Compatible
+                      </span>
+                    )}
                   </div>
-                </div>
-
-                {/* Controls & Actions */}
-                <div className="flex flex-wrap items-center gap-3 border-t lg:border-t-0 border-[#F3DCE8] pt-3 lg:pt-0">
-                  {/* Settings Button */}
-                  {plugin.settingsSchema.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      leftIcon={<Settings size={13} />}
-                      onClick={() => openConfigModal(plugin)}
-                    >
-                      Configure
-                    </Button>
-                  )}
-
-                  {/* Permissions Inspector */}
-                  <button
-                    onClick={() => setPermissionsPlugin(plugin)}
-                    className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                    title="Permissions & Security"
-                  >
-                    <ShieldCheck size={16} />
-                  </button>
-
-                  {/* Changelog */}
-                  <button
-                    onClick={() => setChangelogPlugin(plugin)}
-                    className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                    title="Version Changelog"
-                  >
-                    <Info size={16} />
-                  </button>
-
-                  {/* Auto Update Checkbox */}
-                  <label className="flex items-center gap-1.5 text-xs text-[#71717A] cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={plugin.autoUpdate}
-                      onChange={(e) => toggleAutoUpdate(plugin.id, e.target.checked)}
-                      className="accent-[#EC4899] rounded"
-                    />
-                    <span>Auto-update</span>
-                  </label>
-
-                  {/* Update action */}
-                  {plugin.hasUpdate && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updatePluginVersion(plugin.id)}
-                      className="text-amber-700 border-amber-300 hover:bg-amber-50"
-                      leftIcon={<RefreshCw size={12} />}
-                    >
-                      Update
-                    </Button>
-                  )}
-
-                  {/* Active Toggle Switch */}
-                  <div className="flex items-center gap-2 pl-2 border-l border-[#F3DCE8]">
-                    <span className={`text-xs font-bold ${plugin.isEnabled ? 'text-emerald-600' : 'text-[#A1A1AA]'}`}>
-                      {plugin.isEnabled ? 'Active' : 'Disabled'}
-                    </span>
-                    <button
-                      onClick={() => togglePlugin(plugin.id, !plugin.isEnabled)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        plugin.isEnabled ? 'bg-[#EC4899]' : 'bg-slate-300'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          plugin.isEnabled ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Plugin Discovery Library / Marketplace */
+        <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-r from-[#FFF1F7] to-white border border-[#FBCFE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#EC4899] text-white flex items-center justify-center font-bold">
+                <Sparkles size={20} />
               </div>
-            </Card>
-          );
-        })}
-      </div>
+              <div>
+                <h4 className="font-bold text-xs text-[#18181B]">CreatorPulse Official & Verified Plugin Library</h4>
+                <p className="text-[11px] text-[#71717A] mt-0.5">
+                  Browse and install verified add-ons with 1-click. All plugins are sandboxed and adhere to Plugin SDK v1.0.
+                </p>
+              </div>
+            </div>
 
-      {/* Dynamic Plugin Configuration Modal */}
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download size={13} />}
+              onClick={handleDownloadStarter}
+            >
+              Download Plugin SDK Starter
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredLibraryPlugins.map((plugin) => (
+              <Card
+                key={plugin.id}
+                className="p-5 flex flex-col justify-between border-[#F3DCE8] bg-white transition-all duration-300 hover:shadow-lg hover:border-[#F472B6]/50"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-2xl flex items-center justify-center border border-[#F3DCE8] shrink-0 shadow-xs">
+                        {plugin.iconUrl}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-[#18181B] leading-tight">{plugin.name}</h3>
+                        <p className="text-[11px] text-[#71717A] font-medium">By {plugin.author}</p>
+                      </div>
+                    </div>
+                    <Badge variant="pink" size="sm">Available</Badge>
+                  </div>
+
+                  <p className="text-xs text-[#71717A] leading-relaxed line-clamp-3 font-medium">
+                    {plugin.description}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8]">
+                      {plugin.category}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
+                      v{plugin.version}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-[#F3DCE8]">
+                  <button
+                    onClick={() => setDetailsPlugin(plugin)}
+                    className="text-xs font-bold text-[#EC4899] hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <Info size={13} /> View Specs
+                  </button>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      installFromLibrary(plugin.id);
+                      triggerNotice(`Installed "${plugin.name}"! You can now activate and configure it.`);
+                    }}
+                    leftIcon={<Plus size={13} />}
+                  >
+                    Install Add-on
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Configuration Modal */}
       {configuringPlugin && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
-              <div>
-                <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
-                  <Settings size={18} className="text-[#EC4899]" />
-                  <span>Configure {configuringPlugin.name}</span>
-                </h3>
-                <p className="text-xs text-[#71717A]">Update add-on runtime settings and keys</p>
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-xl flex items-center justify-center border border-[#F3DCE8]">
+                  {configuringPlugin.iconUrl}
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">{configuringPlugin.name} Settings</h3>
+                  <p className="text-xs text-[#71717A]">Configure parameters and preferences</p>
+                </div>
               </div>
               <button
                 onClick={() => setConfiguringPlugin(null)}
-                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B] cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
               {configuringPlugin.settingsSchema.map((field) => (
                 <div key={field.id} className="space-y-1.5">
                   <label className="block font-bold text-[#18181B]">{field.label}</label>
@@ -352,6 +600,16 @@ export default function AdminPluginsPage() {
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
                       className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
+                    />
+                  )}
+
+                  {field.type === 'password' && (
+                    <input
+                      type="password"
+                      value={String(configDraft[field.id] ?? '')}
+                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
+                      placeholder={field.placeholder}
+                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-mono"
                     />
                   )}
 
@@ -372,7 +630,7 @@ export default function AdminPluginsPage() {
                         onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.checked })}
                         className="accent-[#EC4899] rounded"
                       />
-                      <span>Enabled</span>
+                      <span>Enable Option</span>
                     </label>
                   )}
 
@@ -403,100 +661,106 @@ export default function AdminPluginsPage() {
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => setConfiguringPlugin(null)}>
                 Cancel
               </Button>
               <Button variant="primary" size="sm" onClick={handleSaveConfig}>
-                Save Configuration
+                Save Settings
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Permissions Inspector Modal */}
-      {permissionsPlugin && (
+      {/* Manifest & Changelog Details Modal */}
+      {detailsPlugin && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
-              <div>
-                <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-[#EC4899]" />
-                  <span>Security & Permissions: {permissionsPlugin.name}</span>
-                </h3>
-                <p className="text-xs text-[#71717A]">Sandboxed capabilities and execution hooks</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-xl flex items-center justify-center border border-[#F3DCE8]">
+                  {detailsPlugin.iconUrl}
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">{detailsPlugin.name}</h3>
+                  <p className="text-xs text-[#71717A]">v{detailsPlugin.version} • By {detailsPlugin.author}</p>
+                </div>
               </div>
-              <button onClick={() => setPermissionsPlugin(null)} className="p-1 rounded-xl text-[#71717A]">
+              <button
+                onClick={() => setDetailsPlugin(null)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <h4 className="font-bold text-[#18181B] mb-1.5">Declared Permissions</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {permissionsPlugin.permissions.map((perm) => (
-                    <span key={perm} className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-semibold">
-                      ✓ {perm}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            <div className="space-y-4 text-xs">
+              <p className="text-[#71717A] leading-relaxed font-medium">{detailsPlugin.description}</p>
 
-              <div>
-                <h4 className="font-bold text-[#18181B] mb-1.5">Registered Execution Hooks</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {permissionsPlugin.hooks.map((hook) => (
-                    <span key={hook} className="px-2.5 py-1 rounded-xl bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8] font-mono text-[11px] font-bold">
-                      ⚓ {hook}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end pt-3 border-t border-[#F3DCE8]">
-              <Button variant="outline" size="sm" onClick={() => setPermissionsPlugin(null)}>
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Changelog Modal */}
-      {changelogPlugin && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
-              <div>
-                <h3 className="font-bold text-base text-[#18181B]">{changelogPlugin.name}</h3>
-                <p className="text-xs text-[#71717A]">Version {changelogPlugin.version} • By {changelogPlugin.author}</p>
-              </div>
-              <button onClick={() => setChangelogPlugin(null)} className="p-1 rounded-xl text-[#71717A]">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs max-h-64 overflow-y-auto pr-1">
-              {changelogPlugin.changelog.map((c) => (
-                <div key={c.version} className="p-3 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#BE185D]">v{c.version}</span>
-                    <span className="text-[10px] text-[#A1A1AA]">{c.date}</span>
+              {/* Technical Specifications */}
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-2">
+                <h4 className="font-bold text-[#18181B] flex items-center gap-1.5">
+                  <Code size={14} className="text-[#EC4899]" />
+                  <span>SDK Manifest Specifications</span>
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <span className="text-[#A1A1AA] block">Plugin ID:</span>
+                    <span className="font-mono text-[#18181B] font-bold">{detailsPlugin.id}</span>
                   </div>
-                  <ul className="list-disc list-inside text-[11px] text-[#71717A] space-y-0.5">
-                    {c.changes.map((ch, idx) => (
-                      <li key={idx}>{ch}</li>
-                    ))}
-                  </ul>
+                  <div>
+                    <span className="text-[#A1A1AA] block">Min Core App Version:</span>
+                    <span className="font-mono text-[#18181B] font-bold">v{detailsPlugin.minAppVersion}</span>
+                  </div>
                 </div>
-              ))}
+
+                <div className="pt-1">
+                  <span className="text-[#A1A1AA] block text-[11px] mb-1">Registered Extension Hooks:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {detailsPlugin.hooks.map((hook) => (
+                      <span key={hook} className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-[#F3DCE8] text-[#BE185D]">
+                        {hook}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <span className="text-[#A1A1AA] block text-[11px] mb-1">Granted Permissions:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {detailsPlugin.permissions.map((perm) => (
+                      <span key={perm} className="text-[10px] font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-emerald-800 font-bold">
+                        {perm}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Changelog */}
+              <div>
+                <h4 className="font-bold text-[#18181B] mb-2">Version Changelog</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {detailsPlugin.changelog.map((c) => (
+                    <div key={c.version} className="p-3 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#BE185D]">v{c.version}</span>
+                        <span className="text-[10px] text-[#A1A1AA]">{c.date}</span>
+                      </div>
+                      <ul className="list-disc list-inside text-[11px] text-[#71717A] space-y-0.5">
+                        {c.changes.map((ch, idx) => (
+                          <li key={idx}>{ch}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-end pt-3 border-t border-[#F3DCE8]">
-              <Button variant="outline" size="sm" onClick={() => setChangelogPlugin(null)}>
+              <Button variant="outline" size="sm" onClick={() => setDetailsPlugin(null)}>
                 Close
               </Button>
             </div>
@@ -512,11 +776,14 @@ export default function AdminPluginsPage() {
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Upload size={18} className="text-[#EC4899]" />
-                  <span>Upload Add-on Package</span>
+                  <span>Upload Plugin Package (.ZIP / JSON)</span>
                 </h3>
-                <p className="text-xs text-[#71717A]">Install custom plugins via JSON manifest or ZIP package</p>
+                <p className="text-xs text-[#71717A]">Install custom third-party add-ons into your portal</p>
               </div>
-              <button onClick={() => setIsUploadOpen(false)} className="p-1 rounded-xl text-[#71717A]">
+              <button
+                onClick={() => setIsUploadOpen(false)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -524,7 +791,7 @@ export default function AdminPluginsPage() {
             {uploadSuccess && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Add-on verified and installed into registry successfully!</span>
+                <span>Plugin package verified and installed successfully!</span>
               </div>
             )}
 
@@ -540,23 +807,23 @@ export default function AdminPluginsPage() {
                 <input
                   type="file"
                   accept=".json,.zip"
-                  onChange={handleFileUpload}
+                  onChange={handleUploadFile}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center mx-auto">
                   <Upload size={22} />
                 </div>
-                <p className="font-bold text-[#18181B]">Click to browse or drop plugin ZIP/JSON here</p>
-                <p className="text-[11px] text-[#71717A]">Valid formats: plugin.json, addon-package.zip</p>
+                <p className="font-bold text-[#18181B]">Click to browse or drop plugin .ZIP or .JSON package here</p>
+                <p className="text-[11px] text-[#71717A]">Manifest compliant with Plugin SDK v1.0 standard</p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block font-bold text-[#18181B]">Or Paste Raw Plugin Manifest:</label>
+                <label className="block font-bold text-[#18181B]">Or Paste Raw Plugin Manifest JSON:</label>
                 <textarea
                   value={uploadText}
                   onChange={(e) => setUploadText(e.target.value)}
                   rows={4}
-                  placeholder={`{\n  "name": "Custom Addon",\n  "version": "1.0.0",\n  "hooks": ["navbar_actions"],\n  "permissions": ["storage_access"]\n}`}
+                  placeholder={`{\n  "id": "plugin-custom-tool",\n  "name": "Custom Tool",\n  "version": "1.0.0",\n  "hooks": ["navbar_actions"],\n  "permissions": ["storage_access"]\n}`}
                   className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 font-mono text-[11px] text-[#18181B] focus:outline-none focus:border-[#EC4899]"
                 />
               </div>
@@ -573,6 +840,79 @@ export default function AdminPluginsPage() {
                 disabled={!uploadText.trim()}
               >
                 Validate & Install
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Developer SDK Docs Modal */}
+      {isDocsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                  <Terminal size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">Plugin SDK v1.0 Developer Guide</h3>
+                  <p className="text-xs text-[#71717A]">Building sandboxed extensions for CreatorPulse</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDocsOpen(false)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1 leading-relaxed">
+              <div>
+                <h4 className="font-bold text-[#18181B] text-sm mb-1">Standard Package Architecture</h4>
+                <p className="text-[#71717A]">
+                  Every plugin package is packaged as a `.zip` or `.json` file containing a root `plugin.json` manifest.
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-slate-950 text-pink-200 rounded-2xl font-mono text-[11px] space-y-1">
+                <p className="text-[#A1A1AA]">// Example plugin.json</p>
+                <p>{`{`}</p>
+                <p className="pl-3">{`"id": "plugin-custom-watermark",`}</p>
+                <p className="pl-3">{`"name": "Custom Watermark Tool",`}</p>
+                <p className="pl-3">{`"version": "1.0.0",`}</p>
+                <p className="pl-3">{`"minAppVersion": "1.0.0",`}</p>
+                <p className="pl-3">{`"permissions": ["media_transform", "storage_access"],`}</p>
+                <p className="pl-3">{`"hooks": ["post_card_footer", "creator_dashboard_widgets"],`}</p>
+                <p className="pl-3">{`"settingsSchema": [`}</p>
+                <p className="pl-6">{`{ "id": "watermarkText", "label": "Text", "type": "text", "defaultValue": "© CP" }`}</p>
+                <p className="pl-3">{`]`}</p>
+                <p>{`}`}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-bold text-[#18181B]">Available Hook Points</h4>
+                <ul className="list-disc list-inside text-[#71717A] space-y-1">
+                  <li><strong className="text-[#18181B]">navbar_actions:</strong> Injects interactive action items into top navbar</li>
+                  <li><strong className="text-[#18181B]">post_card_footer:</strong> Renders badges, gifts, and copyright protection on feed cards</li>
+                  <li><strong className="text-[#18181B]">creator_dashboard_widgets:</strong> Adds custom analytics & management widgets to creator studio</li>
+                  <li><strong className="text-[#18181B]">payment_gateway_methods:</strong> Expands wallet & checkout payment processors</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-[#F3DCE8] shrink-0">
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Download size={13} />}
+                onClick={handleDownloadStarter}
+              >
+                Download Starter Plugin
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setIsDocsOpen(false)}>
+                Close Docs
               </Button>
             </div>
           </div>

@@ -2,11 +2,16 @@
 
 import React from 'react';
 import { UserRole } from '@/lib/supabase/store';
-import { Shield, Sparkles, UserCheck, Eye } from 'lucide-react';
+import { Shield, Sparkles, UserCheck, Eye, Key, Crown } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 export const RoleSwitcher: React.FC = () => {
   const { role, switchRole } = useAuth();
+  const isLive = isSupabaseConfigured();
+
+  // Hide entirely in live production database mode
+  if (isLive) return null;
 
   return (
     <div className="bg-white/95 backdrop-blur-md border-b border-[#F3DCE8] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50 shadow-xs">
@@ -16,7 +21,7 @@ export const RoleSwitcher: React.FC = () => {
         <span className="text-[#71717A] hidden md:inline font-medium">Switch active demo role & permissions</span>
       </div>
 
-      <div className="flex items-center gap-1.5 bg-[#FFF9FC] p-1 rounded-2xl border border-[#F3DCE8]">
+      <div className="flex flex-wrap items-center gap-1.5 bg-[#FFF9FC] p-1 rounded-2xl border border-[#F3DCE8]">
         <button
           onClick={() => switchRole('member')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
@@ -26,7 +31,7 @@ export const RoleSwitcher: React.FC = () => {
           }`}
         >
           <UserCheck size={13} />
-          <span>Member View</span>
+          <span>Member</span>
         </button>
 
         <button
@@ -38,7 +43,19 @@ export const RoleSwitcher: React.FC = () => {
           }`}
         >
           <Eye size={13} />
-          <span>Creator Studio</span>
+          <span>Creator</span>
+        </button>
+
+        <button
+          onClick={() => switchRole('moderator')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+            role === 'moderator'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B]'
+          }`}
+        >
+          <Key size={13} />
+          <span>Moderator</span>
         </button>
 
         <button
@@ -50,7 +67,19 @@ export const RoleSwitcher: React.FC = () => {
           }`}
         >
           <Shield size={13} />
-          <span>Admin Portal</span>
+          <span>Admin</span>
+        </button>
+
+        <button
+          onClick={() => switchRole('super_admin')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+            role === 'super_admin'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B]'
+          }`}
+        >
+          <Crown size={13} />
+          <span>Super Admin</span>
         </button>
       </div>
     </div>

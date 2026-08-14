@@ -13,6 +13,7 @@ import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { CheckoutModal } from '@/components/payments/CheckoutModal';
 import { 
   MOCK_BALANCE, MOCK_TRANSACTIONS, TransactionRecord, 
   MOCK_PAYOUT_REQUESTS, PayoutRequest 
@@ -30,54 +31,83 @@ export default function BalancePage() {
   const [payoutAmount, setPayoutAmount] = useState('500');
   const [payoutMethod, setPayoutMethod] = useState('Bank Transfer');
   const [accountDetails, setAccountDetails] = useState('Chase Bank - Routing: 122000247');
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [isPayoutProcessing, setIsPayoutProcessing] = useState(false);
+  const [payoutError, setPayoutError] = useState('');
 
   const handleTopUp = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(topUpAmount) || 0;
     if (val <= 0) return;
 
-    setBalance({
-      ...balance,
-      availableBalance: balance.availableBalance + val
-    });
-
-    const newTx: TransactionRecord = {
-      id: `tx-${Date.now()}`,
-      date: 'Today',
-      type: 'Top-Up',
-      description: 'Wallet Balance Deposit',
-      recipientOrSender: 'Visa Card (•••• 8821)',
-      amount: val,
-      platformFee: 0,
-      netAmount: val,
-      status: 'Completed'
-    };
-
-    setTransactions([newTx, ...transactions]);
     setShowTopUpModal(false);
+    setShowCheckoutModal(true);
   };
 
-  const handlePayoutSubmit = (e: React.FormEvent) => {
+  const handlePayoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(payoutAmount) || 0;
     if (val <= 0 || val > balance.creatorTotalEarnings) return;
 
-    const fee = Math.round(val * 0.01 * 100) / 100;
-    const newPayout: PayoutRequest = {
-      id: `pay-${Date.now()}`,
-      creatorId: 'user-creator-1',
-      creatorName: 'Sarah Jenkins',
-      amount: val,
-      processingFee: fee,
-      netPayout: val - fee,
-      payoutMethod,
-      accountDetails,
-      status: 'Pending',
-      requestedAt: 'Just now'
-    };
+    setIsPayoutProcessing(true);
+    setPayoutError('');
 
-    setPayouts([newPayout, ...payouts]);
-    setShowPayoutModal(false);
+    const processingFee = Math.round(val * 0.01 * 100) / 100;
+    const netPayout = val - processingFee;
+    const idempotencyKey = `payout-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+
+    try {
+      const response = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gatewayId: 'plugin-stripe', // default gateway for payouts
+          type: 'payout',
+          params: {
+            idempotencyKey,
+            creatorId: 'user-creator-1',
+            amount: val,
+            currency: 'USD',
+            method: payoutMethod,
+            accountDetails,
+            isSandbox: true
+          },
+          settings: { mode: 'sandbox' }
+        })
+      });
+
+      const result = await response.json();
+      if (result.error) {
+        setPayoutError(result.error);
+        setIsPayoutProcessing(false);
+        return;
+      }
+
+      setBalance({
+        ...balance,
+        creatorTotalEarnings: balance.creatorTotalEarnings - val
+      });
+
+      const newPayout: PayoutRequest = {
+        id: result.payoutId || `pay-${Date.now()}`,
+        creatorId: 'user-creator-1',
+        creatorName: 'Sarah Jenkins',
+        amount: val,
+        processingFee,
+        netPayout,
+        payoutMethod,
+        accountDetails,
+        status: 'Pending',
+        requestedAt: 'Just now'
+      };
+
+      setPayouts([newPayout, ...payouts]);
+      setShowPayoutModal(false);
+    } catch (err: any) {
+      setPayoutError(`Failed to request payout: ${err.message}`);
+    } finally {
+      setIsPayoutProcessing(false);
+    }
   };
 
   return (
@@ -265,6 +295,12 @@ export default function BalancePage() {
             </div>
 
             <form onSubmit={handlePayoutSubmit} className="space-y-3.5 text-xs">
+              {payoutError && (
+                <div className="p-2.5 bg-[#FFE4E6] border border-[#FECDD3] rounded-2xl text-[10px] text-[#BE123C] font-semibold">
+                  ⚠️ {payoutError}
+                </div>
+              )}
+              
               <div>
                 <label className="block text-[#18181B] font-bold mb-1">Payout Amount ($)</label>
                 <input
@@ -304,16 +340,45 @@ export default function BalancePage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" type="button" onClick={() => setShowPayoutModal(false)}>
+                <Button variant="outline" size="sm" type="button" disabled={isPayoutProcessing} onClick={() => setShowPayoutModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" size="sm" type="submit">
-                  Submit Payout Request
+                <Button variant="primary" size="sm" type="submit" disabled={isPayoutProcessing}>
+                  {isPayoutProcessing ? 'Requesting Payout...' : 'Submit Payout Request'}
                 </Button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {showCheckoutModal && (
+        <CheckoutModal
+          type="funding"
+          amount={parseFloat(topUpAmount) || 0}
+          description="Wallet Deposit Top-up"
+          onClose={() => setShowCheckoutModal(false)}
+          onSuccess={(res) => {
+            const val = parseFloat(topUpAmount) || 0;
+            setBalance({
+              ...balance,
+              availableBalance: balance.availableBalance + val
+            });
+            const newTx: TransactionRecord = {
+              id: res.transactionId || `tx-${Date.now()}`,
+              date: 'Today',
+              type: 'Top-Up',
+              description: 'Wallet Balance Deposit',
+              recipientOrSender: 'Visa Card (•••• 8821)',
+              amount: val,
+              platformFee: 0,
+              netAmount: val,
+              status: 'Completed'
+            };
+            setTransactions([newTx, ...transactions]);
+            setShowCheckoutModal(false);
+          }}
+        />
       )}
 
       <MobileNav />

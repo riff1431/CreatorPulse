@@ -17,6 +17,7 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
     bio: 'CreatorPulse Platform Administrator & Security Lead.',
     role: 'admin',
     isVerified: true,
+    status: 'active',
     createdAt: '2025-01-01',
     passwordHash: 'AdminPass123!'
   },
@@ -32,6 +33,7 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
     role: 'creator',
     isVerified: true,
     category: 'Art & Design',
+    status: 'active',
     createdAt: '2025-11-10',
     passwordHash: 'CreatorPass123!'
   },
@@ -46,6 +48,7 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
     role: 'creator',
     isVerified: true,
     category: 'Art & Design',
+    status: 'active',
     createdAt: '2025-11-10',
     passwordHash: 'password123'
   },
@@ -60,6 +63,7 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
     bio: 'Tech enthusiast, indie hacker, and supporter of digital creators.',
     role: 'member',
     isVerified: false,
+    status: 'active',
     createdAt: '2026-01-15',
     passwordHash: 'FanPass123!'
   },
@@ -73,8 +77,54 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
     bio: 'Tech enthusiast, indie hacker, and supporter of digital creators.',
     role: 'member',
     isVerified: false,
+    status: 'active',
     createdAt: '2026-01-15',
     passwordHash: 'password123'
+  },
+  // 4. Moderator User
+  'moderator@creatorpulse.com': {
+    ...MOCK_USERS['user-moderator'],
+    id: 'user-moderator',
+    email: 'moderator@creatorpulse.com',
+    fullName: 'Mod Harris',
+    username: 'mod_harris',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=mod_harris',
+    bio: 'CreatorPulse Moderation Lead.',
+    role: 'moderator',
+    isVerified: true,
+    status: 'active',
+    createdAt: '2026-02-10',
+    passwordHash: 'ModPass123!'
+  },
+  // 5. Super Admin User
+  'superadmin@creatorpulse.com': {
+    ...MOCK_USERS['user-superadmin'],
+    id: 'user-superadmin',
+    email: 'superadmin@creatorpulse.com',
+    fullName: 'Chief Super Admin',
+    username: 'superadmin',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=superadmin',
+    bio: 'CreatorPulse Owner & Super Administrator.',
+    role: 'super_admin',
+    isVerified: true,
+    status: 'active',
+    createdAt: '2025-01-01',
+    passwordHash: 'SuperPass123!'
+  },
+  // 6. Suspended / Banned User
+  'suspended@creatorpulse.com': {
+    ...MOCK_USERS['user-suspended'],
+    id: 'user-suspended',
+    email: 'suspended@creatorpulse.com',
+    fullName: 'Banned Account',
+    username: 'banned_user',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=banned_user',
+    bio: 'This account has been suspended by the platform administrator.',
+    role: 'member',
+    isVerified: false,
+    status: 'suspended',
+    createdAt: '2026-03-12',
+    passwordHash: 'SuspPass123!'
   }
 };
 
@@ -94,6 +144,11 @@ export function authenticateUser(email: string, password: string): { user: UserP
           const dynamicUsers: Record<string, AuthUser> = JSON.parse(dynamicUsersRaw);
           const dynamicAccount = dynamicUsers[normalizedEmail];
           if (dynamicAccount) {
+            // Check account status first
+            if (dynamicAccount.status === 'suspended' || dynamicAccount.status === 'banned') {
+              return { user: null, error: 'Your account has been suspended or banned. Please contact support.' };
+            }
+
             if (dynamicAccount.passwordHash === password || password === 'password123' || password === 'Pass123!') {
               const { passwordHash, ...userProfile } = dynamicAccount;
               return { user: userProfile, error: null };
@@ -109,8 +164,21 @@ export function authenticateUser(email: string, password: string): { user: UserP
     return { user: null, error: 'Account not found. Please check your email or create a new account.' };
   }
 
+  // Check account status first
+  if (account.status === 'suspended' || account.status === 'banned') {
+    return { user: null, error: 'Your account has been suspended or banned. Please contact support.' };
+  }
+
   // Check password
-  if (account.passwordHash !== password && password !== 'password123' && password !== 'AdminPass123!' && password !== 'CreatorPass123!' && password !== 'FanPass123!') {
+  if (
+    account.passwordHash !== password && 
+    password !== 'password123' && 
+    password !== 'AdminPass123!' && 
+    password !== 'CreatorPass123!' && 
+    password !== 'FanPass123!' &&
+    password !== 'ModPass123!' &&
+    password !== 'SuperPass123!'
+  ) {
     return { user: null, error: 'Incorrect password. Please try again.' };
   }
 
@@ -130,6 +198,8 @@ export function registerAccount(
   category?: string
 ): UserProfile {
   const normalizedEmail = email.trim().toLowerCase();
+  
+  // Set default status to 'active'
   const newUser: AuthUser = {
     id: `user-${Date.now()}`,
     email: normalizedEmail,
@@ -138,8 +208,9 @@ export function registerAccount(
     avatarUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${username.trim()}`,
     bio: `${role === 'creator' ? 'Creator & Educator' : 'Community Member'} on CreatorPulse.`,
     role,
-    isVerified: role === 'admin',
+    isVerified: role === 'admin' || role === 'super_admin',
     category: category || (role === 'creator' ? 'Education & Tech' : undefined),
+    status: 'active',
     createdAt: new Date().toISOString().split('T')[0],
     passwordHash: password
   };

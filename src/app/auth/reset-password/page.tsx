@@ -3,20 +3,46 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { resetPassword } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) return;
+    setErrorMessage('');
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const result = await resetPassword(password);
+
+    if (!result.success) {
+      setErrorMessage(result.error || 'Failed to update password.');
+      setIsLoading(false);
+      return;
+    }
+
     setIsSuccess(true);
+    setIsLoading(false);
 
     setTimeout(() => {
       router.push('/auth/login');
@@ -45,6 +71,13 @@ export default function ResetPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-4 text-xs">
+              {errorMessage && (
+                <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-xl text-xs text-[#BE123C] flex items-center gap-2">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[#18181B] font-bold mb-1">New Password</label>
                 <div className="relative">
@@ -75,7 +108,14 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
 
-              <Button type="submit" variant="primary" size="md" className="w-full" rightIcon={<ArrowRight size={14} />}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                className="w-full"
+                isLoading={isLoading}
+                rightIcon={<ArrowRight size={14} />}
+              >
                 Update Password
               </Button>
             </form>

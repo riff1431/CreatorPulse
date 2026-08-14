@@ -2,17 +2,19 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { PluginManifest, PluginHookType } from './plugin-types';
-import { DEFAULT_PLUGINS } from './default-extensions';
+import { DEFAULT_PLUGINS, PLUGIN_LIBRARY_CATALOG } from './default-extensions';
 import { logAuditEvent } from './package-installer';
 
 interface PluginContextType {
   plugins: PluginManifest[];
   activePlugins: PluginManifest[];
+  libraryPlugins: PluginManifest[];
   togglePlugin: (pluginId: string, enabled: boolean) => void;
   updatePluginSettings: (pluginId: string, values: Record<string, unknown>) => void;
   toggleAutoUpdate: (pluginId: string, autoUpdate: boolean) => void;
   updatePluginVersion: (pluginId: string) => void;
   installPlugin: (manifest: PluginManifest) => boolean;
+  installFromLibrary: (pluginId: string) => boolean;
   deletePlugin: (pluginId: string) => boolean;
   isHookActive: (hookName: PluginHookType) => boolean;
   getHookPlugins: (hookName: PluginHookType) => PluginManifest[];
@@ -43,13 +45,67 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const activePlugins = plugins.filter((p) => p.isEnabled);
 
+  const CORE_VERSION = '1.2.0';
+
+  const isVersionCompatible = (minVersion: string): boolean => {
+    try {
+      const coreParts = CORE_VERSION.split('.').map(Number);
+      const minParts = minVersion.split('.').map(Number);
+      for (let i = 0; i < 3; i++) {
+        const c = coreParts[i] || 0;
+        const m = minParts[i] || 0;
+        if (c > m) return true;
+        if (m > c) return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   const togglePlugin = (pluginId: string, enabled: boolean) => {
     const target = plugins.find((p) => p.id === pluginId);
     if (!target) return;
 
+    // Enforce compatibility check upon activation
+    if (enabled) {
+      const minVersion = target.minAppVersion || '1.0.0';
+      if (!isVersionCompatible(minVersion)) {
+        alert(`Cannot activate "${target.name}": requires core app version v${minVersion} (you have v${CORE_VERSION}).`);
+        
+        // Update registry with error status
+        const updated = plugins.map((p) => {
+          if (p.id === pluginId) {
+            return {
+              ...p,
+              isEnabled: false,
+              hasError: true,
+              errorMessage: `Requires Core App version v${minVersion}.`
+            };
+          }
+          return p;
+        });
+        setPlugins(updated);
+        localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+        return;
+      }
+    } else {
+      // Deactivation Guard: Prevent deactivating the active default gateway
+      if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
+        alert(`Security Guard: Cannot disable "${target.name}" because it is the active default Payment Gateway. Please configure another gateway as default first.`);
+        return;
+      }
+    }
+
     const updated = plugins.map((p) => {
       if (p.id === pluginId) {
-        return { ...p, isEnabled: enabled, updatedAt: new Date().toISOString().split('T')[0] };
+        return { 
+          ...p, 
+          isEnabled: enabled, 
+          hasError: false,
+          errorMessage: undefined,
+          updatedAt: new Date().toISOString().split('T')[0] 
+        };
       }
       return p;
     });
@@ -70,6 +126,63 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const target = plugins.find((p) => p.id === pluginId);
     if (!target) return;
 
+    // Default Gateway Constraint checks
+    const isPaymentGateway = target.hooks.includes('payment_gateway_methods');
+    if (isPaymentGateway) {
+      const wasDefault = target.settingsValues.isDefault === true;
+      const willBeDefault = values.isDefault === true;
+      
+      // If changing default from true to false, make sure another active gateway is default
+      if (wasDefault && !willBeDefault) {
+        const otherActiveDefault = plugins.some(
+          p => p.id !== pluginId && 
+               p.isEnabled && 
+               p.hooks.includes('payment_gateway_methods') && 
+               p.settingsValues.isDefault === true
+        );
+        if (!otherActiveDefault) {
+          alert('Validation Error: There must be at least one active default payment gateway.');
+          return;
+        }
+      }
+    }
+
+    // Intercept passwords/secrets to save server-side securely
+    const passwordFieldKeys = target.settingsSchema
+      .filter((field) => field.type === 'password')
+      .map((field) => field.id);
+
+    const secretSecrets: Record<string, string> = {};
+    let hasSecretsToUpload = false;
+
+    passwordFieldKeys.forEach((key) => {
+      const value = values[key];
+      if (value !== undefined && value !== '••••••••' && value !== '••••••••••••••••') {
+        secretSecrets[key] = value as string;
+        hasSecretsToUpload = true;
+        // Keep the local storage setting as bullet masks
+        values[key] = '••••••••';
+      }
+    });
+
+    if (hasSecretsToUpload) {
+      // POST secret keys to server-side vault securely
+      fetch('/api/payments/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gatewayId: pluginId, secrets: secretSecrets })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          console.error('[Engine] Secrets sync failed:', data.error);
+        } else {
+          console.log('[Engine] Secrets synchronized to server vault successfully.');
+        }
+      })
+      .catch((err) => console.error('[Engine] Failed to upload secrets:', err));
+    }
+
     const updated = plugins.map((p) => {
       if (p.id === pluginId) {
         return {
@@ -81,6 +194,18 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           updatedAt: new Date().toISOString().split('T')[0]
         };
       }
+      
+      // Enforce default gateway exclusivity
+      if (isPaymentGateway && values.isDefault === true && p.hooks.includes('payment_gateway_methods')) {
+        return {
+          ...p,
+          settingsValues: {
+            ...p.settingsValues,
+            isDefault: false
+          }
+        };
+      }
+      
       return p;
     });
 
@@ -165,6 +290,19 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const target = plugins.find((p) => p.id === pluginId);
     if (!target) return false;
 
+    // Deletion Lock: Prevent deleting the active default gateway
+    if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
+      alert(`Deletion Lock: Cannot uninstall "${target.name}" because it is currently set as the default Payment Gateway. Please assign another gateway as default first.`);
+      return false;
+    }
+
+    // Call server to clean secrets vault
+    fetch('/api/payments/secrets', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gatewayId: pluginId })
+    }).catch(err => console.error('[Engine] Failed to clean vault secrets', err));
+
     const filtered = plugins.filter((p) => p.id !== pluginId);
     setPlugins(filtered);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(filtered));
@@ -179,6 +317,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return true;
   };
 
+
   const isHookActive = (hookName: PluginHookType): boolean => {
     return activePlugins.some((p) => p.hooks.includes(hookName));
   };
@@ -187,16 +326,31 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return activePlugins.filter((p) => p.hooks.includes(hookName));
   };
 
+  const installFromLibrary = (pluginId: string): boolean => {
+    const catalogItem = PLUGIN_LIBRARY_CATALOG.find((p) => p.id === pluginId);
+    if (!catalogItem) return false;
+
+    const manifest: PluginManifest = {
+      ...catalogItem,
+      isEnabled: false,
+      installedAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    return installPlugin(manifest);
+  };
+
   return (
     <PluginContext.Provider
       value={{
         plugins,
         activePlugins,
+        libraryPlugins: PLUGIN_LIBRARY_CATALOG,
         togglePlugin,
         updatePluginSettings,
         toggleAutoUpdate,
         updatePluginVersion,
         installPlugin,
+        installFromLibrary,
         deletePlugin,
         isHookActive,
         getHookPlugins

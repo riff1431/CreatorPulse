@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Sparkles, Mail, Lock, ArrowRight, ShieldCheck, UserCheck, 
-  Eye, EyeOff, Shield, AlertCircle, CheckCircle2, User 
+  Eye, EyeOff, Shield, AlertCircle, CheckCircle2, User, Key, Crown, Ban
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -18,6 +18,7 @@ function LoginFormContent() {
 
   const [email, setEmail] = useState('admin@creatorpulse.com');
   const [password, setPassword] = useState('AdminPass123!');
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,14 +26,23 @@ function LoginFormContent() {
   const reason = searchParams.get('reason');
   const redirectUrl = searchParams.get('redirect');
 
-  const handleQuickFill = (type: 'admin' | 'creator' | 'member') => {
+  const handleQuickFill = (type: 'admin' | 'creator' | 'member' | 'moderator' | 'superadmin' | 'suspended') => {
     setErrorMessage('');
     if (type === 'admin') {
       setEmail('admin@creatorpulse.com');
       setPassword('AdminPass123!');
+    } else if (type === 'superadmin') {
+      setEmail('superadmin@creatorpulse.com');
+      setPassword('SuperPass123!');
     } else if (type === 'creator') {
       setEmail('creator@creatorpulse.com');
       setPassword('CreatorPass123!');
+    } else if (type === 'moderator') {
+      setEmail('moderator@creatorpulse.com');
+      setPassword('ModPass123!');
+    } else if (type === 'suspended') {
+      setEmail('suspended@creatorpulse.com');
+      setPassword('SuspPass123!');
     } else {
       setEmail('fan@creatorpulse.com');
       setPassword('FanPass123!');
@@ -44,7 +54,13 @@ function LoginFormContent() {
     setErrorMessage('');
     setIsSubmitting(true);
 
-    const result = await login(email, password);
+    if (!email.trim() || !password) {
+      setErrorMessage('Please fill in all credentials.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const result = await login(email, password, rememberMe);
 
     if (!result.success) {
       setErrorMessage(result.error || 'Invalid credentials');
@@ -57,7 +73,7 @@ function LoginFormContent() {
     // Route based on role or explicit redirect
     if (redirectUrl) {
       router.push(redirectUrl);
-    } else if (authedRole === 'admin') {
+    } else if (authedRole === 'admin' || authedRole === 'super_admin') {
       router.push('/admin/dashboard');
     } else if (authedRole === 'creator') {
       router.push('/creator/dashboard');
@@ -65,6 +81,25 @@ function LoginFormContent() {
       router.push('/feed');
     }
   };
+
+  // Dynamic alerts for reasons
+  let reasonAlert = null;
+  if (reason === 'unauthorized') {
+    reasonAlert = {
+      title: "Authorization Required",
+      message: "Your current account level does not have permissions to view that page. Sign in with administrative privileges."
+    };
+  } else if (reason === 'blocked') {
+    reasonAlert = {
+      title: "Account Suspended",
+      message: "This account has been restricted or banned by the platform administrator due to policy violations."
+    };
+  } else if (reason) {
+    reasonAlert = {
+      title: "Security Clearance Required",
+      message: "Please authenticate with your credentials to access the requested view."
+    };
+  }
 
   return (
     <div className="max-w-md w-full space-y-6 relative z-10">
@@ -80,18 +115,18 @@ function LoginFormContent() {
       </div>
 
       {/* Reason Alert (e.g. from restricted page redirect) */}
-      {reason && (
+      {reasonAlert && (
         <div className="p-3.5 bg-[#FFF1F2] border border-[#FECDD3] rounded-2xl text-xs text-[#BE123C] flex items-start gap-2.5">
           <AlertCircle size={16} className="shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold">Authorization Required</p>
-            <p className="text-[11px] mt-0.5">Please sign in with the appropriate account to access that page.</p>
+            <p className="font-bold">{reasonAlert.title}</p>
+            <p className="text-[11px] mt-0.5">{reasonAlert.message}</p>
           </div>
         </div>
       )}
 
       <Card className="p-6 space-y-5">
-        {/* Quick-Fill Role Test Credentials (from Test User Credentials.md) */}
+        {/* Quick-Fill Role Test Credentials */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
             <label className="font-bold text-[#18181B]">Quick Test Credentials:</label>
@@ -101,41 +136,80 @@ function LoginFormContent() {
           <div className="grid grid-cols-3 gap-1.5 bg-[#FFF9FC] p-1.5 rounded-2xl border border-[#F3DCE8]">
             <button
               type="button"
-              onClick={() => handleQuickFill('admin')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                email.includes('admin')
+              onClick={() => handleQuickFill('superadmin')}
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                email.includes('superadmin')
                   ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
                   : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >
-              <Shield size={14} />
+              <Crown size={12} />
+              <span>👑 Super</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('admin')}
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                email.includes('admin@')
+                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
+              }`}
+            >
+              <Shield size={12} />
               <span>🛡️ Admin</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleQuickFill('creator')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                 email.includes('creator')
                   ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
                   : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >
-              <Eye size={14} />
+              <Eye size={12} />
               <span>🎨 Creator</span>
             </button>
 
             <button
               type="button"
+              onClick={() => handleQuickFill('moderator')}
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                email.includes('moderator')
+                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
+              }`}
+            >
+              <Key size={12} />
+              <span>⚖️ Moderator</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => handleQuickFill('member')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                 email.includes('fan') || email.includes('alex')
                   ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
                   : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >
-              <UserCheck size={14} />
+              <UserCheck size={12} />
               <span>👋 Member</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('suspended')}
+              className={`py-2 px-1 rounded-xl text-[10px] font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                email.includes('suspended')
+                  ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs'
+                  : 'text-[#71717A] hover:text-rose-600 hover:bg-rose-50/50'
+              }`}
+            >
+              <Ban size={12} />
+              <span>🚫 Blocked</span>
             </button>
           </div>
         </div>
@@ -188,6 +262,18 @@ function LoginFormContent() {
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 text-xs text-[#71717A] cursor-pointer font-medium select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-[#F3DCE8] text-[#EC4899] focus:ring-[#EC4899]/30 h-4 w-4 accent-[#EC4899]"
+              />
+              <span>Remember my session</span>
+            </label>
           </div>
 
           <Button

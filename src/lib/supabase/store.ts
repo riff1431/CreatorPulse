@@ -1,4 +1,24 @@
-export type UserRole = 'guest' | 'member' | 'creator' | 'admin';
+export type UserRole = string;
+
+export interface RolePermissionSet {
+  view_dashboard: boolean;
+  manage_users: boolean;
+  manage_roles: boolean;
+  manage_content: boolean;
+  moderate_reports: boolean;
+  manage_settings: boolean;
+  view_audit_logs: boolean;
+}
+
+export const PERMISSION_LABELS: Record<keyof RolePermissionSet, { title: string; description: string }> = {
+  view_dashboard: { title: 'View Dashboard', description: 'Access general metrics and earnings analytics.' },
+  manage_users: { title: 'Manage Users', description: 'Verify, moderate, suspend, or ban user accounts.' },
+  manage_roles: { title: 'Manage Roles', description: 'Create and configure custom roles & granular permissions.' },
+  manage_content: { title: 'Manage Content', description: 'Delete or moderate posts, reels, and stories.' },
+  moderate_reports: { title: 'Moderate Reports', description: 'Review and act on user reports and flagging.' },
+  manage_settings: { title: 'Manage Settings', description: 'Change core app and system wide configuration settings.' },
+  view_audit_logs: { title: 'View Audit Logs', description: 'Read platform administrative security and activity trails.' }
+};
 
 export interface UserProfile {
   id: string;
@@ -11,6 +31,7 @@ export interface UserProfile {
   role: UserRole;
   isVerified: boolean;
   category?: string;
+  status: 'active' | 'suspended' | 'banned';
   createdAt: string;
 }
 
@@ -235,6 +256,7 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     bio: 'Tech enthusiast, indie hacker, and supporter of digital creators.',
     role: 'member',
     isVerified: false,
+    status: 'active',
     createdAt: '2026-01-15'
   },
   'user-creator-1': {
@@ -247,6 +269,7 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'creator',
     isVerified: true,
     category: 'Art & Design',
+    status: 'active',
     createdAt: '2025-11-10'
   },
   'user-creator-2': {
@@ -259,6 +282,7 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'creator',
     isVerified: true,
     category: 'Education & Tech',
+    status: 'active',
     createdAt: '2025-08-20'
   },
   'user-admin': {
@@ -270,7 +294,44 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     bio: 'CreatorPulse Administrator.',
     role: 'admin',
     isVerified: true,
+    status: 'active',
     createdAt: '2025-01-01'
+  },
+  'user-moderator': {
+    id: 'user-moderator',
+    email: 'moderator@creatorpulse.com',
+    fullName: 'Mod Harris',
+    username: 'mod_harris',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=mod_harris',
+    bio: 'CreatorPulse Moderation Lead.',
+    role: 'moderator',
+    isVerified: true,
+    status: 'active',
+    createdAt: '2026-02-10'
+  },
+  'user-superadmin': {
+    id: 'user-superadmin',
+    email: 'superadmin@creatorpulse.com',
+    fullName: 'Chief Super Admin',
+    username: 'superadmin',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=superadmin',
+    bio: 'CreatorPulse Owner & Super Administrator.',
+    role: 'super_admin',
+    isVerified: true,
+    status: 'active',
+    createdAt: '2025-01-01'
+  },
+  'user-suspended': {
+    id: 'user-suspended',
+    email: 'suspended@creatorpulse.com',
+    fullName: 'Banned Account',
+    username: 'banned_user',
+    avatarUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=banned_user',
+    bio: 'This account has been suspended by the platform administrator.',
+    role: 'member',
+    isVerified: false,
+    status: 'suspended',
+    createdAt: '2026-03-12'
   }
 };
 

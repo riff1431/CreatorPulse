@@ -2,17 +2,39 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Mail, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function ForgotPasswordPage() {
+  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+
+    if (!email.trim()) {
+      setErrorMessage('Please enter your email address.');
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await forgotPassword(email);
+
+    if (!result.success) {
+      setErrorMessage(result.error || 'Failed to send password reset email.');
+      setIsLoading(false);
+      return;
+    }
+
     setSubmitted(true);
+    setIsLoading(false);
   };
 
   return (
@@ -40,6 +62,13 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              {errorMessage && (
+                <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-xl text-xs text-[#BE123C] flex items-center gap-2">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[#18181B] font-bold mb-1">Email Address</label>
                 <div className="relative">
@@ -55,7 +84,14 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button type="submit" variant="primary" size="md" className="w-full" rightIcon={<ArrowRight size={14} />}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                className="w-full"
+                isLoading={isLoading}
+                rightIcon={<ArrowRight size={14} />}
+              >
                 Send Reset Link
               </Button>
             </form>

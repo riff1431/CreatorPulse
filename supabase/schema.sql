@@ -4,10 +4,25 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. ENUM TYPES
-DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('guest', 'member', 'creator', 'admin');
-EXCEPTION WHEN duplicate_object THEN null; END $$;
+-- 1. ENUM TYPES & ROLE TABLES
+CREATE TABLE IF NOT EXISTS public.roles (
+    id TEXT PRIMARY KEY, -- 'admin', 'creator', 'member', etc.
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+    is_builtin BOOLEAN DEFAULT FALSE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Prepopulate built-in roles
+INSERT INTO public.roles (id, name, description, permissions, is_builtin, status) VALUES
+('super_admin', 'Super Admin', 'Root system administrator with absolute ownership over all permissions.', '{"view_dashboard": true, "manage_users": true, "manage_roles": true, "manage_content": true, "moderate_reports": true, "manage_settings": true, "view_audit_logs": true}', true, 'active'),
+('admin', 'Admin', 'Administrative console privileges, user and content management.', '{"view_dashboard": true, "manage_users": true, "manage_roles": false, "manage_content": true, "moderate_reports": true, "manage_settings": true, "view_audit_logs": true}', true, 'active'),
+('moderator', 'Moderator', 'Moderation dashboard privileges, handles content reports and flags.', '{"view_dashboard": true, "manage_content": false, "moderate_reports": true, "manage_users": false, "manage_roles": false, "manage_settings": false, "view_audit_logs": false}', true, 'active'),
+('creator', 'Creator', 'Can publish posts, reels, stories, and manage subscription plans.', '{"view_dashboard": true, "manage_content": true, "moderate_reports": false, "manage_users": false, "manage_roles": false, "manage_settings": false, "view_audit_logs": false}', true, 'active'),
+('member', 'Member', 'Standard fan account that can view and subscribe to creators.', '{"view_dashboard": false, "manage_content": false, "moderate_reports": false, "manage_users": false, "manage_roles": false, "manage_settings": false, "view_audit_logs": false}', true, 'active')
+ON CONFLICT (id) DO NOTHING;
 
 DO $$ BEGIN
     CREATE TYPE post_type AS ENUM ('text', 'image', 'video', 'short', 'audio', 'poll');
@@ -42,9 +57,41 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     avatar_url TEXT,
     cover_url TEXT,
     bio TEXT,
-    role user_role DEFAULT 'member'::user_role NOT NULL,
+    role_id TEXT DEFAULT 'member' REFERENCES public.roles(id) ON DELETE RESTRICT,
     is_verified BOOLEAN DEFAULT FALSE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'banned')) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Granular permission function for RLS
+CREATE OR REPLACE FUNCTION public.has_permission(usr_id UUID, perm TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+  has_perm BOOLEAN;
+BEGIN
+  SELECT (r.permissions->>perm)::boolean INTO has_perm
+  FROM public.profiles p
+  JOIN public.roles r ON p.role_id = r.id
+  WHERE p.id = usr_id AND r.status = 'active';
+  
+  RETURN COALESCE(has_perm, FALSE);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Roles & permissions audit log
+CREATE TABLE IF NOT EXISTS public.roles_audit_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    action TEXT NOT NULL, -- 'ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED', 'ROLE_ASSIGNED', 'ROLE_STATUS_TOGGLED'
+    actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    actor_name TEXT NOT NULL,
+    actor_role TEXT NOT NULL,
+    target_id TEXT, -- role id or user id
+    target_name TEXT,
+    details TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('info', 'success', 'warning', 'error')),
+    ip_address TEXT,
+    user_agent TEXT
 );
 
 -- 3. CREATOR PROFILES
@@ -288,3 +335,66 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Public posts read" ON public.posts FOR SELECT USING (visibility = 'public' OR author_id = auth.uid());
 CREATE POLICY "Public reels read" ON public.reels FOR SELECT USING (visibility = 'public' OR author_id = auth.uid());
+
+-- Profiles UPDATE policy: prevent self-role spoofing and status overrides
+CREATE POLICY "Users can update their own profile fields except role and status"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id AND status = 'active')
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND role_id IN ('admin', 'super_admin')
+    )
+    OR
+    (
+      role_id = (SELECT role_id FROM public.profiles WHERE id = auth.uid())
+      AND
+      status = (SELECT status FROM public.profiles WHERE id = auth.uid())
+    )
+  );
+
+-- 15. AUTOMATIC PROFILE CREATION TRIGGER ON SIGNUP
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  default_role TEXT := 'member';
+  user_full_name TEXT;
+  user_username TEXT;
+BEGIN
+  user_full_name := COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'fullName', 'New User');
+  user_username := COALESCE(
+    new.raw_user_meta_data->>'username',
+    SPLIT_PART(new.email, '@', 1) || '_' || FLOOR(RANDOM() * 1000)::TEXT
+  );
+  
+  -- Prevent role spoofing from signup client metadata (only member or creator allowed)
+  IF new.raw_user_meta_data->>'role' = 'creator' THEN
+    default_role := 'creator';
+  END IF;
+
+  INSERT INTO public.profiles (id, email, full_name, username, role_id, is_verified, status)
+  VALUES (
+    new.id,
+    new.email,
+    user_full_name,
+    user_username,
+    default_role,
+    FALSE,
+    'active'
+  );
+
+  -- If creator, create creator profile
+  IF default_role = 'creator' THEN
+    INSERT INTO public.creator_profiles (id, headline, category)
+    VALUES (new.id, 'New Creator on CreatorPulse', 'General');
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to run on auth.users insert
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PostCard } from '@/components/post-card';
 import { SupportModal } from '@/components/support-modal';
+import { CheckoutModal } from '@/components/payments/CheckoutModal';
 import { 
   MOCK_CREATOR_DETAILS, MOCK_POSTS, MOCK_MEMBERSHIP_PLANS, 
   CreatorProfile, MembershipPlan 
@@ -43,6 +44,7 @@ export default function CreatorProfilePage() {
   const [durationMonths, setDurationMonths] = useState<number>(1); // 1, 3, 6, 12 months
   const [autoRenew, setAutoRenew] = useState(true);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   // PRD Profile Tabs: Posts, Media, Reels, Memberships, About
   const [activeTab, setActiveTab] = useState<'posts' | 'media' | 'reels' | 'memberships' | 'about'>('posts');
@@ -86,8 +88,8 @@ export default function CreatorProfilePage() {
   }, [activeTab]);
 
   const handleSubscribeConfirm = () => {
-    setIsSubscribed(true);
     setShowSubModal(false);
+    setShowCheckoutModal(true);
   };
 
   return (
@@ -425,6 +427,27 @@ export default function CreatorProfilePage() {
           creatorAvatar={creator.avatarUrl}
           creatorUsername={creator.username}
           onClose={() => setShowSupportModal(false)}
+        />
+      )}
+
+      {showCheckoutModal && (
+        <CheckoutModal
+          type="subscription"
+          amount={totalPrice}
+          description={`Subscription: ${selectedPlan.name}`}
+          creatorId={creatorKey}
+          creatorName={creator.fullName}
+          creatorAvatar={creator.avatarUrl}
+          creatorUsername={creator.username}
+          planId={selectedPlan.id}
+          planName={selectedPlan.name}
+          durationMonths={durationMonths}
+          autoRenew={autoRenew}
+          onClose={() => setShowCheckoutModal(false)}
+          onSuccess={(res) => {
+            setIsSubscribed(true);
+            setShowCheckoutModal(false);
+          }}
         />
       )}
 

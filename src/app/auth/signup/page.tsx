@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Mail, Lock, User, ArrowRight, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -28,6 +28,18 @@ export default function SignupPage() {
     setErrorMessage('');
     setIsLoading(true);
 
+    if (!fullName.trim() || !username.trim() || !email.trim()) {
+      setErrorMessage('Please fill out all required fields.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (username.length < 3) {
+      setErrorMessage('Username must be at least 3 characters long.');
+      setIsLoading(false);
+      return;
+    }
+
     if (password.length < 6) {
       setErrorMessage('Password must be at least 6 characters long.');
       setIsLoading(false);
@@ -39,6 +51,12 @@ export default function SignupPage() {
     if (!result.success) {
       setErrorMessage(result.error || 'Signup failed. Please try again.');
       setIsLoading(false);
+      return;
+    }
+
+    // Special redirection for live Supabase Auth verification
+    if (result.error === 'Check email') {
+      router.push('/auth/verify');
       return;
     }
 
@@ -100,38 +118,44 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-3.5 text-xs">
             <div>
               <label className="block text-[#18181B] font-bold mb-1">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Jordan Lee"
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Jordan Lee"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
+                  required
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-[#18181B] font-bold mb-1">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. jordan_creator"
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. jordan_creator"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
+                  required
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-[#18181B] font-bold mb-1">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jordan@domain.com"
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jordan@domain.com"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
+                  required
+                />
+              </div>
             </div>
 
             {role === 'creator' && (
@@ -158,7 +182,7 @@ export default function SignupPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="•••••••• (Min 6 characters)"
                   className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-3 pr-10 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
                   required
                 />

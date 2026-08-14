@@ -45,6 +45,7 @@ const allAdminNavGroups: NavGroup[] = [
     title: 'User Management',
     items: [
       { label: 'All Users', href: '/admin/users', icon: Users },
+      { label: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
       { label: 'Creators', href: '/admin/creators', icon: UserCheck },
       { label: 'Creator Applications', href: '/admin/applications', icon: FileText, badge: 2, badgeVariant: 'pink' },
     ],

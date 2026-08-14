@@ -3,15 +3,17 @@
 import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Lock, ArrowRight, Sparkles, UserCheck, Eye, Shield, LogIn } from 'lucide-react';
+import { ShieldAlert, Sparkles, UserCheck, Eye, Shield, LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { UserRole } from '@/lib/supabase/store';
+import { getRoles } from '@/lib/auth/role-store';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
 interface RoleGuardProps {
   children: ReactNode;
-  allowedRoles: UserRole[];
+  allowedRoles?: UserRole[];
+  requiredPermission?: string;
   fallbackTitle?: string;
   fallbackMessage?: string;
 }
@@ -19,11 +21,12 @@ interface RoleGuardProps {
 export const RoleGuard: React.FC<RoleGuardProps> = ({
   children,
   allowedRoles,
+  requiredPermission,
   fallbackTitle,
   fallbackMessage
 }) => {
   const router = useRouter();
-  const { role, user, isAuthenticated, isLoading, switchRole } = useAuth();
+  const { role, user, switchRole, hasPermission, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -34,12 +37,26 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     );
   }
 
-  const isAuthorized = allowedRoles.includes(role);
+  let isAuthorized = false;
+  if (requiredPermission) {
+    isAuthorized = hasPermission(requiredPermission);
+  } else if (allowedRoles) {
+    isAuthorized = allowedRoles.includes(role);
+  } else {
+    isAuthorized = true;
+  }
 
   if (!isAuthorized) {
-    const requiredRoleLabel = allowedRoles.includes('admin')
+    const rolesList = getRoles();
+    const authorizedRoles = requiredPermission
+      ? rolesList.filter(r => r.status === 'active' && r.permissions[requiredPermission as keyof typeof r.permissions]).map(r => r.id)
+      : allowedRoles || [];
+
+    const label = requiredPermission
+      ? `Permission: ${requiredPermission.replace(/_/g, ' ')}`
+      : allowedRoles?.includes('admin')
       ? 'Administrator'
-      : allowedRoles.includes('creator')
+      : allowedRoles?.includes('creator')
       ? 'Creator'
       : 'Member';
 
@@ -52,41 +69,45 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
 
           <div className="space-y-2">
             <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#F43F5E] bg-[#FFE4E6] px-3 py-1 rounded-full border border-[#FECDD3]">
-              Role Access Restricted
+              Access Restricted
             </span>
             <h2 className="text-2xl font-black text-[#18181B] mt-2">
-              {fallbackTitle || `${requiredRoleLabel} Privileges Required`}
+              {fallbackTitle || 'Security Clearance Required'}
             </h2>
             <p className="text-xs text-[#71717A] leading-relaxed max-w-md mx-auto font-medium">
               {fallbackMessage ||
-                `You are currently logged in as ${user?.fullName || 'Guest'} with the "${role.toUpperCase()}" role. This area is strictly protected and requires ${requiredRoleLabel.toLowerCase()} access.`}
+                `You are currently logged in as ${user?.fullName || 'Guest'} with the "${role.toUpperCase()}" role. This operation requires the privilege "${label}".`}
             </p>
           </div>
 
-          {/* Quick Demo Bypass Actions */}
-          <div className="bg-[#FFF9FC] p-4 rounded-2xl border border-[#F3DCE8] space-y-3 text-left">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#18181B]">
-              <Sparkles size={14} className="text-[#EC4899]" />
-              <span>Sandbox Instant Demo Bypass:</span>
+          {authorizedRoles.length > 0 && (
+            <div className="bg-[#FFF9FC] p-4 rounded-2xl border border-[#F3DCE8] space-y-3 text-left">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#18181B]">
+                <Sparkles size={14} className="text-[#EC4899]" />
+                <span>Sandbox Instant Demo Bypass:</span>
+              </div>
+              <p className="text-[11px] text-[#71717A]">
+                Switch your active role instantly to test this protected view:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                {authorizedRoles.map((r) => {
+                  const roleName = rolesList.find(roleItem => roleItem.id === r)?.name || r;
+                  return (
+                    <Button
+                      key={r}
+                      variant="primary"
+                      size="sm"
+                      onClick={() => switchRole(r)}
+                      className="w-full text-xs"
+                      leftIcon={r === 'admin' ? <Shield size={14} /> : <Eye size={14} />}
+                    >
+                      Switch to {roleName}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-            <p className="text-[11px] text-[#71717A]">
-              Switch your active role instantly to test this protected view:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {allowedRoles.map((r) => (
-                <Button
-                  key={r}
-                  variant="primary"
-                  size="sm"
-                  onClick={() => switchRole(r)}
-                  className="w-full text-xs"
-                  leftIcon={r === 'admin' ? <Shield size={14} /> : <Eye size={14} />}
-                >
-                  Switch to {r.toUpperCase()} Role
-                </Button>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 border-t border-[#F3DCE8]">
             <Link href="/auth/login" className="w-full sm:w-auto">

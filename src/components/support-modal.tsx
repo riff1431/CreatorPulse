@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Heart, DollarSign, Sparkles, X, CheckCircle2, ShieldCheck } from 'lucide-react';
 import gsap from 'gsap';
 import { Button } from './ui/Button';
+import { CheckoutModal } from './payments/CheckoutModal';
 
 interface SupportModalProps {
   creatorName: string;
@@ -22,6 +23,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   const [customAmount, setCustomAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [showCheckout, setShowCheckout] = useState<boolean>(false);
   const modalBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   const handleSendSupport = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedAmount <= 0) return;
-    setIsSuccess(true);
+    setShowCheckout(true);
   };
 
   return (
@@ -157,6 +159,23 @@ export const SupportModal: React.FC<SupportModalProps> = ({
           </form>
         )}
       </div>
+
+      {showCheckout && (
+        <CheckoutModal
+          type="checkout"
+          amount={selectedAmount}
+          description={`Support tip for ${creatorName}`}
+          creatorId={creatorUsername === 'sarahdesign' ? 'user-creator-1' : 'user-creator-2'}
+          creatorName={creatorName}
+          creatorAvatar={creatorAvatar}
+          creatorUsername={creatorUsername}
+          onClose={() => setShowCheckout(false)}
+          onSuccess={(res) => {
+            setShowCheckout(false);
+            setIsSuccess(true);
+          }}
+        />
+      )}
     </div>
   );
 };
