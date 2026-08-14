@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Isolated Admin Portal styles */
 .admin-portal-isolated {
@@ -10,6 +10,22 @@
 
 .admin-portal-isolated * {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Headings, stat counters, and bold labels use the premium Outfit typeface */
+.admin-portal-isolated h1,
+.admin-portal-isolated h2,
+.admin-portal-isolated h3,
+.admin-portal-isolated h4,
+.admin-portal-isolated h5,
+.admin-portal-isolated h6,
+.admin-portal-isolated .stat-counter,
+.admin-portal-isolated .admin-heading,
+.admin-portal-isolated th,
+.admin-portal-isolated .font-black,
+.admin-portal-isolated .font-extrabold {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  letter-spacing: -0.02em !important;
 }
 
 /* Custom Scrollbars */

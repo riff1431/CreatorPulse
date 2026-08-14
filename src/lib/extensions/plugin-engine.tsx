@@ -73,7 +73,6 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (!isVersionCompatible(minVersion)) {
         alert(`Cannot activate "${target.name}": requires core app version v${minVersion} (you have v${CORE_VERSION}).`);
         
-        // Update registry with error status
         const updated = plugins.map((p) => {
           if (p.id === pluginId) {
             return {
@@ -90,7 +89,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return;
       }
     } else {
-      // Deactivation Guard: Prevent deactivating the active default gateway
+      // Deactivation Guard: Prevent deactivating the active default payment gateway
       if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
         alert(`Security Guard: Cannot disable "${target.name}" because it is the active default Payment Gateway. Please configure another gateway as default first.`);
         return;
@@ -132,7 +131,6 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const wasDefault = target.settingsValues.isDefault === true;
       const willBeDefault = values.isDefault === true;
       
-      // If changing default from true to false, make sure another active gateway is default
       if (wasDefault && !willBeDefault) {
         const otherActiveDefault = plugins.some(
           p => p.id !== pluginId && 
@@ -160,13 +158,11 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (value !== undefined && value !== '••••••••' && value !== '••••••••••••••••') {
         secretSecrets[key] = value as string;
         hasSecretsToUpload = true;
-        // Keep the local storage setting as bullet masks
         values[key] = '••••••••';
       }
     });
 
     if (hasSecretsToUpload) {
-      // POST secret keys to server-side vault securely
       fetch('/api/payments/secrets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,7 +191,6 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
       }
       
-      // Enforce default gateway exclusivity
       if (isPaymentGateway && values.isDefault === true && p.hooks.includes('payment_gateway_methods')) {
         return {
           ...p,
@@ -286,46 +281,6 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return true;
   };
 
-  const deletePlugin = (pluginId: string): boolean => {
-    const target = plugins.find((p) => p.id === pluginId);
-    if (!target) return false;
-
-    // Deletion Lock: Prevent deleting the active default gateway
-    if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
-      alert(`Deletion Lock: Cannot uninstall "${target.name}" because it is currently set as the default Payment Gateway. Please assign another gateway as default first.`);
-      return false;
-    }
-
-    // Call server to clean secrets vault
-    fetch('/api/payments/secrets', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gatewayId: pluginId })
-    }).catch(err => console.error('[Engine] Failed to clean vault secrets', err));
-
-    const filtered = plugins.filter((p) => p.id !== pluginId);
-    setPlugins(filtered);
-    localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(filtered));
-
-    logAuditEvent({
-      action: 'PLUGIN_DEACTIVATED',
-      entityType: 'plugin',
-      entityName: target.name,
-      details: `Uninstalled and removed plugin package`,
-      severity: 'warning'
-    });
-    return true;
-  };
-
-
-  const isHookActive = (hookName: PluginHookType): boolean => {
-    return activePlugins.some((p) => p.hooks.includes(hookName));
-  };
-
-  const getHookPlugins = (hookName: PluginHookType): PluginManifest[] => {
-    return activePlugins.filter((p) => p.hooks.includes(hookName));
-  };
-
   const installFromLibrary = (pluginId: string): boolean => {
     const catalogItem = PLUGIN_LIBRARY_CATALOG.find((p) => p.id === pluginId);
     if (!catalogItem) return false;
@@ -337,6 +292,43 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       updatedAt: new Date().toISOString().split('T')[0]
     };
     return installPlugin(manifest);
+  };
+
+  const deletePlugin = (pluginId: string): boolean => {
+    const target = plugins.find((p) => p.id === pluginId);
+    if (!target) return false;
+
+    if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
+      alert(`Deletion Lock: Cannot uninstall "${target.name}" because it is currently set as the default Payment Gateway. Please assign another gateway as default first.`);
+      return false;
+    }
+
+    fetch('/api/payments/secrets', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gatewayId: pluginId })
+    }).catch(err => console.error('[Engine] Failed to clean vault secrets', err));
+
+    const filtered = plugins.filter((p) => p.id !== pluginId);
+    setPlugins(filtered);
+    localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(filtered));
+
+    logAuditEvent({
+      action: 'PLUGIN_DELETED',
+      entityType: 'plugin',
+      entityName: target.name,
+      details: `Uninstalled and removed plugin package`,
+      severity: 'warning'
+    });
+    return true;
+  };
+
+  const isHookActive = (hookName: PluginHookType): boolean => {
+    return activePlugins.some((p) => p.hooks.includes(hookName));
+  };
+
+  const getHookPlugins = (hookName: PluginHookType): PluginManifest[] => {
+    return activePlugins.filter((p) => p.hooks.includes(hookName));
   };
 
   return (
@@ -370,7 +362,7 @@ export const usePlugins = () => {
 };
 
 /**
- * Universal HookPoint Component for extending UI dynamically without modifying core files.
+ * Universal HookPoint Component for extending UI dynamically without modifying core application code.
  */
 interface HookPointProps {
   name: PluginHookType;
@@ -388,57 +380,155 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
     <div className={`plugin-hook-point plugin-hook-${name} ${className}`}>
       {registeredPlugins.map((plugin) => {
         try {
-          // Render specific built-in add-on behavior based on plugin id
-          if (plugin.id === 'plugin-drm-watermark' && name === 'post_card_footer') {
-            const watermarkText: string = String(plugin.settingsValues.watermarkText || '© CreatorPulse Protected');
-            const postAuthor: string = String((context as any)?.post?.authorUsername || 'public');
-            return (
-              <div key={plugin.id} className="pt-2 border-t border-[#F3DCE8]/60 flex items-center justify-between text-[10px] text-[#A1A1AA] select-none">
-                <span className="flex items-center gap-1 font-semibold">
-                  <span className="text-[#EC4899]">🛡️ DRM</span> {watermarkText}
-                </span>
-                {Boolean(plugin.settingsValues.includeViewerUsername) && (
-                  <span className="font-mono bg-[#FFF1F7] px-1.5 py-0.5 rounded text-[#BE185D]">
-                    ID: #{postAuthor}
+          // 1. Post Card Footer Hooks
+          if (name === 'post_card_footer') {
+            if (plugin.id === 'plugin-drm-watermark') {
+              const watermarkText = String(plugin.settingsValues.watermarkText || '© CreatorPulse Protected');
+              const postAuthor = String((context as any)?.post?.authorUsername || 'public');
+              return (
+                <div key={plugin.id} className="pt-2 border-t border-[#F3DCE8]/60 flex items-center justify-between text-[10px] text-[#A1A1AA] select-none">
+                  <span className="flex items-center gap-1 font-semibold">
+                    <span className="text-[#EC4899]">🛡️ DRM</span> {watermarkText}
                   </span>
-                )}
-              </div>
-            );
-          }
+                  {Boolean(plugin.settingsValues.includeViewerUsername) && (
+                    <span className="font-mono bg-[#FFF1F7] px-1.5 py-0.5 rounded text-[#BE185D]">
+                      ID: #{postAuthor}
+                    </span>
+                  )}
+                </div>
+              );
+            }
 
-          if (plugin.id === 'plugin-virtual-gifts' && name === 'post_card_footer') {
-            return (
-              <div key={plugin.id} className="pt-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                <span className="text-[10px] text-[#71717A] font-bold shrink-0">🎁 Quick Gift:</span>
-                {['🌹 Rose ($1)', '💎 Diamond ($5)', '🚀 Rocket ($20)'].map((gift) => (
+            if (plugin.id === 'plugin-virtual-gifts') {
+              return (
+                <div key={plugin.id} className="pt-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                  <span className="text-[10px] text-[#71717A] font-bold shrink-0">🎁 Quick Gift:</span>
+                  {['🌹 Rose ($1)', '💎 Diamond ($5)', '🚀 Rocket ($20)'].map((gift) => (
+                    <button
+                      key={gift}
+                      onClick={() => alert(`Gift sent: ${gift}! Handled by Virtual Gifts plugin.`)}
+                      className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8] hover:bg-[#FCE7F3] transition-all shrink-0 cursor-pointer shadow-xs"
+                    >
+                      {gift}
+                    </button>
+                  ))}
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-podcast-audio') {
+              return (
+                <div key={plugin.id} className="p-2.5 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎙️</span>
+                    <div className="text-left">
+                      <p className="font-bold text-[#18181B] text-[11px]">Creator Podcast Episode Preview</p>
+                      <p className="text-[9px] text-[#71717A]">SonicWave Hi-Res Audio Stream</p>
+                    </div>
+                  </div>
                   <button
-                    key={gift}
-                    onClick={() => alert(`Gift sent: ${gift}! Handled by Virtual Gifts plugin.`)}
-                    className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8] hover:bg-[#FCE7F3] transition-all shrink-0 cursor-pointer shadow-xs"
+                    onClick={() => alert('Playing Hi-Res Audio stream via SonicWave plugin.')}
+                    className="px-2.5 py-1 rounded-lg bg-[#EC4899] text-white text-[10px] font-bold shadow-xs hover:bg-[#DB2777]"
                   >
-                    {gift}
+                    ▶ Listen
                   </button>
-                ))}
-              </div>
-            );
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-crypto-tips') {
+              return (
+                <div key={plugin.id} className="pt-1.5 flex items-center justify-end">
+                  <button
+                    onClick={() => alert('Opening USDC Web3 instant tip checkout.')}
+                    className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>🪙 Tip USDC</span>
+                  </button>
+                </div>
+              );
+            }
           }
 
-          if (plugin.id === 'plugin-virtual-gifts' && name === 'navbar_actions') {
-            return (
-              <button
-                key={plugin.id}
-                onClick={() => alert('Virtual Gift Wallet & Store - Powered by Virtual Gifts & Animated Reactions add-on.')}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-rose-500/10 text-amber-700 border border-amber-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
-                title="Virtual Gifts Store"
-              >
-                <span>🎁 Gifts</span>
-              </button>
-            );
+          // 2. Navbar Action Hooks
+          if (name === 'navbar_actions') {
+            if (plugin.id === 'plugin-virtual-gifts') {
+              return (
+                <button
+                  key={plugin.id}
+                  onClick={() => alert('Virtual Gift Wallet & Store — Powered by Virtual Gifts plugin.')}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-rose-500/10 text-amber-700 border border-amber-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  title="Virtual Gifts Store"
+                >
+                  <span>🎁 Gifts</span>
+                </button>
+              );
+            }
           }
 
-          return null;
+          // 3. Creator Dashboard Widget Hooks
+          if (name === 'creator_dashboard_widgets') {
+            if (plugin.id === 'plugin-gemini-ai') {
+              return (
+                <div key={plugin.id} className="p-4 bg-gradient-to-br from-[#FFF1F7] to-white border border-[#F3DCE8] rounded-2xl space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💬</span>
+                      <h4 className="font-bold text-xs text-[#18181B]">Gemini AI Assistant</h4>
+                    </div>
+                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#FCE7F3] text-[#BE185D]">
+                      Active Model: {String(plugin.settingsValues.aiModel || 'gemini-1.5-flash')}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#71717A] leading-relaxed">
+                    AI Auto-Suggest is active with {String(plugin.settingsValues.defaultTone || 'energetic')} tone. Trending hashtags will automatically attach to your new posts.
+                  </p>
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-discord-sync') {
+              return (
+                <div key={plugin.id} className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💬</span>
+                      <h4 className="font-bold text-xs text-[#1E293B]">Discord Role Sync</h4>
+                    </div>
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      Connected
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">
+                    Active VIP subscribers are automatically synced to your Discord Guild roles.
+                  </p>
+                </div>
+              );
+            }
+          }
+
+          // 4. Sidebar Extra Links
+          if (name === 'sidebar_extra_links') {
+            if (plugin.id === 'plugin-podcast-audio') {
+              return (
+                <div key={plugin.id} className="px-3 py-1.5 text-xs text-[#71717A] font-semibold flex items-center gap-2">
+                  <span>🎙️</span>
+                  <span>Audio Podcasts Active</span>
+                </div>
+              );
+            }
+          }
+
+          // Generic fallback for custom third-party SDK plugins
+          return (
+            <div key={plugin.id} className="inline-block p-1 text-[10px] text-[#71717A]">
+              <span className="font-mono bg-[#FFF1F7] text-[#BE185D] px-1.5 py-0.5 rounded border border-[#FBCFE8]">
+                {plugin.name}
+              </span>
+            </div>
+          );
         } catch (err) {
-          console.error(`Error executing plugin ${plugin.name} on hook ${name}:`, err);
+          console.error(`[Plugin Engine] Error executing hook "${name}" in plugin "${plugin.id}":`, err);
           return null;
         }
       })}

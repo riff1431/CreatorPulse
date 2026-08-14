@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Sparkline } from '@/components/ui/Sparkline';
+import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 // Multi-dataset for different time periods
 const periodData = {
@@ -393,6 +394,9 @@ export default function CreatorDashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Dynamic Plugin Widgets Hook Point */}
+      <HookPoint name="creator_dashboard_widgets" className="space-y-4" />
 
       {/* Row 3: Recent Subscribers & Top Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

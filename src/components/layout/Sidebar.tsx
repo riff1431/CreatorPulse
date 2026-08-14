@@ -8,6 +8,7 @@ import {
   Database, Wallet, Bell, MessageSquare, Sparkles 
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
@@ -100,6 +101,9 @@ export const Sidebar: React.FC = () => {
           <Database size={18} className="text-[#EC4899]" />
           <span>Supabase Inspector</span>
         </Link>
+
+        {/* Plugin Extension Hook Point */}
+        <HookPoint name="sidebar_extra_links" />
       </div>
 
       {role === 'member' && (

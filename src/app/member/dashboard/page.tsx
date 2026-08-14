@@ -15,6 +15,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/lib/auth/auth-context';
+import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 export default function FanDashboard() {
   const { user } = useAuth();
@@ -108,6 +109,9 @@ export default function FanDashboard() {
                   </Card>
                 ))}
               </div>
+
+              {/* Dynamic Member Add-on Widgets */}
+              <HookPoint name="member_dashboard_widgets" className="space-y-4" />
             </div>
 
             {/* Quick Actions */}

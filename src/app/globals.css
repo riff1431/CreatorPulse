@@ -2,24 +2,51 @@
 
 @layer base {
   :root {
-    --primary-pink: #EC4899;
-    --primary-hover: #DB2777;
-    --soft-pink: #FCE7F3;
-    --light-pink: #FDF2F8;
-    --rose-accent: #F43F5E;
-    --bg-main: #FFF9FC;
-    --surface: #FFFFFF;
-    --surface-secondary: #FFF1F7;
-    --border-subtle: #F3DCE8;
-    --border-hover: #F472B6;
-    --text-main: #18181B;
-    --text-secondary: #71717A;
-    --text-muted: #A1A1AA;
+    --color-primary: #EC4899;
+    --color-primary-hover: #DB2777;
+    --color-soft-primary: #FCE7F3;
+    --color-light-primary: #FDF2F8;
+    --color-accent: #F43F5E;
+    --color-bg: #FFF9FC;
+    --color-surface: #FFFFFF;
+    --color-surface-secondary: #FFF1F7;
+    --color-border: #F3DCE8;
+    --color-text-primary: #18181B;
+    --color-text-secondary: #71717A;
+    --color-text-muted: #A1A1AA;
+    --radius-card: 20px;
+    --radius-button: 14px;
+    --theme-container-width: max-w-7xl;
+
+    /* Aliases for backwards compatibility */
+    --primary-pink: var(--color-primary);
+    --primary-hover: var(--color-primary-hover);
+    --soft-pink: var(--color-soft-primary);
+    --light-pink: var(--color-light-primary);
+    --rose-accent: var(--color-accent);
+    --bg-main: var(--color-bg);
+    --surface: var(--color-surface);
+    --surface-secondary: var(--color-surface-secondary);
+    --border-subtle: var(--color-border);
+    --border-hover: var(--color-primary);
+    --text-main: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
+  }
+
+  /* Dark Theme class support */
+  .dark-theme {
+    --bg-main: var(--color-bg);
+    --surface: var(--color-surface);
+    --surface-secondary: var(--color-surface-secondary);
+    --border-subtle: var(--color-border);
+    --text-main: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
   }
 
   body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
+    background-color: var(--color-bg, #FFF9FC);
+    color: var(--color-text-primary, #18181B);
     font-family: var(--font-sans, 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
     min-height: 100vh;
     overflow-x: hidden;
