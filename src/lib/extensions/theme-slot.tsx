@@ -23,7 +23,7 @@ export const ThemeSlot: React.FC<ThemeSlotProps> = ({
   const { activeTheme } = useTheme();
 
   // If theme has slot customization or active overrides
-  const hasCustomOverride = Boolean(activeTheme?.isCustom || activeTheme?.id !== 'theme-blush-core');
+  const hasCustomOverride = Boolean(activeTheme?.isCustom || (activeTheme?.id !== 'theme-default-theme' && !activeTheme?.isDefault));
 
   if (children) {
     return (

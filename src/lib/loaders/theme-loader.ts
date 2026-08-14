@@ -75,36 +75,50 @@ export class ThemeLoader {
   }
 
   /**
-   * Discover and return all available themes
+   * Discover and return all available themes based on disk scan and legitimate custom themes
    */
-  public static discoverThemes(storedThemes?: ThemeManifest[]): ThemeManifest[] {
-    const discovered = [...DISCOVERED_THEMES];
-    if (!storedThemes || storedThemes.length === 0) {
-      return discovered;
+  public static discoverThemes(baseThemes: ThemeManifest[] = DISCOVERED_THEMES, storedThemes?: ThemeManifest[]): ThemeManifest[] {
+    const themeMap = new Map<string, ThemeManifest>();
+    baseThemes.forEach((t) => themeMap.set(t.id, t));
+
+    if (storedThemes && Array.isArray(storedThemes)) {
+      // Filter out legacy deleted theme IDs
+      const legacyIds = new Set(['theme-blush-core', 'theme-cyber-glow', 'theme-rose-flow', 'theme-frosted-glass', 'theme-midnight-dark']);
+
+      storedThemes.forEach((stored) => {
+        if (themeMap.has(stored.id)) {
+          // Merge user-customized tokens & visual settings onto disk theme
+          const existing = themeMap.get(stored.id)!;
+          themeMap.set(stored.id, {
+            ...existing,
+            tokens: stored.tokens ? { ...existing.tokens, ...stored.tokens } : existing.tokens,
+            settings: stored.settings ? { ...existing.settings, ...stored.settings } : existing.settings,
+            isActive: stored.isActive ?? existing.isActive,
+          });
+        } else if (stored.isCustom && !legacyIds.has(stored.id)) {
+          // Retain genuine custom imported themes
+          themeMap.set(stored.id, stored);
+        }
+      });
     }
 
-    // Merge stored custom themes / updates
-    const themeMap = new Map<string, ThemeManifest>();
-    discovered.forEach((t) => themeMap.set(t.id, t));
-    storedThemes.forEach((t) => themeMap.set(t.id, { ...themeMap.get(t.id), ...t }));
-
-    // Ensure Blush Core default theme is permanently present
-    if (!themeMap.has('theme-blush-core')) {
-      themeMap.set('theme-blush-core', DISCOVERED_THEMES[0]);
+    // Ensure official default theme is permanently present
+    if (!themeMap.has('theme-default-theme') && DISCOVERED_THEMES.length > 0) {
+      themeMap.set('theme-default-theme', DISCOVERED_THEMES[0]);
     }
 
     return Array.from(themeMap.values());
   }
 
   /**
-   * Get the active theme with safe fallback to Blush Core
+   * Get the active theme with safe fallback to Official Default Theme
    */
   public static resolveActiveTheme(themes: ThemeManifest[], activeId: string): ThemeManifest {
     const active = themes.find((t) => t.id === activeId);
     if (active) return active;
     
-    const fallback = themes.find((t) => t.slug === this.defaultThemeSlug || t.id === 'theme-blush-core');
-    return fallback || DISCOVERED_THEMES[0];
+    const fallback = themes.find((t) => t.isDefault || t.slug === this.defaultThemeSlug || t.id === 'theme-default-theme');
+    return fallback || themes[0] || DISCOVERED_THEMES[0];
   }
 
   /**

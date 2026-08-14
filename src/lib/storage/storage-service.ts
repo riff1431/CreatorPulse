@@ -90,12 +90,12 @@ export const INITIAL_STORED_FILES: StoredFile[] = [
   },
   {
     id: 'file-5',
-    name: 'theme-blush-core-v1.0.zip',
-    originalName: 'blush-core-theme-bundle.zip',
+    name: 'starter-theme-template-v1.0.zip',
+    originalName: 'starter-theme-template.zip',
     folder: 'themes',
     driver: 'local',
-    path: 'themes/theme-blush-core-v1.0.zip',
-    url: '/uploads/themes/theme-blush-core-v1.0.zip',
+    path: 'themes/starter-theme-template-v1.0.zip',
+    url: '/uploads/themes/starter-theme-template-v1.0.zip',
     sizeBytes: 2097152, // 2 MB
     mimeType: 'application/zip',
     createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),

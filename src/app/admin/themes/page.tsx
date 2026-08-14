@@ -909,7 +909,7 @@ export default function AdminThemesPage() {
             <h1 className="text-2xl font-black text-[#18181B]">Theme Management</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Manage frontend themes and visual styles. Active Theme: <strong className="text-[#BE185D]">{activeTheme.name}</strong>. Built-in default: <strong className="text-[#BE185D]">Blush Core</strong>.
+            Manage frontend themes and visual styles. Active Theme: <strong className="text-[#BE185D]">{activeTheme.name}</strong>. Built-in default: <strong className="text-[#BE185D]">{themes.find((t) => t.isDefault || t.id === 'theme-default-theme')?.name || 'Official Default Theme'}</strong>.
           </p>
         </div>
 
@@ -1870,7 +1870,7 @@ export default function AdminThemesPage() {
               <div className="p-3 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] text-[11px] space-y-1">
                 <p className="font-bold text-[#18181B]">Safety Constraints:</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  <li>Built-in default theme (Blush Core) is protected and cannot be deleted.</li>
+                  <li>Built-in default theme ({themes.find((t) => t.isDefault || t.id === 'theme-default-theme')?.name || 'Official Default Theme'}) is protected and cannot be deleted.</li>
                   <li>Currently active theme cannot be deleted until another theme is activated.</li>
                 </ul>
               </div>

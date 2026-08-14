@@ -71,8 +71,8 @@ export const APP_CONFIG: AppConfig = {
     maxFileSizeMB: 50,
   },
   themes: {
-    defaultThemeId: 'theme-blush-core',
-    defaultThemeName: 'Blush Core',
+    defaultThemeId: 'theme-default-theme',
+    defaultThemeName: 'Official Default Theme',
   },
   plugins: {
     engineVersion: '1.0.0',

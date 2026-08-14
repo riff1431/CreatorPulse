@@ -71,6 +71,54 @@ export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
   isDark: false
 };
 
+/**
+ * Dynamically updates all favicon link tags in the document head.
+ * Removes stale entries and creates fresh ones with proper type detection.
+ */
+function updateBrowserFavicon(url: string): void {
+  if (typeof document === 'undefined') return;
+
+  const targetUrl = url || '/favicon.ico';
+
+  // Detect MIME type from extension
+  const ext = targetUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'ico';
+  const typeMap: Record<string, string> = {
+    ico: 'image/x-icon',
+    png: 'image/png',
+    svg: 'image/svg+xml',
+    gif: 'image/gif',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+  };
+  const mimeType = typeMap[ext] || 'image/x-icon';
+
+  // Cache-bust: append a timestamp so the browser doesn't serve a stale icon
+  const bustUrl = targetUrl.includes('?')
+    ? `${targetUrl}&_t=${Date.now()}`
+    : `${targetUrl}?_t=${Date.now()}`;
+
+  // Remove ALL existing favicon link tags to avoid conflicts
+  const existingLinks = document.querySelectorAll<HTMLLinkElement>(
+    "link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
+  );
+  existingLinks.forEach((link) => link.remove());
+
+  // Create a fresh link element
+  const newLink = document.createElement('link');
+  newLink.rel = 'icon';
+  newLink.type = mimeType;
+  newLink.href = bustUrl;
+  document.head.appendChild(newLink);
+
+  // Also add shortcut icon for legacy browser support
+  const shortcutLink = document.createElement('link');
+  shortcutLink.rel = 'shortcut icon';
+  shortcutLink.type = mimeType;
+  shortcutLink.href = bustUrl;
+  document.head.appendChild(shortcutLink);
+}
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const { settings: siteSettings } = useSiteSettings();
@@ -112,13 +160,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           } catch (e) {}
         }
 
-        const mergedThemes = ThemeLoader.discoverThemes([...baseThemes, ...storedCustom]);
+        const mergedThemes = ThemeLoader.discoverThemes(baseThemes, storedCustom);
         setThemes(mergedThemes);
+        // Persist sanitized themes to remove any legacy zombie themes from localStorage
+        localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(mergedThemes));
 
-        if (storedActiveId && mergedThemes.some((t) => t.id === storedActiveId)) {
+        const legacyIds = new Set(['theme-blush-core', 'theme-cyber-glow', 'theme-rose-flow', 'theme-frosted-glass', 'theme-midnight-dark']);
+        if (storedActiveId && !legacyIds.has(storedActiveId) && mergedThemes.some((t) => t.id === storedActiveId)) {
           setActiveThemeId(storedActiveId);
         } else {
           setActiveThemeId('theme-default-theme');
+          localStorage.setItem(STORAGE_ACTIVE_THEME_ID, 'theme-default-theme');
         }
 
         if (storedBackupsRaw) {
@@ -181,18 +233,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (styleTag) styleTag.remove();
 
       // Apply Favicon dynamically from Site Settings
-      const faviconUrl = siteSettings.favicon_url;
-      let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-      if (faviconUrl) {
-        if (!faviconLink) {
-          faviconLink = document.createElement('link');
-          faviconLink.rel = 'shortcut icon';
-          document.getElementsByTagName('head')[0].appendChild(faviconLink);
-        }
-        faviconLink.href = faviconUrl;
-      } else if (faviconLink) {
-        faviconLink.href = '/favicon.ico';
-      }
+      updateBrowserFavicon(siteSettings.favicon_url);
     } else {
       // Apply active Frontend theme tokens across public & user portals
       try {
@@ -249,21 +290,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
 
         // Apply Favicon dynamically (prioritize Site Settings, then Theme settings)
-        const faviconUrl = siteSettings.favicon_url || settings.faviconUrl;
-        if (faviconUrl) {
-          let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-          if (!faviconLink) {
-            faviconLink = document.createElement('link');
-            faviconLink.rel = 'shortcut icon';
-            document.getElementsByTagName('head')[0].appendChild(faviconLink);
-          }
-          faviconLink.href = faviconUrl;
-        } else {
-          const faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-          if (faviconLink) {
-            faviconLink.href = '/favicon.ico';
-          }
-        }
+        updateBrowserFavicon(siteSettings.favicon_url || settings.faviconUrl || '');
 
         // Load fonts dynamically from Google Fonts if specified
         if (tokens.fontFamily) {

@@ -26,10 +26,50 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "CreatorPulse — Premium Creator Platform & Community",
-  description: "A modern, elegant membership-based platform for creators, educators, coaches, and communities.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let faviconUrl = '/favicon.ico';
+  let siteName = 'CreatorPulse';
+  let tagline = 'A premium creator membership and community platform.';
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      const { data: settings } = await supabase
+        .from('site_settings')
+        .select('favicon_url, site_name, tagline')
+        .eq('id', 1)
+        .single();
+      
+      if (settings) {
+        if (settings.favicon_url) {
+          faviconUrl = settings.favicon_url;
+        }
+        if (settings.site_name) {
+          siteName = settings.site_name;
+        }
+        if (settings.tagline) {
+          tagline = settings.tagline;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error in generateMetadata:', e);
+  }
+
+  return {
+    title: {
+      default: `${siteName} — ${tagline}`,
+      template: `%s | ${siteName}`,
+    },
+    description: "A modern, elegant membership-based platform for creators, educators, coaches, and communities.",
+    icons: {
+      icon: faviconUrl,
+      shortcut: faviconUrl,
+      apple: faviconUrl,
+    }
+  };
+}
+
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
