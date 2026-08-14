@@ -35,7 +35,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   return (
     <div className={`relative inline-block ${className}`}>
       <div
-        className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-semibold text-slate-200 bg-slate-800 border border-slate-700 ${
+        className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-semibold text-pink-100 bg-pink-950/60 border border-pink-500/30 ${
           hasStory ? 'story-ring' : ''
         }`}
       >
@@ -47,7 +47,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       </div>
       {isVerified && (
         <CheckCircle
-          className="absolute -bottom-0.5 -right-0.5 text-cyan-400 fill-slate-900 bg-slate-900 rounded-full"
+          className="absolute -bottom-0.5 -right-0.5 text-pink-400 fill-slate-950 bg-slate-950 rounded-full"
           size={size === 'sm' ? 12 : size === 'md' ? 15 : size === 'lg' ? 18 : 22}
         />
       )}

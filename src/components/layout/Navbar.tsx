@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Sparkles, Search, Bell, Moon, Sun, Shield, LayoutDashboard, 
-  User, LogOut, Video, PlusSquare, Compass, Bookmark
+  User, LogOut, PlusSquare
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
@@ -52,30 +52,30 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 sticky top-0 z-40 px-4 lg:px-8 py-3 transition-colors">
+    <header className="bg-slate-950/85 backdrop-blur-xl border-b border-pink-500/15 sticky top-0 z-40 px-4 lg:px-8 py-3 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand Logo */}
-        <Link href="/feed" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+        <Link href="/feed" className="flex items-center gap-2.5 group">
+          <div className="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center shadow-lg shadow-pink-500/25 group-hover:scale-105 transition-transform">
             <Sparkles className="text-white" size={20} />
           </div>
           <div>
             <span className="text-lg font-black tracking-tight text-white flex items-center gap-1">
               Creator<span className="gradient-text">Pulse</span>
             </span>
-            <span className="text-[10px] text-slate-400 block -mt-1 font-medium">Creator SaaS Platform</span>
+            <span className="text-[10px] text-pink-300/70 block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
           </div>
         </Link>
 
         {/* Global Search Bar */}
         <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-md relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pink-400/60" size={16} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search creators, topics, vertical shorts, or posts..."
-            className="w-full bg-slate-900/90 border border-slate-800 focus:border-cyan-500 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none transition-all"
+            className="w-full bg-pink-950/20 border border-pink-500/20 focus:border-pink-400 rounded-xl pl-10 pr-4 py-2 text-sm text-pink-100 placeholder-pink-300/40 focus:outline-none focus:ring-2 focus:ring-pink-500/20 transition-all"
           />
         </form>
 
@@ -84,7 +84,7 @@ export const Navbar: React.FC = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-900 transition-colors"
+            className="p-2 rounded-xl text-pink-300/80 hover:text-pink-200 hover:bg-pink-500/10 transition-colors"
             title="Toggle theme"
           >
             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -101,7 +101,7 @@ export const Navbar: React.FC = () => {
 
           {activeRole === 'admin' && (
             <Link href="/admin/dashboard">
-              <Button variant="outline" size="sm" leftIcon={<Shield size={16} className="text-rose-400" />}>
+              <Button variant="outline" size="sm" leftIcon={<Shield size={16} className="text-pink-400" />}>
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             </Link>
@@ -111,32 +111,32 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-900 transition-colors relative"
+              className="p-2 rounded-xl text-pink-300/80 hover:text-pink-200 hover:bg-pink-500/10 transition-colors relative"
             >
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-400"></span>
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 glass-card p-4 space-y-3 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <h4 className="font-semibold text-sm text-slate-100">Notifications</h4>
-                  <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full font-medium">3 New</span>
+              <div className="absolute right-0 mt-2 w-80 glass-card p-4 space-y-3 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 border-pink-500/25">
+                <div className="flex items-center justify-between border-b border-pink-500/20 pb-2">
+                  <h4 className="font-semibold text-sm text-pink-100">Notifications</h4>
+                  <span className="text-[10px] text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded-full font-medium">3 New</span>
                 </div>
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-pink-950/40 border border-pink-500/20 flex items-start gap-2.5">
                     <Avatar alt="Sarah Jenkins" size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" />
                     <div>
-                      <p className="text-slate-200"><strong className="text-white">Sarah Jenkins</strong> published a new member post: "Modern Micro-Interactions"</p>
-                      <span className="text-[10px] text-slate-400 mt-1 block">10 minutes ago</span>
+                      <p className="text-pink-100"><strong className="text-white">Sarah Jenkins</strong> published a new member post: "Modern Micro-Interactions"</p>
+                      <span className="text-[10px] text-pink-300/60 mt-1 block">10 minutes ago</span>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-pink-950/40 border border-pink-500/20 flex items-start gap-2.5">
                     <Avatar alt="Marcus Vance" size="sm" src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150" />
                     <div>
-                      <p className="text-slate-200"><strong className="text-white">Marcus Vance</strong> added a new 24h Story</p>
-                      <span className="text-[10px] text-slate-400 mt-1 block">1 hour ago</span>
+                      <p className="text-pink-100"><strong className="text-white">Marcus Vance</strong> added a new 24h Story</p>
+                      <span className="text-[10px] text-pink-300/60 mt-1 block">1 hour ago</span>
                     </div>
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-900 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-pink-500/10 transition-colors"
             >
               <Avatar
                 alt={currentUser.fullName}
@@ -159,31 +159,31 @@ export const Navbar: React.FC = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 glass-card p-3 space-y-2 z-50 shadow-2xl">
-                <div className="px-2 py-1 border-b border-slate-800 pb-2">
-                  <p className="text-sm font-bold text-slate-100">{currentUser.fullName}</p>
-                  <p className="text-xs text-slate-400">@{currentUser.username}</p>
-                  <span className="inline-block text-[10px] uppercase font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded mt-1">
+              <div className="absolute right-0 mt-2 w-56 glass-card p-3 space-y-2 z-50 shadow-2xl border-pink-500/25">
+                <div className="px-2 py-1 border-b border-pink-500/20 pb-2">
+                  <p className="text-sm font-bold text-pink-100">{currentUser.fullName}</p>
+                  <p className="text-xs text-pink-300/70">@{currentUser.username}</p>
+                  <span className="inline-block text-[10px] uppercase font-bold text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded mt-1 border border-pink-500/30">
                     Role: {activeRole}
                   </span>
                 </div>
 
-                <div className="space-y-1 text-xs text-slate-300">
+                <div className="space-y-1 text-xs text-pink-200">
                   <Link
                     href={`/c/${currentUser.username}`}
                     onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors"
                   >
-                    <User size={14} /> My Profile
+                    <User size={14} className="text-pink-400" /> My Profile
                   </Link>
 
                   {activeRole === 'creator' && (
                     <Link
                       href="/creator/dashboard"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-slate-800 transition-colors text-indigo-400"
+                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors text-pink-300 font-medium"
                     >
-                      <LayoutDashboard size={14} /> Creator Dashboard
+                      <LayoutDashboard size={14} className="text-pink-400" /> Creator Dashboard
                     </Link>
                   )}
 
@@ -191,16 +191,16 @@ export const Navbar: React.FC = () => {
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-slate-800 transition-colors text-rose-400"
+                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors text-rose-300 font-medium"
                     >
-                      <Shield size={14} /> Admin Portal
+                      <Shield size={14} className="text-rose-400" /> Admin Portal
                     </Link>
                   )}
 
                   <Link
                     href="/auth/login"
                     onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-rose-500/10 hover:text-rose-400 transition-colors text-slate-400 border-t border-slate-800 mt-1"
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/20 hover:text-pink-200 transition-colors text-pink-300/70 border-t border-pink-500/20 mt-1"
                   >
                     <LogOut size={14} /> Switch Account / Logout
                   </Link>

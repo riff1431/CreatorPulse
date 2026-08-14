@@ -19,14 +19,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const variantStyles = {
-    primary: 'gradient-btn text-white shadow-lg shadow-cyan-500/10',
-    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700',
-    outline: 'bg-transparent hover:bg-slate-800/60 text-slate-200 border border-slate-700 hover:border-slate-500',
-    ghost: 'bg-transparent hover:bg-slate-800/50 text-slate-300 hover:text-white',
-    danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20'
+    primary: 'gradient-btn text-white font-semibold',
+    secondary: 'bg-pink-950/50 hover:bg-pink-900/60 text-pink-100 border border-pink-500/30 hover:border-pink-400/50 shadow-sm shadow-pink-500/10',
+    outline: 'bg-transparent hover:bg-pink-500/10 text-pink-200 border border-pink-500/30 hover:border-pink-400 hover:text-white',
+    ghost: 'bg-transparent hover:bg-pink-500/10 text-pink-300 hover:text-pink-100',
+    danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/25'
   };
 
   const sizeStyles = {

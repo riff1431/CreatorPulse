@@ -7,15 +7,15 @@ import { Avatar } from '@/components/ui/Avatar';
 
 export const CreatorHeader: React.FC = () => {
   return (
-    <header className="h-14 bg-slate-950 border-b border-slate-800/80 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50">
+    <header className="h-14 bg-slate-950/90 border-b border-pink-500/20 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 backdrop-blur-xl">
       {/* Left: Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <div className="w-8 h-8 rounded-lg gradient-btn flex items-center justify-center shadow-lg shadow-pink-500/25">
           <Sparkles className="text-white" size={16} />
         </div>
         <div className="hidden sm:block">
           <h1 className="text-sm font-black text-white leading-none">CreatorPulse</h1>
-          <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider">Creator Studio</span>
+          <span className="text-[10px] text-pink-400 font-semibold uppercase tracking-wider">Creator Studio</span>
         </div>
       </div>
 
@@ -23,25 +23,25 @@ export const CreatorHeader: React.FC = () => {
       <div className="flex items-center gap-3">
         <Link
           href="/feed"
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-slate-900"
+          className="flex items-center gap-1.5 text-xs text-pink-300/70 hover:text-pink-100 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-pink-500/10"
         >
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">Back to Feed</span>
         </Link>
 
         <Link href="/creator/posts">
-          <button className="flex items-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all">
+          <button className="flex items-center gap-1.5 text-xs font-semibold text-white gradient-btn px-3 py-1.5 rounded-xl shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all cursor-pointer">
             <PlusSquare size={14} />
             <span className="hidden sm:inline">Publish</span>
           </button>
         </Link>
 
-        <button className="relative p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded-lg transition-colors">
+        <button className="relative p-2 text-pink-300/70 hover:text-pink-100 hover:bg-pink-500/10 rounded-lg transition-colors cursor-pointer">
           <Bell size={16} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
+          <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full"></span>
         </button>
 
-        <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-900 transition-colors">
+        <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-pink-500/10 transition-colors cursor-pointer">
           <Avatar
             src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
             alt="Creator"
@@ -49,10 +49,10 @@ export const CreatorHeader: React.FC = () => {
             isVerified={true}
           />
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-semibold text-slate-200 leading-none">Sarah Jenkins</p>
-            <p className="text-[10px] text-indigo-400">Verified Creator</p>
+            <p className="text-xs font-semibold text-pink-100 leading-none">Sarah Jenkins</p>
+            <p className="text-[10px] text-pink-400 font-medium">Verified Creator</p>
           </div>
-          <ChevronDown size={12} className="text-slate-500 hidden sm:block" />
+          <ChevronDown size={12} className="text-pink-400/60 hidden sm:block" />
         </button>
       </div>
     </header>

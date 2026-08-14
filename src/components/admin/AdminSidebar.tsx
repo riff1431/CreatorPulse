@@ -80,7 +80,7 @@ export const AdminSidebar: React.FC = () => {
         {navGroups.map((group) => (
           <div key={group.title}>
             {!collapsed && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-3 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-pink-300/40 px-3 mb-2">
                 {group.title}
               </p>
             )}
@@ -97,19 +97,19 @@ export const AdminSidebar: React.FC = () => {
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all group ${
                       isActive
-                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-sm shadow-rose-500/5'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                        ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30 shadow-sm shadow-rose-500/10 font-semibold'
+                        : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-950/40'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Icon
                         size={16}
-                        className={isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300'}
+                        className={isActive ? 'text-rose-400' : 'text-pink-300/50 group-hover:text-pink-200'}
                       />
                       {!collapsed && <span>{item.label}</span>}
                     </div>
                     {!collapsed && item.badge && item.badge > 0 && (
-                      <span className="text-[10px] font-bold bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-full border border-rose-500/30 leading-none">
+                      <span className="text-[10px] font-bold bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded-full border border-rose-500/30 leading-none">
                         {item.badge}
                       </span>
                     )}
@@ -122,10 +122,10 @@ export const AdminSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-slate-800 p-3">
+      <div className="hidden lg:block border-t border-pink-500/15 p-3">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-300 py-2 rounded-lg hover:bg-slate-900 transition-colors"
+          className="w-full flex items-center justify-center gap-2 text-xs text-pink-300/60 hover:text-pink-200 py-2 rounded-lg hover:bg-pink-500/10 transition-colors cursor-pointer"
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           {!collapsed && <span>Collapse</span>}
@@ -139,7 +139,7 @@ export const AdminSidebar: React.FC = () => {
       {/* Mobile Toggle */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-rose-600 text-white shadow-xl shadow-rose-500/30 flex items-center justify-center"
+        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full gradient-btn text-white shadow-xl shadow-pink-500/30 flex items-center justify-center cursor-pointer"
       >
         <Menu size={20} />
       </button>
@@ -154,19 +154,19 @@ export const AdminSidebar: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-slate-950 border-r border-slate-800 z-50 transition-transform duration-300 w-64 ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-slate-950 border-r border-pink-500/20 z-50 transition-transform duration-300 w-64 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-14 flex items-center px-4 border-b border-slate-800">
-          <span className="text-sm font-bold text-white">Admin Navigation</span>
+        <div className="h-14 flex items-center px-4 border-b border-pink-500/20">
+          <span className="text-sm font-bold text-pink-100">Admin Navigation</span>
         </div>
         {sidebarContent}
       </aside>
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-slate-800/80 bg-slate-950 shrink-0 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r border-pink-500/15 bg-slate-950/80 shrink-0 transition-all duration-300 ${
           collapsed ? 'w-16' : 'w-56'
         }`}
       >
