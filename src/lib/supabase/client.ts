@@ -1,0 +1,21 @@
+import { createBrowserClient } from '@supabase/ssr';
+
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+}
+
+export const isSupabaseConfigured = () => {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    key &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-supabase')
+  );
+};
