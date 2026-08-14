@@ -5,6 +5,7 @@ import { PluginManifest, PluginHookType } from './plugin-types';
 import { DEFAULT_PLUGINS, PLUGIN_LIBRARY_CATALOG } from './default-extensions';
 import { logAuditEvent } from './package-installer';
 import { PluginLoader } from '@/lib/loaders/plugin-loader';
+import { DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
 
 interface PluginContextType {
   plugins: PluginManifest[];
@@ -27,16 +28,41 @@ const PluginContext = createContext<PluginContextType | undefined>(undefined);
 const STORAGE_PLUGINS_KEY = 'creatorpulse_plugins';
 
 export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [plugins, setPlugins] = useState<PluginManifest[]>(DEFAULT_PLUGINS);
+  const [plugins, setPlugins] = useState<PluginManifest[]>(DISCOVERED_PLUGIN_MANIFESTS);
 
-  // Load from localStorage on mount and sync server licenses
+  // Load dynamically from /api/admin/plugins and filesystem on mount
   useEffect(() => {
     const initPlugins = async () => {
       try {
-        const storedPluginsRaw = localStorage.getItem(STORAGE_PLUGINS_KEY);
-        let loadedPlugins = storedPluginsRaw ? JSON.parse(storedPluginsRaw) : DEFAULT_PLUGINS;
+        let basePlugins = DISCOVERED_PLUGIN_MANIFESTS;
 
-        // Fetch secure licenses from server
+        // 1. Fetch live scanned plugins from server API
+        try {
+          const res = await fetch('/api/admin/plugins');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.plugins) && data.plugins.length > 0) {
+            basePlugins = data.plugins;
+          }
+        } catch (apiErr) {
+          console.warn('[PluginEngine] Fallback to local registry', apiErr);
+        }
+
+        const storedPluginsRaw = localStorage.getItem(STORAGE_PLUGINS_KEY);
+        let storedCustom: PluginManifest[] = [];
+        if (storedPluginsRaw) {
+          try {
+            storedCustom = JSON.parse(storedPluginsRaw);
+          } catch (e) {}
+        }
+
+        let loadedPlugins = PluginLoader.discoverPlugins(
+          basePlugins.map((bp) => {
+            const override = storedCustom.find((s) => s.id === bp.id);
+            return override ? { ...bp, ...override } : bp;
+          })
+        );
+
+        // 2. Fetch secure licenses from server
         try {
           const res = await fetch('/api/plugins/license');
           const data = await res.json();
@@ -70,6 +96,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setPlugins(loadedPlugins);
       } catch (e) {
         console.error('Failed to load plugins from storage', e);
+        setPlugins(DISCOVERED_PLUGIN_MANIFESTS);
       }
     };
     const timer = setTimeout(initPlugins, 0);
@@ -149,6 +176,13 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+    // Sync toggle status to server
+    fetch('/api/admin/plugins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle', pluginId, isEnabled: enabled })
+    }).catch(err => console.warn('[PluginEngine] Server sync warning:', err));
 
     // Execute standard WordPress-like lifecycle hook
     PluginLoader.executeLifecycle(pluginId, enabled ? 'onActivate' : 'onDeactivate');
@@ -248,6 +282,13 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
 
+    // Sync settings to server
+    fetch('/api/admin/plugins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'settings', pluginId, settingsValues: values })
+    }).catch(err => console.warn('[PluginEngine] Server sync warning:', err));
+
     logAuditEvent({
       action: 'PLUGIN_CONFIG_SAVED',
       entityType: 'plugin',
@@ -314,6 +355,13 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+    // Sync installed plugin to server
+    fetch('/api/admin/plugins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'install', manifest })
+    }).catch(err => console.warn('[PluginEngine] Server sync warning:', err));
 
     // Execute lifecycle install hook
     PluginLoader.executeLifecycle(manifest.id, 'onInstall');

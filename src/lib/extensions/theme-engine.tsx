@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings, ThemeBackup } from './theme-types';
 import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG, THEME_UPDATE_REGISTRY } from './default-extensions';
 import { logAuditEvent, validateThemePackage } from './package-installer';
+import { DISCOVERED_THEMES } from '@/lib/loaders/registry';
+import { ThemeLoader } from '@/lib/loaders/theme-loader';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
@@ -38,14 +40,15 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_THEMES_KEY = 'creatorpulse_themes_v2';
 const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id_v2';
-export const CURRENT_APP_VERSION = '1.0.0';
 
-// Fixed Admin Control Panel tokens (Permanently isolated and immune from frontend themes)
+export const CURRENT_APP_VERSION = '1.2.0';
+
+// Fixed administrative token variables to sandbox the Admin Console
 export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
   primary: '#EC4899',
   primaryHover: '#DB2777',
   softPrimary: '#FCE7F3',
-  lightPrimary: '#FDF2F8',
+  lightPrimary: '#FFF9FC',
   accent: '#F43F5E',
   background: '#FFF9FC',
   surface: '#FFFFFF',
@@ -63,7 +66,7 @@ export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const pathname = usePathname();
-  const [themes, setThemes] = useState<ThemeManifest[]>(DEFAULT_THEMES);
+  const [themes, setThemes] = useState<ThemeManifest[]>(DISCOVERED_THEMES);
   const [activeThemeId, setActiveThemeId] = useState<string>('theme-blush-core');
   const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
 
@@ -72,41 +75,59 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [lastUpdateCheck, setLastUpdateCheck] = useState<string | null>(null);
 
-  // Load from localStorage on mount
+  // Load dynamically from /api/admin/themes and filesystem on mount
   useEffect(() => {
-    try {
-      const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
-      const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
-      const storedBackupsRaw = localStorage.getItem('creatorpulse_theme_backups');
-      const storedLastCheck = localStorage.getItem('creatorpulse_last_update_check');
+    const initThemes = async () => {
+      try {
+        let baseThemes = DISCOVERED_THEMES;
 
-      let currentThemes = DEFAULT_THEMES;
-      if (storedThemesRaw) {
-        currentThemes = JSON.parse(storedThemesRaw);
-        // Ensure Blush Core default theme is always present
-        if (!currentThemes.some(t => t.id === 'theme-blush-core')) {
-          currentThemes = [DEFAULT_THEMES[0], ...currentThemes];
+        // Fetch live scanned themes from server
+        try {
+          const res = await fetch('/api/admin/themes');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.themes) && data.themes.length > 0) {
+            baseThemes = data.themes;
+          }
+        } catch (apiErr) {
+          console.warn('[ThemeEngine] Fallback to local registry', apiErr);
         }
-        setThemes(currentThemes);
-      }
 
-      if (storedActiveId && currentThemes.some((t) => t.id === storedActiveId)) {
-        setActiveThemeId(storedActiveId);
-      } else {
+        const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
+        const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
+        const storedBackupsRaw = localStorage.getItem('creatorpulse_theme_backups');
+        const storedLastCheck = localStorage.getItem('creatorpulse_last_update_check');
+
+        let storedCustom: ThemeManifest[] = [];
+        if (storedThemesRaw) {
+          try {
+            storedCustom = JSON.parse(storedThemesRaw);
+          } catch (e) {}
+        }
+
+        const mergedThemes = ThemeLoader.discoverThemes([...baseThemes, ...storedCustom]);
+        setThemes(mergedThemes);
+
+        if (storedActiveId && mergedThemes.some((t) => t.id === storedActiveId)) {
+          setActiveThemeId(storedActiveId);
+        } else {
+          setActiveThemeId('theme-blush-core');
+        }
+
+        if (storedBackupsRaw) {
+          setBackups(JSON.parse(storedBackupsRaw));
+        }
+
+        if (storedLastCheck) {
+          setLastUpdateCheck(storedLastCheck);
+        }
+      } catch (e) {
+        console.error('Failed to load themes from storage, reverting to Blush Core default', e);
+        setThemes(DISCOVERED_THEMES);
         setActiveThemeId('theme-blush-core');
       }
+    };
 
-      if (storedBackupsRaw) {
-        setBackups(JSON.parse(storedBackupsRaw));
-      }
-
-      if (storedLastCheck) {
-        setLastUpdateCheck(storedLastCheck);
-      }
-    } catch (e) {
-      console.error('Failed to load themes from storage, reverting to Blush Core default', e);
-      setActiveThemeId('theme-blush-core');
-    }
+    initThemes();
   }, []);
 
   const activeTheme = themes.find((t) => t.id === activeThemeId) || themes[0] || DEFAULT_THEMES[0];
@@ -315,6 +336,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setThemes(updated);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
 
+    // Sync active theme state to server
+    fetch('/api/admin/themes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'activate', themeId, licenseKey })
+    }).catch(err => console.warn('[ThemeEngine] Server sync warning:', err));
+
     logAuditEvent({
       action: 'THEME_ACTIVATED',
       entityType: 'theme',
@@ -421,6 +449,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setThemes(updated);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
 
+    // Sync installed theme to server
+    fetch('/api/admin/themes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'install', manifest })
+    }).catch(err => console.warn('[ThemeEngine] Server sync warning:', err));
+
     logAuditEvent({
       action: 'THEME_INSTALLED',
       entityType: 'theme',
@@ -522,6 +557,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     setThemes(updated);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
+
+    // Sync customizations to server
+    fetch('/api/admin/themes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'customize', themeId, tokens: updatedTokens, settings: updatedSettings })
+    }).catch(err => console.warn('[ThemeEngine] Server sync warning:', err));
 
     logAuditEvent({
       action: 'THEME_CUSTOMIZED',
