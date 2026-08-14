@@ -1,0 +1,45 @@
+{
+  "id": "theme-cyber-glow",
+  "name": "CyberGlow Studio",
+  "slug": "cyber-glow",
+  "description": "High-contrast dark mode tailored for gaming streamers, nocturnal digital artists, and tech creators with vivid neon accents.",
+  "version": "1.1.0",
+  "author": "Neon Matrix Themes",
+  "authorUrl": "https://neonmatrix.dev",
+  "previewImageUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600",
+  "category": "Dark Cyber",
+  "tags": ["Dark Mode", "Neon Cyan", "High Contrast", "Gamers"],
+  "minAppVersion": "1.0.0",
+  "isActive": false,
+  "installedAt": "2026-08-05",
+  "updatedAt": "2026-08-12",
+  "tokens": {
+    "primary": "#06B6D4",
+    "primaryHover": "#0891B2",
+    "softPrimary": "#164E63",
+    "lightPrimary": "#083344",
+    "accent": "#F43F5E",
+    "background": "#0F172A",
+    "surface": "#1E293B",
+    "surfaceSecondary": "#334155",
+    "border": "#334155",
+    "textPrimary": "#F8FAFC",
+    "textSecondary": "#94A3B8",
+    "textMuted": "#64748B",
+    "cardRadius": "16px",
+    "buttonRadius": "12px",
+    "fontFamily": "Inter, sans-serif",
+    "fontHeading": "Inter, sans-serif",
+    "isDark": true
+  },
+  "settings": {
+    "containerWidth": "max-w-7xl",
+    "buttonStyle": "gradient-glow",
+    "animationIntensity": "playful",
+    "cardShadow": "glow"
+  },
+  "changelog": [
+    { "version": "1.1.0", "date": "2026-08-12", "changes": ["Enhanced neon borders and glow contrast"] },
+    { "version": "1.0.0", "date": "2026-08-05", "changes": ["Initial release"] }
+  ]
+}

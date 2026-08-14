@@ -1,0 +1,61 @@
+{
+  "id": "theme-blush-core",
+  "name": "Blush Core",
+  "slug": "blush-core",
+  "description": "The signature built-in default frontend creator-platform theme with soft rose pink hues, warm blush canvas, and editorial typography.",
+  "version": "1.2.0",
+  "author": "CreatorPulse Core Team",
+  "authorUrl": "https://creatorpulse.com",
+  "previewImageUrl": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
+  "category": "Modern Light",
+  "tags": ["Built-in Default", "Blush Core", "Light Pink", "Official"],
+  "minAppVersion": "1.0.0",
+  "isDefault": true,
+  "isActive": true,
+  "installedAt": "2026-08-01",
+  "updatedAt": "2026-08-14",
+  "tokens": {
+    "primary": "#EC4899",
+    "primaryHover": "#DB2777",
+    "softPrimary": "#FCE7F3",
+    "lightPrimary": "#FDF2F8",
+    "accent": "#F43F5E",
+    "background": "#FFF9FC",
+    "surface": "#FFFFFF",
+    "surfaceSecondary": "#FFF1F7",
+    "border": "#F3DCE8",
+    "textPrimary": "#18181B",
+    "textSecondary": "#71717A",
+    "textMuted": "#A1A1AA",
+    "cardRadius": "20px",
+    "buttonRadius": "14px",
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "fontHeading": "Plus Jakarta Sans, sans-serif",
+    "isDark": false
+  },
+  "settings": {
+    "logoUrl": "",
+    "faviconUrl": "",
+    "containerWidth": "max-w-7xl",
+    "buttonStyle": "gradient-glow",
+    "animationIntensity": "normal",
+    "cardShadow": "soft-pink"
+  },
+  "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2026-08-14",
+      "changes": [
+        "Standardized as official built-in default Blush Core theme",
+        "Added complete visual customization schema"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-08-01",
+      "changes": [
+        "Initial official release"
+      ]
+    }
+  ]
+}

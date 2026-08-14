@@ -1,0 +1,47 @@
+{
+  "id": "plugin-seo-social",
+  "name": "Social Share & OpenGraph Cards",
+  "slug": "seo-social",
+  "description": "Generates dynamic branded OpenGraph and Twitter cards for creator profiles, posts, and audio-video teasers.",
+  "version": "1.0.4",
+  "author": "CreatorPulse Marketing Core",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "📈",
+  "category": "Marketing & SEO",
+  "tags": ["SEO", "Social", "OpenGraph", "Twitter Cards", "Marketing"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["media_transform", "network_requests"],
+  "hooks": ["post_card_header", "navbar_actions"],
+  "isEnabled": false,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-06",
+  "updatedAt": "2026-08-06",
+  "settingsSchema": [
+    {
+      "id": "twitterCardType",
+      "label": "Twitter Card Presentation",
+      "type": "select",
+      "defaultValue": "summary_large_image",
+      "options": [
+        { "label": "Large Visual Summary Image", "value": "summary_large_image" },
+        { "label": "Compact Thumbnail Summary", "value": "summary" }
+      ]
+    },
+    {
+      "id": "brandPrefix",
+      "label": "Social Meta Title Suffix",
+      "type": "text",
+      "defaultValue": "| CreatorPulse",
+      "placeholder": "| Your Brand Name"
+    }
+  ],
+  "settingsValues": {
+    "twitterCardType": "summary_large_image",
+    "brandPrefix": "| CreatorPulse"
+  },
+  "changelog": [
+    { "version": "1.0.4", "date": "2026-08-06", "changes": ["Added custom aspect ratio controls"] },
+    { "version": "1.0.0", "date": "2026-08-01", "changes": ["Initial release"] }
+  ]
+}

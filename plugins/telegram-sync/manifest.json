@@ -1,0 +1,47 @@
+{
+  "id": "plugin-telegram-sync",
+  "name": "Telegram VIP Community Sync",
+  "slug": "telegram-sync",
+  "description": "Automatically invites, validates, and manages paying subscriber membership inside private Telegram VIP channels and groups.",
+  "version": "1.3.0",
+  "author": "BotForge Inc",
+  "authorUrl": "https://botforge.dev",
+  "iconUrl": "✈️",
+  "category": "Marketing & SEO",
+  "tags": ["Telegram", "Automation", "VIP Community", "Sync"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["network_requests", "notifications_send"],
+  "hooks": ["member_dashboard_widgets", "creator_dashboard_widgets"],
+  "isEnabled": false,
+  "autoUpdate": false,
+  "hasUpdate": false,
+  "installedAt": "2026-08-07",
+  "updatedAt": "2026-08-07",
+  "settingsSchema": [
+    {
+      "id": "botToken",
+      "label": "Telegram Bot API Token",
+      "type": "password",
+      "defaultValue": "",
+      "placeholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    },
+    {
+      "id": "channelId",
+      "label": "Telegram VIP Channel / Group ID",
+      "type": "text",
+      "defaultValue": "@creator_vip_room",
+      "placeholder": "@channel_username or -100123456789"
+    }
+  ],
+  "settingsValues": {
+    "botToken": "",
+    "channelId": "@creator_vip_room"
+  },
+  "changelog": [
+    {
+      "version": "1.3.0",
+      "date": "2026-08-07",
+      "changes": ["Added multi-tier group routing", "Fixed kick on subscription expiration"]
+    }
+  ]
+}

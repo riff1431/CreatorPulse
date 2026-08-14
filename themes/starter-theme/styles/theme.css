@@ -1,0 +1,21 @@
+/**
+ * Starter Theme Stylesheet
+ */
+
+:root[data-theme='theme-starter-theme'] {
+  --theme-primary: #3B82F6;
+  --theme-primary-hover: #2563EB;
+  --theme-soft-primary: #DBEAFE;
+  --theme-light-primary: #EFF6FF;
+  --theme-accent: #F59E0B;
+  --theme-bg: #F8FAFC;
+  --theme-surface: #FFFFFF;
+  --theme-surface-secondary: #F1F5F9;
+  --theme-border: #E2E8F0;
+  --theme-text-primary: #0F172A;
+  --theme-text-secondary: #64748B;
+  --theme-text-muted: #94A3B8;
+  --theme-card-radius: 16px;
+  --theme-button-radius: 10px;
+  --theme-font-family: 'Inter', sans-serif;
+}

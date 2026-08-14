@@ -1,0 +1,21 @@
+/**
+ * RoseFlow Theme Stylesheet
+ */
+
+:root[data-theme='theme-rose-flow'] {
+  --theme-primary: #E11D48;
+  --theme-primary-hover: #BE185D;
+  --theme-soft-primary: #FFE4E6;
+  --theme-light-primary: #FFF1F2;
+  --theme-accent: #FDA4AF;
+  --theme-bg: #FFF9FB;
+  --theme-surface: #FFFFFF;
+  --theme-surface-secondary: #FFF1F5;
+  --theme-border: #FCE7F3;
+  --theme-text-primary: #3F2D33;
+  --theme-text-secondary: #6B565C;
+  --theme-text-muted: #B59FA5;
+  --theme-card-radius: 24px;
+  --theme-button-radius: 16px;
+  --theme-font-family: 'Plus Jakarta Sans', sans-serif;
+}

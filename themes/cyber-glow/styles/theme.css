@@ -1,0 +1,21 @@
+/**
+ * CyberGlow Theme Stylesheet
+ */
+
+:root[data-theme='theme-cyber-glow'] {
+  --theme-primary: #06B6D4;
+  --theme-primary-hover: #0891B2;
+  --theme-soft-primary: #164E63;
+  --theme-light-primary: #083344;
+  --theme-accent: #F43F5E;
+  --theme-bg: #0F172A;
+  --theme-surface: #1E293B;
+  --theme-surface-secondary: #334155;
+  --theme-border: #334155;
+  --theme-text-primary: #F8FAFC;
+  --theme-text-secondary: #94A3B8;
+  --theme-text-muted: #64748B;
+  --theme-card-radius: 16px;
+  --theme-button-radius: 12px;
+  --theme-font-family: 'Inter', sans-serif;
+}

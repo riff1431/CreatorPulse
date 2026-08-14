@@ -1,0 +1,52 @@
+{
+  "id": "plugin-creator-stories",
+  "name": "Creator 24h Expiring Stories",
+  "slug": "creator-stories",
+  "description": "Instagram/Snapchat-style 24-hour self-destructing ephemeral video and photo stories with interactive stickers, polls, and views analytics.",
+  "version": "1.0.0",
+  "author": "StoryWave Labs",
+  "authorUrl": "https://storywave.io",
+  "iconUrl": "✨",
+  "category": "Community & Media",
+  "tags": ["Stories", "Ephemeral", "Video", "Engagement", "24h"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["storage_access", "notifications_send"],
+  "hooks": ["navbar_actions", "creator_dashboard_widgets", "sidebar_extra_links"],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-15",
+  "updatedAt": "2026-08-15",
+  "databaseMigrations": [
+    {
+      "version": "1.0.0",
+      "description": "Create creator_stories and story_views tables",
+      "sql": "CREATE TABLE IF NOT EXISTS creator_stories (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), creator_id UUID NOT NULL, media_url TEXT NOT NULL, caption TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours');"
+    }
+  ],
+  "settingsSchema": [
+    {
+      "id": "maxStoryDurationHours",
+      "label": "Story Expiration Time (Hours)",
+      "type": "number",
+      "defaultValue": 24
+    },
+    {
+      "id": "allowPublicReplies",
+      "label": "Allow Direct DM Replies on Stories",
+      "type": "boolean",
+      "defaultValue": true
+    }
+  ],
+  "settingsValues": {
+    "maxStoryDurationHours": 24,
+    "allowPublicReplies": true
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-15",
+      "changes": ["Initial release with Supabase real-time story feed"]
+    }
+  ]
+}

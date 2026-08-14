@@ -1,0 +1,42 @@
+{
+  "id": "plugin-starter-plugin",
+  "name": "Starter Plugin Template",
+  "slug": "starter-plugin",
+  "description": "Standardized starter boilerplate for third-party developers to build modular extensions for CreatorPulse.",
+  "version": "1.0.0",
+  "author": "Your Studio / Developer Name",
+  "authorUrl": "https://yourwebsite.com",
+  "iconUrl": "⚡",
+  "category": "Community & Media",
+  "tags": ["Starter", "Developer", "Template", "SDK"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["notifications_send", "storage_access"],
+  "hooks": ["navbar_actions", "creator_dashboard_widgets", "post_card_footer"],
+  "isEnabled": false,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-15",
+  "updatedAt": "2026-08-15",
+  "settingsSchema": [
+    {
+      "id": "sampleApiKey",
+      "label": "Custom Service API Key",
+      "type": "password",
+      "defaultValue": "",
+      "placeholder": "sk_test_..."
+    },
+    {
+      "id": "enableNotificationBadge",
+      "label": "Show Interactive Action Badge",
+      "type": "boolean",
+      "defaultValue": true
+    }
+  ],
+  "settingsValues": {
+    "sampleApiKey": "",
+    "enableNotificationBadge": true
+  },
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-08-15", "changes": ["Initial starter plugin template"] }
+  ]
+}

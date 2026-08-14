@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { PluginManifest, PluginHookType } from './plugin-types';
 import { DEFAULT_PLUGINS, PLUGIN_LIBRARY_CATALOG } from './default-extensions';
 import { logAuditEvent } from './package-installer';
+import { PluginLoader } from '@/lib/loaders/plugin-loader';
 
 interface PluginContextType {
   plugins: PluginManifest[];
@@ -149,6 +150,9 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
 
+    // Execute standard WordPress-like lifecycle hook
+    PluginLoader.executeLifecycle(pluginId, enabled ? 'onActivate' : 'onDeactivate');
+
     logAuditEvent({
       action: enabled ? 'PLUGIN_ACTIVATED' : 'PLUGIN_DEACTIVATED',
       entityType: 'plugin',
@@ -286,6 +290,9 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
 
+    // Execute lifecycle update hook
+    PluginLoader.executeLifecycle(pluginId, 'onUpdate', target.version);
+
     logAuditEvent({
       action: 'PLUGIN_UPDATED',
       entityType: 'plugin',
@@ -307,6 +314,9 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+    // Execute lifecycle install hook
+    PluginLoader.executeLifecycle(manifest.id, 'onInstall');
 
     logAuditEvent({
       action: 'PLUGIN_INSTALLED',
@@ -351,6 +361,9 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pluginId })
     }).catch(err => console.error('[Engine] Failed to clean secure license', err));
+
+    // Execute lifecycle uninstall hook
+    PluginLoader.executeLifecycle(pluginId, 'onUninstall');
 
     const filtered = plugins.filter((p) => p.id !== pluginId);
     setPlugins(filtered);

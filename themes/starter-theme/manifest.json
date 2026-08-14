@@ -1,0 +1,44 @@
+{
+  "id": "theme-starter-theme",
+  "name": "Starter Theme Template",
+  "slug": "starter-theme",
+  "description": "Clean, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.",
+  "version": "1.0.0",
+  "author": "Your Studio / Developer Name",
+  "authorUrl": "https://yourwebsite.com",
+  "previewImageUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600",
+  "category": "Modern Light",
+  "tags": ["Starter", "Developer", "Template", "SDK"],
+  "minAppVersion": "1.0.0",
+  "isActive": false,
+  "installedAt": "2026-08-15",
+  "updatedAt": "2026-08-15",
+  "tokens": {
+    "primary": "#3B82F6",
+    "primaryHover": "#2563EB",
+    "softPrimary": "#DBEAFE",
+    "lightPrimary": "#EFF6FF",
+    "accent": "#F59E0B",
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "surfaceSecondary": "#F1F5F9",
+    "border": "#E2E8F0",
+    "textPrimary": "#0F172A",
+    "textSecondary": "#64748B",
+    "textMuted": "#94A3B8",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "Inter, sans-serif",
+    "fontHeading": "Inter, sans-serif",
+    "isDark": false
+  },
+  "settings": {
+    "containerWidth": "max-w-7xl",
+    "buttonStyle": "gradient-glow",
+    "animationIntensity": "normal",
+    "cardShadow": "elevated"
+  },
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-08-15", "changes": ["Initial starter theme template"] }
+  ]
+}

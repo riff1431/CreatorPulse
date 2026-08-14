@@ -1,0 +1,61 @@
+{
+  "id": "plugin-virtual-gifts",
+  "name": "Virtual Gifts & Animated Reactions",
+  "slug": "virtual-gifts",
+  "description": "Empowers fans to send colorful 3D animated gifts (Diamonds, Roses, Rocket) directly on posts and video reels.",
+  "version": "1.4.2",
+  "author": "StreamEngine Tech",
+  "authorUrl": "https://streamengine.io",
+  "iconUrl": "🎁",
+  "category": "Monetization",
+  "tags": ["Monetization", "Gifts", "Animations", "Tips"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["payment_hooks", "notifications_send"],
+  "hooks": ["post_card_footer", "navbar_actions", "creator_dashboard_widgets"],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": true,
+  "latestVersion": "1.5.0",
+  "installedAt": "2026-08-03",
+  "updatedAt": "2026-08-10",
+  "settingsSchema": [
+    {
+      "id": "minGiftValue",
+      "label": "Minimum Gift Value ($)",
+      "type": "number",
+      "defaultValue": 1.00
+    },
+    {
+      "id": "platformCutPercentage",
+      "label": "Platform Revenue Share (%)",
+      "type": "number",
+      "defaultValue": 10
+    },
+    {
+      "id": "enableConfettiAnimation",
+      "label": "Play Fullscreen Confetti Particle Burst",
+      "type": "boolean",
+      "defaultValue": true
+    }
+  ],
+  "settingsValues": {
+    "minGiftValue": 1.00,
+    "platformCutPercentage": 10,
+    "enableConfettiAnimation": true
+  },
+  "changelog": [
+    {
+      "version": "1.4.2",
+      "date": "2026-08-10",
+      "changes": [
+        "Added diamond cluster multi-gift bundle",
+        "Optimized mobile reaction animations"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-08-03",
+      "changes": ["Initial release"]
+    }
+  ]
+}

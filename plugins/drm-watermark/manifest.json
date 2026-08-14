@@ -1,0 +1,69 @@
+{
+  "id": "plugin-drm-watermark",
+  "name": "Digital Watermark & DRM Guard",
+  "slug": "drm-watermark",
+  "description": "Automatically applies dynamic copyright watermarks, username overlay stamps, and right-click protection to creator media.",
+  "version": "2.1.0",
+  "author": "CreatorPulse Security Labs",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "🛡️",
+  "category": "Security & DRM",
+  "tags": ["Security", "Watermark", "DRM", "Anti-piracy"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["media_transform", "storage_access"],
+  "hooks": ["post_card_footer", "creator_dashboard_widgets"],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-01",
+  "updatedAt": "2026-08-13",
+  "settingsSchema": [
+    {
+      "id": "watermarkText",
+      "label": "Default Watermark Text",
+      "type": "text",
+      "defaultValue": "© CreatorPulse Protected",
+      "placeholder": "© CreatorPulse Protected"
+    },
+    {
+      "id": "watermarkOpacity",
+      "label": "Watermark Opacity (0.1 - 1.0)",
+      "type": "number",
+      "defaultValue": 0.4
+    },
+    {
+      "id": "includeViewerUsername",
+      "label": "Include Viewer Username Stamp",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Disincentivizes screen recording by stamping active subscriber username."
+    },
+    {
+      "id": "blockRightClick",
+      "label": "Disable Right Click on Media",
+      "type": "boolean",
+      "defaultValue": true
+    }
+  ],
+  "settingsValues": {
+    "watermarkText": "© CreatorPulse Protected",
+    "watermarkOpacity": 0.4,
+    "includeViewerUsername": true,
+    "blockRightClick": true
+  },
+  "changelog": [
+    {
+      "version": "2.1.0",
+      "date": "2026-08-13",
+      "changes": [
+        "Added dynamic viewer username stamping",
+        "Optimized rendering performance"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-08-01",
+      "changes": ["Initial release"]
+    }
+  ]
+}
