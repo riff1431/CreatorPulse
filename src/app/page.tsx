@@ -14,10 +14,12 @@ import { Avatar } from '@/components/ui/Avatar';
 import { MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
 import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { useTheme } from '@/lib/extensions/theme-engine';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 import gsap from 'gsap';
 
 export default function LandingPage() {
   const { activeTheme } = useTheme();
+  const { settings } = useSiteSettings();
   const [subscriberCount, setSubscriberCount] = useState(350);
   const [tierPrice, setTierPrice] = useState(15);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -42,7 +44,7 @@ export default function LandingPage() {
     },
     {
       q: 'What platform fees apply to creator tips and memberships?',
-      a: 'CreatorPulse charges a transparent 5% platform fee on memberships and tips. The remaining 95% goes directly to your creator balance for express payouts.'
+      a: `${settings.site_name || 'CreatorPulse'} charges a transparent 5% platform fee on memberships and tips. The remaining 95% goes directly to your creator balance for express payouts.`
     },
     {
       q: 'Can I publish vertical short reels and 24-hour stories?',
@@ -68,15 +70,19 @@ export default function LandingPage() {
       }`}>
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {activeTheme.settings?.logoUrl ? (
-              <img src={activeTheme.settings.logoUrl} alt="Logo" className="h-9 w-auto max-w-[150px] object-contain rounded-xl" />
+            {settings.logo_url || activeTheme.settings?.logoUrl ? (
+              <img src={settings.logo_url || activeTheme.settings.logoUrl} alt={settings.site_name || 'Logo'} className="h-9 w-auto max-w-[150px] object-contain rounded-xl" />
             ) : (
               <>
                 <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25">
                   <Sparkles className="text-white" size={20} />
                 </div>
                 <span className="text-xl font-extrabold tracking-tight text-[#18181B]">
-                  Creator<span className="gradient-text">Pulse</span>
+                  {settings.site_name ? (
+                    settings.site_name
+                  ) : (
+                    <>Creator<span className="gradient-text">Pulse</span></>
+                  )}
                 </span>
               </>
             )}
@@ -363,7 +369,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-[#F3DCE8] px-6 py-8 text-center text-xs text-[#71717A] bg-white">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span>© 2026 CreatorPulse Platform Inc. Built with Next.js & Supabase.</span>
+          <span>© 2026 {settings.site_name || 'CreatorPulse'} Platform Inc. Built with Next.js & Supabase.</span>
           <div className="flex items-center gap-5 text-[#71717A] font-semibold">
             <Link href="/feed" className="hover:text-[#EC4899]">Feed</Link>
             <Link href="/shorts" className="hover:text-[#EC4899]">Reels</Link>

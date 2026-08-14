@@ -260,4 +260,201 @@
   transform: translateX(-50%) translateY(-2px);
 }
 
+/* --- Admin Dark Mode Styling --- */
+
+/* Smooth transitions for all theme-affected elements inside isolated admin panel */
+.admin-portal-isolated,
+.admin-portal-isolated *,
+.admin-portal-isolated ::before,
+.admin-portal-isolated ::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, fill 0.25s ease, stroke 0.25s ease;
+}
+
+/* Dark theme design tokens applied strictly to document element when admin-dark is active */
+:root.admin-dark,
+:root.admin-isolated.admin-dark,
+.admin-dark {
+  /* Slate-based premium dark mode palette */
+  --color-primary: #3B82F6 !important; /* Premium blue primary */
+  --color-primary-hover: #2563EB !important;
+  --color-soft-primary: #1E293B !important;
+  --color-light-primary: #0F172A !important;
+  --color-accent: #10B981 !important;
+  --color-bg: #0B0F19 !important; /* Deep dark page background */
+  --color-surface: #161B26 !important; /* Slightly lighter surface for cards, dropdowns */
+  --color-surface-secondary: #1F2633 !important; /* Table headers, search inputs, etc. */
+  --color-border: #2E3A52 !important; /* Sleek contrast borders */
+  --color-text-primary: #FAF5FF !important; /* Soft white primary text */
+  --color-text-secondary: #94A3B8 !important; /* Slate gray secondary text */
+  --color-text-muted: #64748B !important; /* Dimmed muted text */
+}
+
+/* Global wrappers overrides */
+:root.admin-dark,
+:root.admin-dark body,
+.admin-dark.admin-portal-isolated,
+.admin-dark .admin-portal-isolated {
+  background-color: var(--color-bg) !important;
+  background-image: none !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Override utility colors inside .admin-dark dynamically to map onto CSS variables */
+.admin-dark .bg-white {
+  background-color: var(--color-surface) !important;
+}
+.admin-dark .bg-white\/70 {
+  background-color: rgba(22, 27, 38, 0.7) !important;
+}
+.admin-dark .bg-slate-50 {
+  background-color: var(--color-bg) !important;
+}
+.admin-dark .bg-slate-50\/50 {
+  background-color: rgba(22, 27, 38, 0.5) !important;
+}
+.admin-dark .bg-slate-50\/60 {
+  background-color: rgba(22, 27, 38, 0.6) !important;
+}
+.admin-dark .bg-slate-50\/80 {
+  background-color: rgba(22, 27, 38, 0.8) !important;
+}
+.admin-dark .bg-indigo-50 {
+  background-color: #1E293B !important;
+}
+.admin-dark .bg-indigo-50\/40 {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+}
+.admin-dark .bg-indigo-50\/60 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+}
+.admin-dark .bg-indigo-50\/80 {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Text overrides */
+.admin-dark .text-slate-900,
+.admin-dark .text-slate-850,
+.admin-dark .text-slate-800,
+.admin-dark .text-\[\#18181B\] {
+  color: var(--color-text-primary) !important;
+}
+.admin-dark .text-slate-700,
+.admin-dark .text-slate-600,
+.admin-dark .text-\[\#71717A\] {
+  color: var(--color-text-secondary) !important;
+}
+.admin-dark .text-slate-500,
+.admin-dark .text-slate-400,
+.admin-dark .text-\[\#A1A1AA\] {
+  color: var(--color-text-muted) !important;
+}
+.admin-dark .text-indigo-750,
+.admin-dark .text-indigo-700 {
+  color: #818CF8 !important;
+}
+.admin-dark .text-indigo-600 {
+  color: #6366F1 !important;
+}
+
+/* Hover overrides */
+.admin-dark .hover\:bg-slate-50\/50:hover {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+.admin-dark .hover\:bg-slate-50:hover {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+.admin-dark .hover\:bg-indigo-50\/40:hover {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+}
+.admin-dark .hover\:bg-slate-100\/50:hover {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+.admin-dark .hover\:text-slate-900:hover {
+  color: #FFFFFF !important;
+}
+
+/* Border overrides */
+.admin-dark .border-slate-200,
+.admin-dark .border-slate-200\/80,
+.admin-dark .border-slate-200\/60,
+.admin-dark .border-slate-100 {
+  border-color: var(--color-border) !important;
+}
+.admin-dark .border-indigo-100\/30 {
+  border-color: rgba(99, 102, 241, 0.2) !important;
+}
+.admin-dark .border-indigo-200\/50 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+.admin-dark .divide-slate-200\/60 > * + *,
+.admin-dark .divide-slate-200 > * + * {
+  border-color: var(--color-border) !important;
+}
+
+/* Input elements styling */
+.admin-dark input,
+.admin-dark select,
+.admin-dark textarea {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+.admin-dark input::placeholder,
+.admin-dark textarea::placeholder {
+  color: var(--color-text-muted) !important;
+}
+
+/* Table overrides */
+.admin-dark th {
+  background-color: var(--color-surface-secondary) !important;
+  color: var(--color-text-secondary) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+/* Custom Scrollbars in dark mode */
+.admin-dark ::-webkit-scrollbar-track {
+  background: var(--color-bg) !important;
+}
+.admin-dark ::-webkit-scrollbar-thumb {
+  background: #334155 !important;
+}
+.admin-dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569 !important;
+}
+
+/* Overriding Global Selection Colors */
+.admin-dark.admin-portal-isolated ::selection,
+.admin-dark .admin-portal-isolated ::selection {
+  background-color: #1E3A8A !important;
+  color: #F8FAFC !important;
+}
+
+/* GSAP card entrance visibility and loading skeletons */
+.admin-dark .shimmer-bg {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%) !important;
+  background-size: 200% 100% !important;
+}
+
+/* Premium Icon System hover backgrounds in dark mode */
+.admin-dark .admin-icon-container {
+  background: rgba(22, 27, 38, 0.6) !important;
+  border-color: rgba(46, 58, 82, 0.7) !important;
+  color: var(--color-text-secondary) !important;
+}
+.admin-dark .admin-icon-hover-lift:hover:not(:disabled) {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+/* Modal and Dialog overrides */
+.admin-dark .admin-tooltip {
+  background-color: #FAF5FF !important;
+  color: #0F172A !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+.admin-dark .admin-tooltip::after {
+  border-color: #FAF5FF transparent transparent transparent !important;
+}
+
+
 

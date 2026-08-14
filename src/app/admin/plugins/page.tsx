@@ -213,7 +213,21 @@ export default function AdminPluginsPage() {
       let manifestText = '';
       if (file.name.endsWith('.zip')) {
         const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+
         manifestText = await extractPluginJsonFromZip(arrayBuffer);
+
+        // Send to server to extract all files physically into /plugins/<slug>
+        fetch('/api/admin/plugins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'upload_zip', zipBase64: base64 })
+        }).catch((err) => console.warn('[Plugin upload] Server ZIP extraction warning:', err));
       } else {
         const text = await file.text();
         manifestText = text;
@@ -1334,7 +1348,21 @@ export default function AdminPluginsPage() {
                       let manifestText = '';
                       if (file.name.endsWith('.zip')) {
                         const arrayBuffer = await file.arrayBuffer();
+                        const bytes = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < bytes.byteLength; i++) {
+                          binary += String.fromCharCode(bytes[i]);
+                        }
+                        const base64 = btoa(binary);
+
                         manifestText = await extractPluginJsonFromZip(arrayBuffer);
+
+                        // Send to server to extract all files physically into /plugins/<slug>
+                        fetch('/api/admin/plugins', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'upload_zip', zipBase64: base64 })
+                        }).catch((err) => console.warn('[Plugin upload] Server ZIP extraction warning:', err));
                       } else {
                         const text = await file.text();
                         manifestText = text;

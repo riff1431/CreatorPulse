@@ -133,6 +133,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${plusJakartaSans.variable} font-sans h-full antialiased`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var isAd = window.location.pathname.startsWith('/admin');
+                  if (isAd) {
+                    var pref = localStorage.getItem('creatorpulse_admin_theme_preference') || 'system';
+                    var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (dark) {
+                      document.documentElement.classList.add('admin-dark');
+                    } else {
+                      document.documentElement.classList.remove('admin-dark');
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[#FFF9FC] text-[#18181B] selection:bg-[#FCE7F3] selection:text-[#DB2777]">
         <SiteSettingsProvider>
           <StorageProvider>

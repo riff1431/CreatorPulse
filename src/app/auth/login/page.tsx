@@ -11,11 +11,13 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
+  const { settings } = useSiteSettings();
 
   const [email, setEmail] = useState('admin@creatorpulse.com');
   const [password, setPassword] = useState('AdminPass123!');
@@ -107,12 +109,16 @@ function LoginFormContent() {
       {/* Brand */}
       <div className="text-center space-y-2">
         <Link href="/" className="inline-flex items-center gap-2 group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
-            <Sparkles className="text-white" size={24} />
-          </div>
+          {settings.logo_url ? (
+            <img src={settings.logo_url} alt={settings.site_name || 'Logo'} className="h-12 w-auto max-w-[180px] object-contain rounded-2xl shrink-0" />
+          ) : (
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform shrink-0">
+              <Sparkles className="text-white" size={24} />
+            </div>
+          )}
         </Link>
         <h1 className="text-2xl font-black text-[#18181B]">Welcome Back</h1>
-        <p className="text-xs text-[#71717A] font-medium">Sign in to your CreatorPulse community account</p>
+        <p className="text-xs text-[#71717A] font-medium">Sign in to your {settings.site_name || 'CreatorPulse'} community account</p>
       </div>
 
       {/* Reason Alert (e.g. from restricted page redirect) */}

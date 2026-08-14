@@ -7,6 +7,7 @@ import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG, THEME_UPDATE_REGISTRY } from './
 import { logAuditEvent, validateThemePackage } from './package-installer';
 import { DISCOVERED_THEMES } from '@/lib/loaders/registry';
 import { ThemeLoader } from '@/lib/loaders/theme-loader';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
@@ -66,6 +67,7 @@ export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const pathname = usePathname();
+  const { settings: siteSettings } = useSiteSettings();
   const [themes, setThemes] = useState<ThemeManifest[]>(DISCOVERED_THEMES);
   const [activeThemeId, setActiveThemeId] = useState<string>('theme-blush-core');
   const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
@@ -172,9 +174,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       root.classList.add('admin-isolated');
       if (styleTag) styleTag.remove();
 
-      // Reset Favicon in Admin Panel to default
-      const faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-      if (faviconLink) {
+      // Apply Favicon dynamically from Site Settings
+      const faviconUrl = siteSettings.favicon_url;
+      let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (faviconUrl) {
+        if (!faviconLink) {
+          faviconLink = document.createElement('link');
+          faviconLink.rel = 'shortcut icon';
+          document.getElementsByTagName('head')[0].appendChild(faviconLink);
+        }
+        faviconLink.href = faviconUrl;
+      } else if (faviconLink) {
         faviconLink.href = '/favicon.ico';
       }
     } else {
@@ -232,15 +242,16 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           root.classList.remove('dark-theme');
         }
 
-        // Apply Favicon dynamically
-        if (settings.faviconUrl) {
+        // Apply Favicon dynamically (prioritize Site Settings, then Theme settings)
+        const faviconUrl = siteSettings.favicon_url || settings.faviconUrl;
+        if (faviconUrl) {
           let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
           if (!faviconLink) {
             faviconLink = document.createElement('link');
             faviconLink.rel = 'shortcut icon';
             document.getElementsByTagName('head')[0].appendChild(faviconLink);
           }
-          faviconLink.href = settings.faviconUrl;
+          faviconLink.href = faviconUrl;
         } else {
           const faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
           if (faviconLink) {
@@ -292,7 +303,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (styleTag) styleTag.remove();
       }
     }
-  }, [effectiveTheme, pathname, themes]);
+  }, [effectiveTheme, pathname, themes, siteSettings.favicon_url]);
 
   const activateTheme = (themeId: string): boolean => {
     const res = activateThemeWithLicense(themeId);
@@ -509,6 +520,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const filtered = themes.filter((t) => t.id !== themeId);
     setThemes(filtered);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(filtered));
+
+    // Sync deletion to server to purge directory from filesystem
+    fetch('/api/admin/themes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', themeId })
+    }).catch(err => console.warn('[ThemeEngine] Server delete warning:', err));
 
     logAuditEvent({
       action: 'THEME_DELETED',

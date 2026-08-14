@@ -100,13 +100,17 @@ const allAdminNavGroups: NavGroup[] = [
 ];
 
 import { usePlugins } from '@/lib/extensions/plugin-engine';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
+  const { settings } = useSiteSettings();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navFilter, setNavFilter] = useState('');
   const { activePlugins } = usePlugins();
+  const siteName = settings.site_name || 'CreatorPulse';
+  const siteInitials = siteName.substring(0, 2).toUpperCase();
   const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories');
 
   const filteredGroups = allAdminNavGroups.map((group) => ({
@@ -255,10 +259,14 @@ export const AdminSidebar: React.FC = () => {
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <div className="w-6.5 h-6.5 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-[11px]">
-              CP
-            </div>
-            <span className="text-xs font-extrabold text-slate-800 tracking-tight">Admin Console</span>
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt={siteName} className="h-6.5 w-auto max-w-[100px] object-contain rounded-md shrink-0" />
+            ) : (
+              <div className="w-6.5 h-6.5 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-[11px] shrink-0">
+                {siteInitials}
+              </div>
+            )}
+            <span className="text-xs font-extrabold text-slate-800 tracking-tight">{siteName}</span>
           </div>
           <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer">
             <AdminIcon icon={ChevronLeft} size="sm" variant="slate" />

@@ -6,6 +6,7 @@ import { Sparkles, Bell, PlusSquare, ArrowLeft, ChevronDown, Check, Star, Messag
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 const mockNotifications = [
   { id: '1', text: 'Alex Vance subscribed to Pro Designer Tier', type: 'sub', time: '5m ago', read: false },
@@ -15,6 +16,7 @@ const mockNotifications = [
 
 export const CreatorHeader: React.FC = () => {
   const { user, role } = useAuth();
+  const { settings } = useSiteSettings();
   const currentUser = user || (role === 'creator' ? MOCK_USERS['user-creator-1'] : MOCK_USERS['user-member']);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -47,11 +49,15 @@ export const CreatorHeader: React.FC = () => {
     <header className="h-16 bg-white/85 border-b border-[#F3DCE8] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 backdrop-blur-xl">
       {/* Left: Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 animate-float">
-          <Sparkles className="text-white" size={18} />
-        </div>
+        {settings.logo_url ? (
+          <img src={settings.logo_url} alt={settings.site_name || 'CreatorPulse'} className="h-10 w-auto max-w-[140px] object-contain rounded-2xl shrink-0" />
+        ) : (
+          <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 animate-float shrink-0">
+            <Sparkles className="text-white" size={18} />
+          </div>
+        )}
         <div className="hidden sm:block">
-          <h1 className="text-sm font-black text-[#18181B] leading-none">CreatorPulse</h1>
+          <h1 className="text-sm font-black text-[#18181B] leading-none">{settings.site_name || 'CreatorPulse'}</h1>
           <span className="text-[10px] text-[#BE185D] font-bold uppercase tracking-wider">Creator Studio</span>
         </div>
       </div>

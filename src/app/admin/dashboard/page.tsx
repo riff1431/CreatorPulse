@@ -280,7 +280,7 @@ export default function AdminDashboardPage() {
               {/* Grid lines */}
               {[0, 0.25, 0.5, 0.75, 1].map((r) => {
                 const y = padding + r * (graphHeight - padding * 2 - 20);
-                return <line key={r} x1={padding} y1={y} x2={graphWidth - padding} y2={y} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="3 3" />;
+                return <line key={r} x1={padding} y1={y} x2={graphWidth - padding} y2={y} stroke="var(--color-border)" strokeWidth={1} strokeDasharray="3 3" />;
               })}
 
               <defs>

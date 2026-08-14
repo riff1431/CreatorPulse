@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { Mail, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 export default function VerifyPage() {
+  const { settings } = useSiteSettings();
+  const siteName = settings.site_name || 'CreatorPulse';
   return (
     <div className="min-h-screen bg-[#FFF9FC] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <Card className="max-w-md w-full p-8 text-center space-y-6">
@@ -17,7 +20,7 @@ export default function VerifyPage() {
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-[#18181B]">Check Your Email</h2>
           <p className="text-xs text-[#71717A] leading-relaxed font-medium">
-            We sent a Supabase authentication link to your email inbox. Please click the confirmation link to activate your CreatorPulse account.
+            We sent a Supabase authentication link to your email inbox. Please click the confirmation link to activate your {siteName} account.
           </p>
         </div>
 

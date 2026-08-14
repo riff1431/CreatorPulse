@@ -7,13 +7,15 @@ import {
   Shield, Search, Bell, ArrowLeft, ChevronDown, User, DollarSign, FileText,
   Palette, Puzzle, CheckCircle2, Clock, AlertTriangle, Sparkles, X, Plus,
   Layers, Settings, Users, LogOut, Check, ExternalLink, Radio, Command,
-  Filter, Trash2, Zap, ShieldAlert, CreditCard
+  Filter, Trash2, Zap, ShieldAlert, CreditCard, Sun, Moon, Monitor
 } from 'lucide-react';
 import { Avatar } from '@/components/admin/ui/Avatar';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
 import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 import { IconButton } from '@/components/admin/ui/IconButton';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
+import { useAdminTheme } from '@/components/admin/AdminThemeProvider';
 
 export interface AdminNotification {
   id: string;
@@ -126,6 +128,7 @@ const SEARCH_DATABASE = [
 export const AdminHeader: React.FC = () => {
   const router = useRouter();
   const { user, role, logout } = useAuth();
+  const { settings } = useSiteSettings();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,6 +144,16 @@ export const AdminHeader: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'actions' | 'system'>('all');
   const [notifications, setNotifications] = useState<AdminNotification[]>(INITIAL_ADMIN_NOTIFICATIONS);
+
+  // Theme state
+  const { adminTheme, setAdminTheme } = useAdminTheme();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Refs for click outside
   const searchRef = useRef<HTMLDivElement>(null);
@@ -196,6 +209,9 @@ export const AdminHeader: React.FC = () => {
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
+      }
+      if (themeMenuRef.current && !themeMenuRef.current.contains(e.target as Node)) {
+        setShowThemeMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -266,11 +282,17 @@ export const AdminHeader: React.FC = () => {
       {/* Left: Brand & Dashboard Link */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0">
-            <AdminIcon icon={Shield} size="sm" className="text-white" />
-          </div>
+          {settings.logo_url ? (
+            <img src={settings.logo_url} alt={settings.site_name || 'CreatorPulse'} className="h-8.5 w-auto max-w-[90px] sm:max-w-[140px] object-contain rounded-lg shrink-0" />
+          ) : (
+            <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0">
+              <AdminIcon icon={Shield} size="sm" className="text-white" />
+            </div>
+          )}
           <div className="hidden sm:block">
-            <h1 className="text-xs font-black text-slate-800 leading-none tracking-tight">CreatorPulse</h1>
+            <h1 className="text-xs font-black text-slate-800 leading-none tracking-tight">
+              {settings.site_name || 'CreatorPulse'}
+            </h1>
             <span className="text-[9px] text-indigo-600 font-extrabold uppercase tracking-wider block mt-0.5">Admin Console</span>
           </div>
         </Link>
@@ -367,12 +389,12 @@ export const AdminHeader: React.FC = () => {
         <div className="relative" ref={quickActionsRef}>
           <button
             onClick={() => setShowQuickActions(!showQuickActions)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/50 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 active:scale-[0.98]"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/50 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 active:scale-[0.98]"
             title="Admin Quick Actions"
           >
             <AdminIcon icon={Plus} size="xs" variant="indigo" strokeWidth={2.5} />
             <span className="hidden sm:inline">Quick Actions</span>
-            <AdminIcon icon={ChevronDown} size="xs" variant="indigo" className={`transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+            <AdminIcon icon={ChevronDown} size="xs" variant="indigo" className={`hidden sm:inline transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
           </button>
 
           {showQuickActions && (
@@ -574,6 +596,60 @@ export const AdminHeader: React.FC = () => {
                   Flagged Content →
                 </Link>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dark Mode Toggle */}
+        <div className="relative font-sans animate-in fade-in" ref={themeMenuRef}>
+          <IconButton
+            icon={
+              !mounted
+                ? Sun
+                : adminTheme === 'dark'
+                ? Moon
+                : adminTheme === 'system'
+                ? Monitor
+                : Sun
+            }
+            size="sm"
+            variant="neutral"
+            label="Theme Selection"
+            onClick={() => setShowThemeMenu(!showThemeMenu)}
+            active={showThemeMenu}
+            tooltip="Theme Preference"
+          />
+
+          {showThemeMenu && (
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+              {(['light', 'dark', 'system'] as const).map((t) => {
+                let Icon = Sun;
+                if (t === 'dark') Icon = Moon;
+                if (t === 'system') Icon = Monitor;
+
+                const isSelected = mounted && adminTheme === t;
+
+                return (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setAdminTheme(t);
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all text-left cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-100/30'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    <AdminIcon icon={Icon} size="xs" variant={isSelected ? 'primary' : 'neutral'} />
+                    <span className="capitalize">{t}</span>
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 ml-auto text-indigo-600" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

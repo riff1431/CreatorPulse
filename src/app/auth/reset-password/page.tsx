@@ -7,10 +7,12 @@ import { Sparkles, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-re
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const { resetPassword } = useAuth();
+  const { settings } = useSiteSettings();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -54,12 +56,16 @@ export default function ResetPasswordPage() {
       <div className="max-w-md w-full space-y-6 relative z-10">
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
-              <Sparkles className="text-white" size={24} />
-            </div>
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt={settings.site_name || 'Logo'} className="h-12 w-auto max-w-[180px] object-contain rounded-2xl shrink-0" />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform shrink-0">
+                <Sparkles className="text-white" size={24} />
+              </div>
+            )}
           </Link>
           <h1 className="text-2xl font-black text-[#18181B]">Create New Password</h1>
-          <p className="text-xs text-[#71717A] font-medium">Set a new secure password for your CreatorPulse account</p>
+          <p className="text-xs text-[#71717A] font-medium">Set a new secure password for your {settings.site_name || 'CreatorPulse'} account</p>
         </div>
 
         <Card className="p-6 space-y-5">

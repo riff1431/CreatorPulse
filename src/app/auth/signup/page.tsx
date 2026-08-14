@@ -9,10 +9,12 @@ import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/auth-context';
 import { UserRole } from '@/lib/supabase/store';
 import { GuestGuard } from '@/components/auth/RouteGuards';
+import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
 export default function SignupPage() {
   const router = useRouter();
   const { signup } = useAuth();
+  const { settings } = useSiteSettings();
 
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -76,11 +78,15 @@ export default function SignupPage() {
         <div className="max-w-md w-full space-y-6 relative z-10">
           <div className="text-center space-y-2">
             <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
-                <Sparkles className="text-white" size={24} />
-              </div>
+              {settings.logo_url ? (
+                <img src={settings.logo_url} alt={settings.site_name || 'Logo'} className="h-12 w-auto max-w-[180px] object-contain rounded-2xl shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform shrink-0">
+                  <Sparkles className="text-white" size={24} />
+                </div>
+              )}
             </Link>
-            <h1 className="text-2xl font-black text-[#18181B]">Join CreatorPulse</h1>
+            <h1 className="text-2xl font-black text-[#18181B]">Join {settings.site_name || 'CreatorPulse'}</h1>
             <p className="text-xs text-[#71717A] font-medium">Create your account to unlock exclusive posts & communities</p>
           </div>
 

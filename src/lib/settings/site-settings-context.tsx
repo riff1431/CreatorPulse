@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export interface SocialLinks {
   twitter: string;
@@ -86,8 +87,53 @@ const SiteSettingsContext = createContext<SiteSettingsContextType | undefined>(u
 const STORAGE_KEY = 'creatorpulse_site_settings';
 
 export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const name = settings.site_name || 'CreatorPulse';
+    const tagline = settings.tagline || 'A premium creator membership and community platform.';
+    
+    if (!pathname) {
+      document.title = `${name} — ${tagline}`;
+      return;
+    }
+
+    // Parse pathname to get a nice page name
+    const segments = pathname.split('/').filter(Boolean);
+    if (segments.length === 0) {
+      document.title = `${name} — ${tagline}`;
+      return;
+    }
+
+    let titleParts: string[] = [];
+
+    // Check if it's admin
+    if (segments[0] === 'admin') {
+      titleParts.push('Admin Console');
+      if (segments[1]) {
+        // e.g. settings -> Site Settings
+        const subPage = segments[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        titleParts.unshift(subPage);
+      }
+    } else if (segments[0] === 'creator') {
+      titleParts.push('Creator Studio');
+      if (segments[1]) {
+        const subPage = segments[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        titleParts.unshift(subPage);
+      }
+    } else {
+      // Regular page
+      const pageName = segments[segments.length - 1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      titleParts.push(pageName);
+    }
+
+    titleParts.push(name);
+    document.title = titleParts.join(' | ');
+  }, [pathname, settings.site_name, settings.tagline]);
 
   useEffect(() => {
     // 1. Load initial from localStorage if present

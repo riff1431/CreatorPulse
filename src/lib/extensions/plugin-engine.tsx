@@ -417,6 +417,13 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setPlugins(filtered);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(filtered));
 
+    // Sync deletion to server to purge directory from filesystem
+    fetch('/api/admin/plugins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', pluginId })
+    }).catch(err => console.warn('[PluginEngine] Server delete warning:', err));
+
     logAuditEvent({
       action: 'PLUGIN_DELETED',
       entityType: 'plugin',

@@ -508,7 +508,23 @@ export default function AdminThemesPage() {
 
     try {
       if (file.name.endsWith('.zip')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+
         const parsed = await importThemeFromZip(file);
+
+        // Send to server to extract all theme files physically into /themes/<slug>
+        fetch('/api/admin/themes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'upload_zip', zipBase64: base64 })
+        }).catch((err) => console.warn('[Theme upload] Server ZIP extraction warning:', err));
+
         await processUploadedTheme(parsed);
       } else if (file.name.endsWith('.json')) {
         const reader = new FileReader();
@@ -2884,7 +2900,23 @@ export default function AdminThemesPage() {
                       const file = new File([blob], selectedFile.name, { type: selectedFile.mimeType });
                       
                       if (file.name.endsWith('.zip')) {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const bytes = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < bytes.byteLength; i++) {
+                          binary += String.fromCharCode(bytes[i]);
+                        }
+                        const base64 = btoa(binary);
+
                         const parsed = await importThemeFromZip(file);
+
+                        // Send to server to extract all files physically into /themes/<slug>
+                        fetch('/api/admin/themes', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'upload_zip', zipBase64: base64 })
+                        }).catch((err) => console.warn('[Theme upload] Server ZIP extraction warning:', err));
+
                         await processUploadedTheme(parsed);
                       } else if (file.name.endsWith('.json')) {
                         const content = await file.text();
