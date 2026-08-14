@@ -11,9 +11,9 @@ import {
 import { usePlugins } from '@/lib/extensions/plugin-engine';
 import { PluginManifest, PluginHookType, PluginPermission } from '@/lib/extensions/plugin-types';
 import { validatePluginPackage } from '@/lib/extensions/package-installer';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/admin/ui/Card';
+import { Button } from '@/components/admin/ui/Button';
+import { Badge } from '@/components/admin/ui/Badge';
 
 export default function AdminPluginsPage() {
   const {
@@ -208,10 +208,10 @@ export default function AdminPluginsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3DCE8] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Puzzle className="text-[#EC4899]" size={24} />
+            <Puzzle className="text-indigo-600" size={24} />
             <h1 className="text-2xl font-black text-[#18181B]">Plugin Management</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
@@ -241,9 +241,9 @@ export default function AdminPluginsPage() {
 
       {/* Notice Banner */}
       {actionNotice && (
-        <div className="p-3.5 bg-[#FFF1F7] border border-[#FBCFE8] rounded-2xl text-xs text-[#BE185D] font-bold flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
+        <div className="p-3.5 bg-slate-100 border border-slate-300 rounded-2xl text-xs text-indigo-700 font-bold flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-[#EC4899]" />
+            <CheckCircle2 size={16} className="text-indigo-600" />
             <span>{actionNotice}</span>
           </div>
           <button onClick={() => setActionNotice('')} className="text-[#A1A1AA] hover:text-[#18181B]">
@@ -253,18 +253,18 @@ export default function AdminPluginsPage() {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F3DCE8] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2 text-xs font-bold">
           <button
             onClick={() => setActiveTab('installed')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'installed'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
             <span>All Installed</span>
-            <span className="text-[10px] bg-white text-[#BE185D] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+            <span className="text-[10px] bg-white text-indigo-700 px-1.5 py-0.5 rounded-full border border-slate-200">
               {plugins.length}
             </span>
           </button>
@@ -273,7 +273,7 @@ export default function AdminPluginsPage() {
             onClick={() => setActiveTab('active')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'active'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
@@ -288,12 +288,12 @@ export default function AdminPluginsPage() {
             onClick={() => setActiveTab('inactive')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'inactive'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
             <span>Inactive</span>
-            <span className="text-[10px] bg-[#FFF9FC] text-[#71717A] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+            <span className="text-[10px] bg-slate-50 text-[#71717A] px-1.5 py-0.5 rounded-full border border-slate-200">
               {plugins.length - activePlugins.length}
             </span>
           </button>
@@ -302,13 +302,13 @@ export default function AdminPluginsPage() {
             onClick={() => setActiveTab('updates')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'updates'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
             <span>Updates</span>
             {updateCount > 0 && (
-              <span className="text-[10px] bg-[#F43F5E] text-white px-1.5 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] bg-[#EF4444] text-white px-1.5 py-0.5 rounded-full font-bold">
                 {updateCount}
               </span>
             )}
@@ -318,13 +318,13 @@ export default function AdminPluginsPage() {
             onClick={() => setActiveTab('library')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'library'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
-            <Sparkles size={13} className="text-[#EC4899]" />
+            <Sparkles size={13} className="text-indigo-600" />
             <span>Plugin Library</span>
-            <span className="text-[10px] bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-gradient-to-r from-[#4F46E5] to-[#EF4444] text-white px-1.5 py-0.5 rounded-full">
               New
             </span>
           </button>
@@ -339,14 +339,14 @@ export default function AdminPluginsPage() {
               placeholder="Search add-ons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 font-medium"
             />
           </div>
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
           >
             <option value="all">All Categories</option>
             <option value="Monetization">Monetization</option>
@@ -363,8 +363,8 @@ export default function AdminPluginsPage() {
         /* Installed Plugins List */
         <div className="space-y-4">
           {filteredInstalledPlugins.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl border border-[#F3DCE8] p-8 space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-[#EC4899] flex items-center justify-center mx-auto text-xl">
+            <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-indigo-600 flex items-center justify-center mx-auto text-xl">
                 🔌
               </div>
               <h3 className="font-bold text-sm text-[#18181B]">No Plugins Found</h3>
@@ -381,14 +381,14 @@ export default function AdminPluginsPage() {
                 <Card
                   key={plugin.id}
                   className={`p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg ${
-                    plugin.isEnabled ? 'border-[#F3DCE8] bg-white' : 'border-[#F3DCE8]/60 bg-[#FFF9FC]/50 opacity-90'
+                    plugin.isEnabled ? 'border-slate-200 bg-white' : 'border-slate-200/60 bg-slate-50/50 opacity-90'
                   }`}
                 >
                   <div className="space-y-4">
                     {/* Top Row: Icon & Status Toggle */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-2xl flex items-center justify-center border border-[#F3DCE8] shrink-0 shadow-xs">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center border border-slate-200 shrink-0 shadow-xs">
                           {plugin.iconUrl}
                         </div>
                         <div>
@@ -405,7 +405,7 @@ export default function AdminPluginsPage() {
                           onChange={(e) => togglePlugin(plugin.id, e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-10 h-5.5 bg-[#E4E4E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E4E4E7] after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#EC4899]"></div>
+                        <div className="w-10 h-5.5 bg-[#E4E4E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E4E4E7] after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
                       </label>
                     </div>
 
@@ -415,14 +415,14 @@ export default function AdminPluginsPage() {
 
                     {/* Metadata Badges */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8]">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-indigo-700 border border-slate-300">
                         {plugin.category}
                       </span>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
                         v{plugin.version}
                       </span>
                       {plugin.hasUpdate && (
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3] flex items-center gap-1">
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-[#FECDD3] flex items-center gap-1">
                           <Zap size={10} /> v{plugin.latestVersion} Available
                         </span>
                       )}
@@ -430,12 +430,12 @@ export default function AdminPluginsPage() {
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-[#F3DCE8]">
+                  <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200">
                     <div className="flex items-center gap-1">
                       {plugin.settingsSchema.length > 0 && (
                         <button
                           onClick={() => openConfigModal(plugin)}
-                          className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                          className="p-2 rounded-xl text-[#71717A] hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Configure Settings"
                         >
                           <Settings size={15} />
@@ -443,14 +443,14 @@ export default function AdminPluginsPage() {
                       )}
                       <button
                         onClick={() => setDetailsPlugin(plugin)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-slate-100 transition-colors cursor-pointer"
                         title="View Manifest & Changelog"
                       >
                         <Info size={15} />
                       </button>
                       <button
                         onClick={() => deletePlugin(plugin.id)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
+                        className="p-2 rounded-xl text-[#71717A] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         title="Uninstall Plugin"
                       >
                         <Trash2 size={15} />
@@ -480,9 +480,9 @@ export default function AdminPluginsPage() {
       ) : (
         /* Plugin Discovery Library / Marketplace */
         <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-[#FFF1F7] to-white border border-[#FBCFE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+          <div className="p-4 bg-gradient-to-r from-[#F1F5F9] to-white border border-slate-300 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#EC4899] text-white flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-2xl bg-[#4F46E5] text-white flex items-center justify-center font-bold">
                 <Sparkles size={20} />
               </div>
               <div>
@@ -507,12 +507,12 @@ export default function AdminPluginsPage() {
             {filteredLibraryPlugins.map((plugin) => (
               <Card
                 key={plugin.id}
-                className="p-5 flex flex-col justify-between border-[#F3DCE8] bg-white transition-all duration-300 hover:shadow-lg hover:border-[#F472B6]/50"
+                className="p-5 flex flex-col justify-between border-slate-200 bg-white transition-all duration-300 hover:shadow-lg hover:border-slate-300/50"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-2xl flex items-center justify-center border border-[#F3DCE8] shrink-0 shadow-xs">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center border border-slate-200 shrink-0 shadow-xs">
                         {plugin.iconUrl}
                       </div>
                       <div>
@@ -528,7 +528,7 @@ export default function AdminPluginsPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8]">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-indigo-700 border border-slate-300">
                       {plugin.category}
                     </span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
@@ -537,10 +537,10 @@ export default function AdminPluginsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-[#F3DCE8]">
+                <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200">
                   <button
                     onClick={() => setDetailsPlugin(plugin)}
-                    className="text-xs font-bold text-[#EC4899] hover:underline cursor-pointer flex items-center gap-1"
+                    className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
                   >
                     <Info size={13} /> View Specs
                   </button>
@@ -566,10 +566,10 @@ export default function AdminPluginsPage() {
       {/* Settings Configuration Modal */}
       {configuringPlugin && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-xl flex items-center justify-center border border-[#F3DCE8]">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-xl flex items-center justify-center border border-slate-200">
                   {configuringPlugin.iconUrl}
                 </div>
                 <div>
@@ -599,7 +599,7 @@ export default function AdminPluginsPage() {
                       value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
                     />
                   )}
 
@@ -609,7 +609,7 @@ export default function AdminPluginsPage() {
                       value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-mono"
                     />
                   )}
 
@@ -618,7 +618,7 @@ export default function AdminPluginsPage() {
                       type="number"
                       value={configDraft[field.id] !== undefined ? Number(configDraft[field.id]) : ''}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: parseFloat(e.target.value) })}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
                     />
                   )}
 
@@ -628,7 +628,7 @@ export default function AdminPluginsPage() {
                         type="checkbox"
                         checked={Boolean(configDraft[field.id])}
                         onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.checked })}
-                        className="accent-[#EC4899] rounded"
+                        className="accent-[#4F46E5] rounded"
                       />
                       <span>Enable Option</span>
                     </label>
@@ -638,7 +638,7 @@ export default function AdminPluginsPage() {
                     <select
                       value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none font-medium"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none font-medium"
                     >
                       {field.options?.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -654,14 +654,14 @@ export default function AdminPluginsPage() {
                       value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 text-xs font-mono text-[#18181B] focus:outline-none focus:border-[#EC4899]"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-[#18181B] focus:outline-none focus:border-indigo-500"
                     />
                   )}
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8] shrink-0">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 shrink-0">
               <Button variant="ghost" size="sm" onClick={() => setConfiguringPlugin(null)}>
                 Cancel
               </Button>
@@ -676,10 +676,10 @@ export default function AdminPluginsPage() {
       {/* Manifest & Changelog Details Modal */}
       {detailsPlugin && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-xl flex items-center justify-center border border-[#F3DCE8]">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-xl flex items-center justify-center border border-slate-200">
                   {detailsPlugin.iconUrl}
                 </div>
                 <div>
@@ -699,9 +699,9 @@ export default function AdminPluginsPage() {
               <p className="text-[#71717A] leading-relaxed font-medium">{detailsPlugin.description}</p>
 
               {/* Technical Specifications */}
-              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-2">
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                 <h4 className="font-bold text-[#18181B] flex items-center gap-1.5">
-                  <Code size={14} className="text-[#EC4899]" />
+                  <Code size={14} className="text-indigo-600" />
                   <span>SDK Manifest Specifications</span>
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
@@ -719,7 +719,7 @@ export default function AdminPluginsPage() {
                   <span className="text-[#A1A1AA] block text-[11px] mb-1">Registered Extension Hooks:</span>
                   <div className="flex flex-wrap gap-1">
                     {detailsPlugin.hooks.map((hook) => (
-                      <span key={hook} className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-[#F3DCE8] text-[#BE185D]">
+                      <span key={hook} className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-indigo-700">
                         {hook}
                       </span>
                     ))}
@@ -743,9 +743,9 @@ export default function AdminPluginsPage() {
                 <h4 className="font-bold text-[#18181B] mb-2">Version Changelog</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                   {detailsPlugin.changelog.map((c) => (
-                    <div key={c.version} className="p-3 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] space-y-1">
+                    <div key={c.version} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-[#BE185D]">v{c.version}</span>
+                        <span className="font-bold text-indigo-700">v{c.version}</span>
                         <span className="text-[10px] text-[#A1A1AA]">{c.date}</span>
                       </div>
                       <ul className="list-disc list-inside text-[11px] text-[#71717A] space-y-0.5">
@@ -759,7 +759,7 @@ export default function AdminPluginsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end pt-3 border-t border-[#F3DCE8]">
+            <div className="flex items-center justify-end pt-3 border-t border-slate-200">
               <Button variant="outline" size="sm" onClick={() => setDetailsPlugin(null)}>
                 Close
               </Button>
@@ -771,11 +771,11 @@ export default function AdminPluginsPage() {
       {/* Upload Plugin Modal */}
       {isUploadOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
-                  <Upload size={18} className="text-[#EC4899]" />
+                  <Upload size={18} className="text-indigo-600" />
                   <span>Upload Plugin Package (.ZIP / JSON)</span>
                 </h3>
                 <p className="text-xs text-[#71717A]">Install custom third-party add-ons into your portal</p>
@@ -796,21 +796,21 @@ export default function AdminPluginsPage() {
             )}
 
             {uploadError && (
-              <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-2xl text-xs text-[#BE123C] flex items-center gap-2">
+              <div className="p-3 bg-red-50 border border-[#FECDD3] rounded-2xl text-xs text-red-700 flex items-center gap-2">
                 <AlertTriangle size={16} className="shrink-0" />
                 <span>{uploadError}</span>
               </div>
             )}
 
             <div className="space-y-4 text-xs">
-              <div className="border-2 border-dashed border-[#F3DCE8] hover:border-[#EC4899] rounded-2xl p-6 text-center space-y-2 bg-[#FFF9FC] transition-colors cursor-pointer relative">
+              <div className="border-2 border-dashed border-slate-200 hover:border-[#4F46E5] rounded-2xl p-6 text-center space-y-2 bg-slate-50 transition-colors cursor-pointer relative">
                 <input
                   type="file"
                   accept=".json,.zip"
                   onChange={handleUploadFile}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-                <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
                   <Upload size={22} />
                 </div>
                 <p className="font-bold text-[#18181B]">Click to browse or drop plugin .ZIP or .JSON package here</p>
@@ -824,12 +824,12 @@ export default function AdminPluginsPage() {
                   onChange={(e) => setUploadText(e.target.value)}
                   rows={4}
                   placeholder={`{\n  "id": "plugin-custom-tool",\n  "name": "Custom Tool",\n  "version": "1.0.0",\n  "hooks": ["navbar_actions"],\n  "permissions": ["storage_access"]\n}`}
-                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 font-mono text-[11px] text-[#18181B] focus:outline-none focus:border-[#EC4899]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-[11px] text-[#18181B] focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
               <Button variant="ghost" size="sm" onClick={() => setIsUploadOpen(false)}>
                 Cancel
               </Button>
@@ -849,10 +849,10 @@ export default function AdminPluginsPage() {
       {/* Developer SDK Docs Modal */}
       {isDocsOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
                   <Terminal size={20} />
                 </div>
                 <div>
@@ -870,13 +870,13 @@ export default function AdminPluginsPage() {
 
             <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1 leading-relaxed">
               <div>
-                <h4 className="font-bold text-[#18181B] text-sm mb-1">Standard Package Architecture</h4>
-                <p className="text-[#71717A]">
+                <h4 className="font-bold text-slate-800 text-sm mb-1">Standard Package Architecture</h4>
+                <p className="text-slate-500">
                   Every plugin package is packaged as a `.zip` or `.json` file containing a root `plugin.json` manifest.
                 </p>
               </div>
 
-              <div className="p-3.5 bg-slate-950 text-pink-200 rounded-2xl font-mono text-[11px] space-y-1">
+              <div className="p-3.5 bg-slate-950 text-indigo-200 rounded-2xl font-mono text-[11px] space-y-1">
                 <p className="text-[#A1A1AA]">// Example plugin.json</p>
                 <p>{`{`}</p>
                 <p className="pl-3">{`"id": "plugin-custom-watermark",`}</p>
@@ -902,7 +902,7 @@ export default function AdminPluginsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#F3DCE8] shrink-0">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 shrink-0">
               <Button
                 variant="primary"
                 size="sm"

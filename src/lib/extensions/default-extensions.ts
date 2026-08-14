@@ -229,6 +229,141 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
   }
 ];
 
+export const THEME_LIBRARY_CATALOG: ThemeManifest[] = [
+  {
+    id: 'theme-emerald-oasis',
+    name: 'Emerald Oasis',
+    slug: 'emerald-oasis',
+    description: 'Refreshing botanical aesthetic with lush mint greens, emerald highlights, and crisp organic surfaces.',
+    version: '1.2.0',
+    author: 'Botanica Design Co',
+    authorUrl: 'https://botanica.design',
+    previewImageUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=600',
+    category: 'Modern Light',
+    tags: ['Emerald', 'Mint', 'Nature', 'Organic'],
+    minAppVersion: '1.0.0',
+    isLibraryItem: true,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    tokens: {
+      primary: '#10B981',
+      primaryHover: '#059669',
+      softPrimary: '#D1FAE5',
+      lightPrimary: '#ECFDF5',
+      accent: '#06B6D4',
+      background: '#F7FDF9',
+      surface: '#FFFFFF',
+      surfaceSecondary: '#ECFDF5',
+      border: '#A7F3D0',
+      textPrimary: '#064E3B',
+      textSecondary: '#047857',
+      textMuted: '#6EE7B7',
+      cardRadius: '22px',
+      buttonRadius: '14px',
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
+      isDark: false
+    },
+    settings: {
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'normal',
+      cardShadow: 'soft-pink'
+    },
+    changelog: [
+      { version: '1.2.0', date: '2026-08-14', changes: ['Initial official catalog release'] }
+    ]
+  },
+  {
+    id: 'theme-midnight-amethyst',
+    name: 'Midnight Amethyst',
+    slug: 'midnight-amethyst',
+    description: 'Mystical dark UI with royal purple hues, glowing violet accents, and frosted glass cards.',
+    version: '2.0.0',
+    author: 'Aetheria Studio',
+    authorUrl: 'https://aetheria.art',
+    previewImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600',
+    category: 'Dark Cyber',
+    tags: ['Purple', 'Dark Mode', 'Violet', 'Cyber'],
+    minAppVersion: '1.0.0',
+    isLibraryItem: true,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    tokens: {
+      primary: '#A855F7',
+      primaryHover: '#9333EA',
+      softPrimary: '#3B0764',
+      lightPrimary: '#1E0338',
+      accent: '#F43F5E',
+      background: '#0F0A1A',
+      surface: '#1E1433',
+      surfaceSecondary: '#2C1B4D',
+      border: '#4C1D95',
+      textPrimary: '#FAF5FF',
+      textSecondary: '#D8B4FE',
+      textMuted: '#A855F7',
+      cardRadius: '24px',
+      buttonRadius: '16px',
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
+      isDark: true
+    },
+    settings: {
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'playful',
+      cardShadow: 'glow'
+    },
+    changelog: [
+      { version: '2.0.0', date: '2026-08-14', changes: ['High-contrast violet glow borders'] }
+    ]
+  },
+  {
+    id: 'theme-cherry-blossom',
+    name: 'Sakura Blossom',
+    slug: 'sakura-blossom',
+    description: 'Delicate and serene Japanese cherry blossom aesthetic with pastel pink petals and warm white surfaces.',
+    version: '1.1.0',
+    author: 'Tokyo UI Guild',
+    authorUrl: 'https://tokyoui.jp',
+    previewImageUrl: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=600',
+    category: 'Frosted Pastel',
+    tags: ['Sakura', 'Pastel', 'Japanese', 'Floral'],
+    minAppVersion: '1.0.0',
+    isLibraryItem: true,
+    installedAt: '2026-08-14',
+    updatedAt: '2026-08-14',
+    tokens: {
+      primary: '#FB7185',
+      primaryHover: '#F43F5E',
+      softPrimary: '#FFE4E6',
+      lightPrimary: '#FFF1F2',
+      accent: '#FDA4AF',
+      background: '#FFF8FA',
+      surface: '#FFFFFF',
+      surfaceSecondary: '#FFF1F5',
+      border: '#FECDD3',
+      textPrimary: '#4C0519',
+      textSecondary: '#9F1239',
+      textMuted: '#E11D48',
+      cardRadius: '20px',
+      buttonRadius: '14px',
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
+      isDark: false
+    },
+    settings: {
+      containerWidth: 'max-w-6xl',
+      buttonStyle: 'soft-glass',
+      animationIntensity: 'subtle',
+      cardShadow: 'soft-pink'
+    },
+    changelog: [
+      { version: '1.1.0', date: '2026-08-14', changes: ['Enhanced soft petal gradients'] }
+    ]
+  }
+];
+
 export const DEFAULT_PLUGINS: PluginManifest[] = [
   {
     id: 'plugin-drm-watermark',

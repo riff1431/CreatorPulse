@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { Film, Search, Trash2, Eye, EyeOff } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const allReels = [
   { id: '1', creator: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', title: '3 UI Design Mistakes You\'re Making!', views: 14200, likes: 1420, comments: 89, status: 'published', date: '2026-08-11' },
@@ -32,7 +32,7 @@ export default function AdminReelsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <Film className="text-[#EC4899]" size={22} />
+          <Film className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Content Moderation — Reels</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">Review and moderate vertical short video reels.</p>
@@ -45,14 +45,14 @@ export default function AdminReelsPage() {
           placeholder="Search reels..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
         />
       </div>
 
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Reel</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Creator</th>
               <th className="py-3.5 px-4 font-bold">Views</th>
@@ -62,9 +62,9 @@ export default function AdminReelsPage() {
               <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {filtered.map((r) => (
-              <tr key={r.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <p className="font-bold text-[#18181B] truncate max-w-[280px]">{r.title}</p>
                   <p className="text-[10px] text-[#A1A1AA]">{r.date}</p>
@@ -86,10 +86,10 @@ export default function AdminReelsPage() {
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm" onClick={() => handleToggleHide(r.id)}>
-                      {r.status === 'published' ? <EyeOff size={13} /> : <Eye size={13} className="text-[#EC4899]" />}
+                      {r.status === 'published' ? <EyeOff size={13} /> : <Eye size={13} className="text-indigo-600" />}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(r.id)}>
-                      <Trash2 size={13} className="text-[#F43F5E]" />
+                      <Trash2 size={13} className="text-red-600" />
                     </Button>
                   </div>
                 </td>

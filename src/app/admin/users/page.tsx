@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Filter, Mail, Calendar, CreditCard, Eye, AlertTriangle, ShieldAlert, CheckSquare, Square, RefreshCw } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
+import { Modal } from '@/components/admin/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/auth-context';
 import { RoleGuard } from '@/components/auth/RoleGuard';
@@ -176,10 +176,10 @@ export default function AdminUsersPage() {
     >
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3DCE8] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Users className="text-[#EC4899]" size={22} />
+              <Users className="text-indigo-600" size={22} />
               <h1 className="text-xl font-black text-[#18181B] tracking-tight">Platform User Registry</h1>
             </div>
             <p className="text-xs text-[#71717A] mt-1 font-medium">Verify credentials, toggle verification badges, moderate accounts, and assign dynamic permissions.</p>
@@ -190,7 +190,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Advanced Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FFF9FC]/50 p-4 border border-[#F3DCE8] rounded-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 p-4 border border-slate-200 rounded-2xl">
           <div className="flex flex-wrap items-center gap-3 flex-1">
             <div className="relative flex-1 min-w-[240px] max-w-sm">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
                 placeholder="Search by name, username, or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium shadow-xs"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 font-medium shadow-xs"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-bold shadow-xs cursor-pointer"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold shadow-xs cursor-pointer"
               >
                 <option value="all">All Roles</option>
                 {roles.map(r => (
@@ -217,7 +217,7 @@ export default function AdminUsersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-bold shadow-xs cursor-pointer"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold shadow-xs cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -229,14 +229,14 @@ export default function AdminUsersPage() {
 
           {/* Bulk Actions Form (Shows up when 1+ users checked) */}
           {selectedUserIds.length > 0 && (
-            <form onSubmit={handleRequestBulkRoleChange} className="flex items-center gap-2 bg-pink-50 border border-pink-200 px-3.5 py-1.5 rounded-xl animate-pulse">
-              <span className="text-[10px] text-pink-700 font-extrabold uppercase whitespace-nowrap">
+            <form onSubmit={handleRequestBulkRoleChange} className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-xl shadow-lg">
+              <span className="text-[10px] text-indigo-400 font-extrabold uppercase whitespace-nowrap">
                 {selectedUserIds.length} Selected
               </span>
               <select
                 value={bulkTargetRoleId}
                 onChange={(e) => setBulkTargetRoleId(e.target.value)}
-                className="bg-white border border-pink-300 rounded-lg px-2.5 py-1 text-[11px] font-bold text-[#18181B]"
+                className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-indigo-500"
                 required
               >
                 <option value="">Bulk Assign Role...</option>
@@ -246,7 +246,7 @@ export default function AdminUsersPage() {
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
               </select>
-              <Button type="submit" variant="primary" size="sm" className="py-1 text-[10px]">
+              <Button type="submit" variant="primary" size="sm" className="py-1 text-[10px] bg-gradient-to-r from-blue-600 to-indigo-600">
                 Apply
               </Button>
             </form>
@@ -254,15 +254,15 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Users Table */}
-        <Card className="overflow-hidden p-0 border-[#F3DCE8]/80 shadow-sm">
+        <Card className="overflow-hidden p-0 border-slate-200/80 shadow-sm">
           <div className="overflow-x-auto relative">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] font-bold">
+                <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] font-bold">
                   <th className="py-3 px-4 w-10">
                     <button 
                       onClick={() => handleSelectAll(filteredUsers)}
-                      className="text-[#EC4899] hover:opacity-80 p-0.5 cursor-pointer flex items-center justify-center"
+                      className="text-indigo-600 hover:opacity-80 p-0.5 cursor-pointer flex items-center justify-center"
                     >
                       {filteredUsers.length > 0 && filteredUsers.every(u => selectedUserIds.includes(u.id)) ? (
                         <CheckSquare size={15} />
@@ -280,18 +280,18 @@ export default function AdminUsersPage() {
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F3DCE8]/60">
+              <tbody className="divide-y divide-slate-200/60">
                 {filteredUsers.map((u) => {
                   const roleObj = roles.find(r => r.id === u.role);
                   return (
-                    <tr key={u.id} className="hover:bg-[#FFF9FC]/50 transition-colors">
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3 px-4">
                         <button 
                           onClick={() => handleToggleSelectUser(u.id)}
-                          className="text-[#71717A] hover:text-[#EC4899] cursor-pointer flex items-center justify-center"
+                          className="text-[#71717A] hover:text-indigo-600 cursor-pointer flex items-center justify-center"
                         >
                           {selectedUserIds.includes(u.id) ? (
-                            <CheckSquare size={15} className="text-[#EC4899]" />
+                            <CheckSquare size={15} className="text-indigo-600" />
                           ) : (
                             <Square size={15} />
                           )}
@@ -351,7 +351,7 @@ export default function AdminUsersPage() {
           {selectedUser && (
             <div className="space-y-5">
               {/* Modal Avatar details */}
-              <div className="flex items-center gap-4 pb-3 border-b border-[#F3DCE8]">
+              <div className="flex items-center gap-4 pb-3 border-b border-slate-200">
                 <Avatar src={selectedUser.avatar} alt={selectedUser.name} size="lg" isVerified={selectedUser.verified} />
                 <div className="space-y-1">
                   <h4 className="text-sm font-black text-[#18181B] tracking-tight">{selectedUser.name}</h4>
@@ -369,21 +369,21 @@ export default function AdminUsersPage() {
 
               {/* Profile Details Grid */}
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] flex items-center gap-2">
-                  <Mail size={14} className="text-[#EC4899] shrink-0" />
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-2">
+                  <Mail size={14} className="text-indigo-600 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] text-[#71717A] font-bold">Email Address</p>
                     <p className="font-extrabold text-[#18181B] truncate">{selectedUser.email}</p>
                   </div>
                 </div>
-                <div className="p-3 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] flex items-center gap-2">
-                  <Calendar size={14} className="text-[#EC4899] shrink-0" />
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-2">
+                  <Calendar size={14} className="text-indigo-600 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] text-[#71717A] font-bold">Member Since</p>
                     <p className="font-extrabold text-[#18181B] truncate">{selectedUser.joined}</p>
                   </div>
                 </div>
-                <div className="p-3 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] flex items-center gap-2 col-span-2">
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-2 col-span-2">
                   <CreditCard size={14} className="text-emerald-600 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] text-[#71717A] font-bold">Wallet Balance</p>
@@ -393,7 +393,7 @@ export default function AdminUsersPage() {
               </div>
 
               {/* Dynamic Role Modification Section */}
-              <div className="p-4 bg-[#FFF9FC] border border-[#F3DCE8] rounded-2xl space-y-2">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                 <h5 className="text-[10px] font-black uppercase text-[#71717A] tracking-wider">Modify User Authorization Role</h5>
                 <p className="text-[10px] text-[#A1A1AA]">
                   Updating this role instantly updates the RLS clearances of this user profile.
@@ -402,7 +402,7 @@ export default function AdminUsersPage() {
                   <select
                     value={selectedUser.role}
                     onChange={(e) => handleRequestIndividualRoleChange(e.target.value)}
-                    className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-bold cursor-pointer flex-1"
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold cursor-pointer flex-1"
                   >
                     {roles
                       .filter(r => r.status === 'active')
@@ -414,7 +414,7 @@ export default function AdminUsersPage() {
               </div>
 
               {/* Moderation Controls */}
-              <div className="space-y-2 pt-2 border-t border-[#F3DCE8]">
+              <div className="space-y-2 pt-2 border-t border-slate-200">
                 <h5 className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-wider">Account Moderation Actions</h5>
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button
@@ -479,7 +479,7 @@ export default function AdminUsersPage() {
               If elevating user scopes to Super Admin (<code>admin</code>), verify that all targeted accounts are fully trusted. The ledger will record this administrative operation.
             </p>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#F3DCE8]">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
               <Button variant="outline" size="sm" onClick={() => setIsBulkConfirmOpen(false)}>
                 Cancel
               </Button>
@@ -511,7 +511,7 @@ export default function AdminUsersPage() {
               This action will instantly modify authorization states, menu layouts, and backend clearances for this account.
             </p>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#F3DCE8]">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
               <Button variant="outline" size="sm" onClick={() => setIsIndividualConfirmOpen(false)}>
                 Cancel
               </Button>

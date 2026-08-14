@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Isolated Admin Portal styles */
+.admin-portal-isolated {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  background-color: #F8FAFC !important;
+  background-image: none !important; /* Remove pink radial glow */
+  min-height: 100vh;
+}
+
+.admin-portal-isolated * {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Custom Scrollbars */
+.admin-portal-isolated ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-portal-isolated ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+.admin-portal-isolated ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.admin-portal-isolated ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Override Global Selection Colors */
+.admin-portal-isolated ::selection {
+  background-color: #DBEAFE !important;
+  color: #1E40AF !important;
+}
+
+/* Blue/Indigo Gradient Button */
+.admin-btn-primary {
+  background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.admin-btn-primary:hover {
+  background: linear-gradient(135deg, #1D4ED8 0%, #4338CA 100%) !important;
+}
+
+/* Theme Engine variable fallbacks for admin page logic */
+:root.admin-isolated {
+  --color-primary: #3B82F6 !important;
+  --color-primary-hover: #2563EB !important;
+  --color-soft-primary: #DBEAFE !important;
+  --color-light-primary: #EFF6FF !important;
+  --color-accent: #10B981 !important;
+  --color-bg: #F8FAFC !important;
+  --color-surface: #FFFFFF !important;
+  --color-surface-secondary: #F1F5F9 !important;
+  --color-border: #E2E8F0 !important;
+  --color-text-primary: #0F172A !important;
+  --color-text-secondary: #475569 !important;
+  --color-text-muted: #94A3B8 !important;
+}
+
+/* GSAP stagger entrance hidden by default to prevent FOUC */
+.gsap-reveal {
+  opacity: 0;
+}

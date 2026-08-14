@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { FileText, CheckCircle2, XCircle, Clock, AlertCircle, Check } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
+import { Modal } from '@/components/admin/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
 interface Application {
@@ -58,27 +58,27 @@ export default function AdminApplicationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="text-[#EC4899]" size={22} />
+            <FileText className="text-indigo-600" size={22} />
             <h1 className="text-xl font-black text-[#18181B] tracking-tight">Creator Verification</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">Verify applications, review bio summaries, and approve creator roles.</p>
         </div>
 
         {/* Tab filters */}
-        <div className="flex items-center gap-1 bg-white/70 p-1 border border-[#F3DCE8] rounded-2xl shadow-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-white/70 p-1 border border-slate-200 rounded-2xl shadow-xs self-start sm:self-auto">
           {(['all', 'pending', 'approved', 'rejected'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer capitalize ${
                 activeFilter === filter
-                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/50'
+                  ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-slate-100/50'
               }`}
             >
               {filter}
               {filter === 'pending' && (
-                <span className="ml-1.5 bg-[#FFE4E6] text-[#BE123C] px-1.5 py-0.5 rounded-full text-[9px] font-black">
+                <span className="ml-1.5 bg-red-50 text-red-700 px-1.5 py-0.5 rounded-full text-[9px] font-black">
                   {applications.filter(a => a.status === 'pending').length}
                 </span>
               )}
@@ -106,16 +106,16 @@ export default function AdminApplicationsPage() {
               </div>
 
               {/* Bio summary block */}
-              <div className="bg-[#FFF9FC] p-3.5 rounded-2xl border border-[#F3DCE8] space-y-2 text-[11px] font-semibold text-[#18181B]">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2 text-[11px] font-semibold text-[#18181B]">
                 <div className="flex items-center justify-between">
                   <span className="text-[#A1A1AA] text-[10px] font-bold">Category</span>
-                  <span className="text-[#BE185D] font-extrabold">{app.category}</span>
+                  <span className="text-indigo-700 font-extrabold">{app.category}</span>
                 </div>
                 <p className="text-[#71717A] leading-relaxed line-clamp-2">{app.bio}</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-[#F3DCE8]/50">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-200/50">
               <span className="text-[10px] text-[#A1A1AA] font-bold flex items-center gap-1">
                 <Clock size={11} /> {app.appliedAt}
               </span>
@@ -125,7 +125,7 @@ export default function AdminApplicationsPage() {
                 </Button>
                 {app.status === 'pending' && (
                   <>
-                    <Button variant="ghost" size="sm" className="text-[#F43F5E]" onClick={() => handleReject(app.id, app.name)}>
+                    <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleReject(app.id, app.name)}>
                       <XCircle size={14} />
                     </Button>
                     <Button variant="primary" size="sm" onClick={() => handleApprove(app.id, app.name)}>
@@ -154,7 +154,7 @@ export default function AdminApplicationsPage() {
       >
         {selectedApp && (
           <div className="space-y-4 font-semibold text-xs">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F3DCE8]">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
               <Avatar src={selectedApp.avatar} alt={selectedApp.name} size="md" />
               <div>
                 <h4 className="text-xs font-black text-[#18181B] tracking-tight">{selectedApp.name}</h4>
@@ -172,7 +172,7 @@ export default function AdminApplicationsPage() {
 
               <div>
                 <span className="text-[#A1A1AA] text-[10px] block font-bold mb-0.5">Proposed Platform Bio</span>
-                <p className="bg-[#FFF9FC] p-3 rounded-xl border border-[#F3DCE8] text-[#18181B] font-medium leading-relaxed">
+                <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[#18181B] font-medium leading-relaxed">
                   {selectedApp.bio}
                 </p>
               </div>
@@ -183,7 +183,7 @@ export default function AdminApplicationsPage() {
                   href={`https://${selectedApp.socialLink}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[#EC4899] hover:underline"
+                  className="text-indigo-600 hover:underline"
                 >
                   {selectedApp.socialLink}
                 </a>
@@ -198,11 +198,11 @@ export default function AdminApplicationsPage() {
             </div>
 
             {selectedApp.status === 'pending' && (
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8] mt-4">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 mt-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-[#F43F5E] border-rose-200 hover:bg-rose-50"
+                  className="text-red-600 border-rose-200 hover:bg-rose-50"
                   onClick={() => handleReject(selectedApp.id, selectedApp.name)}
                 >
                   Reject Application

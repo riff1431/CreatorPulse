@@ -2,8 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Shield, Search, Bell, ArrowLeft, ChevronDown, User, DollarSign, FileText, Palette, Puzzle, ShieldCheck } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
+import { Shield, Search, Bell, ArrowLeft, ChevronDown, User, DollarSign, FileText, Palette, Puzzle } from 'lucide-react';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const mockSearchResults = [
   { type: 'theme', title: 'Frontend Themes', subtitle: 'Manage active themes & design tokens', url: '/admin/themes' },
@@ -40,22 +40,22 @@ export const AdminHeader: React.FC = () => {
   );
 
   return (
-    <header className="h-16 bg-white border-b border-[#F3DCE8] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 shadow-xs">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 shadow-2xs">
       {/* Left: Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F43F5E] flex items-center justify-center shadow-md shadow-[#EC4899]/20">
-          <Shield className="text-white" size={16} />
+        <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-xs">
+          <Shield className="text-white" size={15} />
         </div>
         <div className="hidden sm:block">
-          <h1 className="text-sm font-black text-[#18181B] leading-none">CreatorPulse</h1>
-          <span className="text-[10px] text-[#EC4899] font-bold uppercase tracking-wider">Admin Panel</span>
+          <h1 className="text-xs font-black text-slate-800 leading-none tracking-tight">CreatorPulse</h1>
+          <span className="text-[9px] text-indigo-600 font-extrabold uppercase tracking-wider block mt-0.5">Admin Console</span>
         </div>
       </div>
 
-      {/* Center: Commmand Palette Search */}
+      {/* Center: Command Palette Search */}
       <div className="flex-1 max-w-md mx-4 hidden md:block relative" ref={searchRef}>
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
           <input
             type="text"
             placeholder="Search themes, plugins, users, payouts..."
@@ -65,16 +65,16 @@ export const AdminHeader: React.FC = () => {
               setShowSearchDropdown(true);
             }}
             onFocus={() => setShowSearchDropdown(true)}
-            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-2xl pl-9 pr-4 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:ring-1 focus:ring-[#EC4899]/30 transition-all font-semibold"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8.5 pr-4 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
           />
         </div>
 
         {showSearchDropdown && (searchQuery.length > 0 || searchQuery === '') && (
-          <div className="absolute left-0 right-0 mt-2 bg-white border border-[#F3DCE8] rounded-2xl shadow-xl p-3 space-y-2 z-50 animate-scale-up">
-            <p className="text-[9px] font-black uppercase text-[#A1A1AA] tracking-widest px-2.5">
-              Quick command suggestions
+          <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg p-2.5 space-y-2 z-50">
+            <p className="text-[8px] font-extrabold uppercase text-slate-400 tracking-wider px-2">
+              Quick Menu Suggestions
             </p>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {filteredResults.map((item, idx) => {
                 let Icon = FileText;
                 if (item.type === 'theme') Icon = Palette;
@@ -84,20 +84,20 @@ export const AdminHeader: React.FC = () => {
 
                 return (
                   <Link key={idx} href={item.url} onClick={() => setShowSearchDropdown(false)}>
-                    <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#FFF1F7] border border-transparent hover:border-[#FBCFE8] cursor-pointer transition-all">
-                      <div className="p-1.5 rounded-lg bg-[#FCE7F3] text-[#EC4899] shrink-0">
-                        <Icon size={13} />
+                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-200/50 cursor-pointer transition-all">
+                      <div className="p-1.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                        <Icon size={12} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#18181B] truncate">{item.title}</p>
-                        <p className="text-[10px] text-[#71717A] font-medium truncate">{item.subtitle}</p>
+                        <p className="text-xs font-bold text-slate-700 truncate">{item.title}</p>
+                        <p className="text-[9px] text-slate-400 font-medium truncate">{item.subtitle}</p>
                       </div>
                     </div>
                   </Link>
                 );
               })}
               {filteredResults.length === 0 && (
-                <p className="text-[10px] text-[#A1A1AA] italic py-2 text-center font-semibold">
+                <p className="text-[10px] text-slate-400 italic py-2 text-center font-medium">
                   No matching admin records found
                 </p>
               )}
@@ -107,61 +107,62 @@ export const AdminHeader: React.FC = () => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5">
         <Link
           href="/feed"
           target="_blank"
-          className="flex items-center gap-1.5 text-xs font-bold text-[#71717A] hover:text-[#EC4899] transition-colors px-3 py-1.5 rounded-xl hover:bg-[#FFF1F7]"
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-slate-50"
         >
-          <ArrowLeft size={14} />
-          <span className="hidden sm:inline">View Public Website</span>
+          <ArrowLeft size={13} />
+          <span className="hidden sm:inline">View Frontend</span>
         </Link>
 
-        <button className="relative p-2.5 text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] rounded-xl transition-colors cursor-pointer border border-transparent">
-          <Bell size={16} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-[#EC4899] rounded-full"></span>
+        <button className="relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-transparent">
+          <Bell size={15} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
         </button>
 
         {/* Profile Menu */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2.5 px-2 py-1 rounded-xl hover:bg-[#FFF1F7] transition-colors cursor-pointer border border-transparent"
+            className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer border border-transparent"
           >
             <Avatar
               src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150"
               alt="Admin"
               size="sm"
             />
-            <div className="hidden sm:block text-left">
-              <p className="text-xs font-bold text-[#18181B] leading-none">Elena Rostova</p>
-              <p className="text-[10px] text-[#EC4899] font-bold mt-0.5">Super Admin</p>
+            <div className="hidden sm:block text-left ml-1">
+              <p className="text-[11px] font-bold text-slate-700 leading-none">Elena Rostova</p>
+              <p className="text-[9px] text-indigo-600 font-extrabold mt-0.5">Super Admin</p>
             </div>
-            <ChevronDown size={12} className="text-[#A1A1AA] hidden sm:block" />
+            <ChevronDown size={11} className="text-slate-400 ml-1.5 hidden sm:block" />
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2.5 w-48 bg-white border border-[#F3DCE8] rounded-2xl shadow-xl p-2.5 space-y-1 z-50 animate-scale-up">
+            <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-0.5 z-50">
               <Link href="/admin/themes" onClick={() => setShowProfileMenu(false)}>
-                <div className="px-3 py-2 text-xs font-bold text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2">
-                  <Palette size={14} className="text-[#EC4899]" />
+                <div className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-md transition-all cursor-pointer flex items-center gap-2">
+                  <Palette size={12} className="text-slate-400" />
                   <span>Frontend Themes</span>
                 </div>
               </Link>
               <Link href="/admin/plugins" onClick={() => setShowProfileMenu(false)}>
-                <div className="px-3 py-2 text-xs font-bold text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2">
-                  <Puzzle size={14} className="text-[#EC4899]" />
+                <div className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-md transition-all cursor-pointer flex items-center gap-2">
+                  <Puzzle size={12} className="text-slate-400" />
                   <span>Plugins & Add-ons</span>
                 </div>
               </Link>
               <Link href="/admin/settings" onClick={() => setShowProfileMenu(false)}>
-                <div className="px-3 py-2 text-xs font-bold text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer">
-                  Platform Settings
+                <div className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-all cursor-pointer flex items-center gap-2">
+                  <User size={12} className="text-slate-400" />
+                  <span>Platform Settings</span>
                 </div>
               </Link>
-              <hr className="border-[#F3DCE8]" />
+              <hr className="border-slate-100 my-1" />
               <Link href="/feed">
-                <div className="px-3 py-2 text-xs font-bold text-[#F43F5E] hover:bg-[#FFE4E6] rounded-xl transition-all cursor-pointer">
+                <div className="px-2.5 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 rounded-md transition-all cursor-pointer">
                   Log Out
                 </div>
               </Link>

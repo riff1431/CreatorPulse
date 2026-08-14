@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { Wallet, CheckCircle2, Eye, Building, Receipt } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
+import { Modal } from '@/components/admin/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
 interface PayoutReq {
@@ -69,25 +69,25 @@ export default function AdminPayoutsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Wallet className="text-[#EC4899]" size={22} />
+            <Wallet className="text-indigo-600" size={22} />
             <h1 className="text-xl font-black text-[#18181B] tracking-tight">Payout Requests</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">Verify payout accounts, process bank wires, and audit logs.</p>
         </div>
 
         {/* Tab Filters */}
-        <div className="flex items-center gap-1 bg-white/70 p-1 border border-[#F3DCE8] rounded-2xl shadow-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-white/70 p-1 border border-slate-200 rounded-2xl shadow-xs self-start sm:self-auto">
           {(['all', 'Pending', 'Approved', 'Completed', 'Rejected'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filter === f ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs' : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/50'
+                filter === f ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs' : 'text-[#71717A] hover:text-[#18181B] hover:bg-slate-100/50'
               }`}
             >
               {f === 'all' ? 'All Ledger' : f}
               {f === 'Pending' && (
-                <span className="ml-1.5 bg-[#FFE4E6] text-[#BE123C] px-1.5 py-0.5 rounded-full text-[9px] font-black">
+                <span className="ml-1.5 bg-red-50 text-red-700 px-1.5 py-0.5 rounded-full text-[9px] font-black">
                   {payouts.filter((p) => p.status === 'Pending').length}
                 </span>
               )}
@@ -97,11 +97,11 @@ export default function AdminPayoutsPage() {
       </div>
 
       {/* Ledger Table */}
-      <Card className="overflow-hidden p-0 border-[#F3DCE8]/80">
+      <Card className="overflow-hidden p-0 border-slate-200/80">
         <div className="overflow-x-auto relative">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] font-bold">
+              <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] font-bold">
                 <th className="py-3.5 px-4">Ref ID</th>
                 <th className="py-3.5 px-4">Creator</th>
                 <th className="py-3.5 px-4">Requested Gross</th>
@@ -112,9 +112,9 @@ export default function AdminPayoutsPage() {
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F3DCE8]/60">
+            <tbody className="divide-y divide-slate-200/60">
               {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-[#FFF9FC]/50 transition-colors">
+                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 text-[#A1A1AA] font-mono font-bold">{p.id}</td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2.5">
@@ -123,7 +123,7 @@ export default function AdminPayoutsPage() {
                     </div>
                   </td>
                   <td className="py-3.5 px-4 text-[#18181B] font-bold">{p.amount}</td>
-                  <td className="py-3.5 px-4 text-[#F43F5E] font-medium hidden sm:table-cell">{p.fee}</td>
+                  <td className="py-3.5 px-4 text-red-600 font-medium hidden sm:table-cell">{p.fee}</td>
                   <td className="py-3.5 px-4 text-emerald-600 font-extrabold hidden sm:table-cell">{p.net}</td>
                   <td className="py-3.5 px-4 text-[#71717A] hidden md:table-cell font-semibold">{p.method}</td>
                   <td className="py-3.5 px-4">
@@ -163,7 +163,7 @@ export default function AdminPayoutsPage() {
         {selectedPayout && (
           <div className="space-y-4 font-semibold text-xs">
             {/* Header info */}
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F3DCE8]">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
               <Avatar src={selectedPayout.avatar} alt={selectedPayout.creator} size="md" />
               <div>
                 <h4 className="text-xs font-black text-[#18181B] tracking-tight">{selectedPayout.creator}</h4>
@@ -172,14 +172,14 @@ export default function AdminPayoutsPage() {
             </div>
 
             {/* Payout invoice grid */}
-            <div className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-2xl p-4 space-y-3 font-semibold text-xs text-[#18181B]">
-              <div className="flex items-center justify-between pb-2 border-b border-[#F3DCE8]/60">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 font-semibold text-xs text-[#18181B]">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                 <span className="text-[#A1A1AA] text-[10px] font-bold">Settlement Account</span>
                 <span className="text-[#18181B] font-extrabold flex items-center gap-1.5">
-                  <Building size={12} className="text-[#EC4899]" /> {selectedPayout.method}
+                  <Building size={12} className="text-indigo-600" /> {selectedPayout.method}
                 </span>
               </div>
-              <p className="text-[#71717A] text-[10px] font-bold bg-white p-2 rounded-xl border border-[#F3DCE8]/60">
+              <p className="text-[#71717A] text-[10px] font-bold bg-white p-2 rounded-xl border border-slate-200/60">
                 {selectedPayout.routingDetails || 'Linked profile connection active.'}
               </p>
               <div className="space-y-1.5 pt-1.5">
@@ -189,9 +189,9 @@ export default function AdminPayoutsPage() {
                 </div>
                 <div className="flex justify-between text-[#71717A]">
                   <span>Processing Fee (1%)</span>
-                  <span className="text-[#F43F5E] font-bold">-{selectedPayout.fee}</span>
+                  <span className="text-red-600 font-bold">-{selectedPayout.fee}</span>
                 </div>
-                <div className="flex justify-between font-bold border-t border-[#F3DCE8] pt-2">
+                <div className="flex justify-between font-bold border-t border-slate-200 pt-2">
                   <span className="text-[#18181B]">Net Payout Released</span>
                   <span className="text-emerald-600 font-extrabold text-sm">{selectedPayout.net}</span>
                 </div>
@@ -209,7 +209,7 @@ export default function AdminPayoutsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-[#F43F5E] border-rose-200 hover:bg-rose-50"
+                      className="text-red-600 border-rose-200 hover:bg-rose-50"
                       onClick={() => handleReject(selectedPayout.id, selectedPayout.creator)}
                     >
                       Reject Request

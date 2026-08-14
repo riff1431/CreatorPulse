@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/admin/ui/Card';
 
 interface AdminStatsCardProps {
   label: string;
@@ -14,17 +14,17 @@ export const AdminStatsCard: React.FC<AdminStatsCardProps> = ({
   value,
   icon,
   trend,
-  trendColor = 'text-[#BE185D]',
+  trendColor = 'text-indigo-600',
 }) => {
   return (
-    <Card className="p-5 space-y-2.5">
-      <div className="flex items-center justify-between text-xs text-[#71717A]">
+    <Card className="p-5 space-y-2">
+      <div className="flex items-center justify-between text-[10px] text-slate-500">
         <span className="font-bold uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <div className="text-2xl sm:text-3xl font-extrabold text-[#18181B]">{value}</div>
+      <div className="text-2xl font-extrabold text-slate-800">{value}</div>
       {trend && (
-        <div className={`text-[11px] ${trendColor} font-bold`}>{trend}</div>
+        <div className={`text-[10px] ${trendColor} font-bold`}>{trend}</div>
       )}
     </Card>
   );

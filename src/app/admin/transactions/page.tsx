@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Receipt, Search, Download } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
 
 const transactions = [
   { id: 'TX-001', date: '2026-08-12', type: 'Membership', from: 'Alex Vance', to: 'Sarah Jenkins', amount: '$15.00', fee: '$0.75', net: '$14.25', status: 'Completed' },
@@ -31,7 +31,7 @@ export default function AdminTransactionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Receipt className="text-[#EC4899]" size={22} />
+            <Receipt className="text-indigo-600" size={22} />
             <h1 className="text-xl font-black text-[#18181B]">Transactions</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">Full platform transaction ledger with fee transparency.</p>
@@ -47,13 +47,13 @@ export default function AdminTransactionsPage() {
             placeholder="Search by user..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
           />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
         >
           <option value="all">All Types</option>
           <option value="Top-Up">Top-Up</option>
@@ -67,7 +67,7 @@ export default function AdminTransactionsPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">ID</th>
               <th className="py-3.5 px-4 font-bold">Date</th>
               <th className="py-3.5 px-4 font-bold">Type</th>
@@ -79,9 +79,9 @@ export default function AdminTransactionsPage() {
               <th className="py-3.5 px-4 font-bold">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {filtered.map((t) => (
-              <tr key={t.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4 text-[#A1A1AA] font-mono font-medium">{t.id}</td>
                 <td className="py-3 px-4 text-[#71717A] font-medium">{t.date}</td>
                 <td className="py-3 px-4">
@@ -96,7 +96,7 @@ export default function AdminTransactionsPage() {
                 <td className="py-3 px-4 text-[#52525B] hidden sm:table-cell font-medium">{t.from}</td>
                 <td className="py-3 px-4 text-[#52525B] hidden sm:table-cell font-medium">{t.to}</td>
                 <td className="py-3 px-4 text-[#18181B] font-bold">{t.amount}</td>
-                <td className="py-3 px-4 text-[#F43F5E] font-medium hidden md:table-cell">{t.fee}</td>
+                <td className="py-3 px-4 text-red-600 font-medium hidden md:table-cell">{t.fee}</td>
                 <td className="py-3 px-4 text-emerald-600 font-bold hidden md:table-cell">{t.net}</td>
                 <td className="py-3 px-4">
                   <Badge variant={t.status === 'Completed' ? 'emerald' : 'amber'} size="sm">{t.status}</Badge>

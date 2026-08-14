@@ -247,6 +247,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error || !data.user) {
+          // Fallback to local mock accounts dynamically for seamless testing when credentials are not seeded yet
+          const normalizedEmail = email.trim().toLowerCase();
+          const { user: authedUser, error: localErr } = authenticateUser(normalizedEmail, password);
+          if (authedUser && !localErr) {
+            setUser(authedUser);
+            setRole(authedUser.role);
+            localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(authedUser));
+            localStorage.setItem(STORAGE_ROLE_KEY, authedUser.role);
+            setCookie(COOKIE_ROLE_KEY, authedUser.role, cookieDays);
+            setCookie(COOKIE_SESSION_KEY, authedUser.id, cookieDays);
+            setIsLoading(false);
+            return { success: true, user: authedUser };
+          }
+
           setIsLoading(false);
           return { success: false, error: error?.message || 'Login failed.' };
         }

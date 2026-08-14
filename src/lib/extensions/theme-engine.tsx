@@ -3,14 +3,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from './theme-types';
-import { DEFAULT_THEMES } from './default-extensions';
+import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG } from './default-extensions';
 import { logAuditEvent } from './package-installer';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
   activeTheme: ThemeManifest;
+  libraryThemes: ThemeManifest[];
   activateTheme: (themeId: string) => boolean;
+  deactivateTheme: (themeId: string) => void;
+  updateThemeVersion: (themeId: string) => void;
   installTheme: (manifest: ThemeManifest) => boolean;
+  installFromLibrary: (themeId: string) => boolean;
   duplicateTheme: (themeId: string) => ThemeManifest | null;
   deleteTheme: (themeId: string) => boolean;
   customizeTheme: (themeId: string, updatedTokens: Partial<ThemeTokens>, updatedSettings?: Partial<ThemeVisualSettings>) => void;
@@ -26,7 +30,7 @@ const STORAGE_THEMES_KEY = 'creatorpulse_themes_v2';
 const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id_v2';
 const CURRENT_APP_VERSION = '1.0.0';
 
-// Fixed Admin Control Panel tokens (Immune & isolated from frontend themes)
+// Fixed Admin Control Panel tokens (Permanently isolated and immune from frontend themes)
 export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
   primary: '#EC4899',
   primaryHover: '#DB2777',
@@ -62,7 +66,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       let currentThemes = DEFAULT_THEMES;
       if (storedThemesRaw) {
         currentThemes = JSON.parse(storedThemesRaw);
-        // Ensure Blush Core is always present as default
+        // Ensure Blush Core default theme is always present
         if (!currentThemes.some(t => t.id === 'theme-blush-core')) {
           currentThemes = [DEFAULT_THEMES[0], ...currentThemes];
         }
@@ -128,7 +132,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         root.style.setProperty('--radius-card', tokens.cardRadius);
         root.style.setProperty('--radius-button', tokens.buttonRadius);
 
-        // Visual Layout & Animation Settings
+        // Layout & Animation Geometry Settings
         root.style.setProperty('--theme-container-width', settings.containerWidth || 'max-w-7xl');
         root.style.setProperty('--theme-button-style', settings.buttonStyle || 'gradient-glow');
         root.style.setProperty('--theme-animation-intensity', settings.animationIntensity || 'normal');
@@ -140,7 +144,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           root.classList.remove('dark-theme');
         }
       } catch (err) {
-        console.error('Error applying theme tokens, falling back to Blush Core', err);
+        console.error('Error applying theme tokens, safely falling back to Blush Core', err);
         const fallback = DEFAULT_THEMES[0].tokens;
         root.style.setProperty('--color-primary', fallback.primary);
         root.style.setProperty('--color-bg', fallback.background);
@@ -173,10 +177,54 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_ACTIVATED',
       entityType: 'theme',
       entityName: target.name,
-      details: `Activated frontend theme version ${target.version} (${target.category})`,
+      details: `Activated frontend theme v${target.version} (${target.category})`,
       severity: 'success'
     });
     return true;
+  };
+
+  const deactivateTheme = (themeId: string) => {
+    if (themeId === 'theme-blush-core') {
+      alert('The core default Blush Core theme cannot be deactivated without activating another theme.');
+      return;
+    }
+    activateTheme('theme-blush-core');
+  };
+
+  const updateThemeVersion = (themeId: string) => {
+    const target = themes.find((t) => t.id === themeId);
+    if (!target || !target.latestVersion) return;
+
+    const updated = themes.map((t) => {
+      if (t.id === themeId) {
+        return {
+          ...t,
+          version: t.latestVersion!,
+          hasUpdate: false,
+          updatedAt: new Date().toISOString().split('T')[0],
+          changelog: [
+            {
+              version: t.latestVersion!,
+              date: new Date().toISOString().split('T')[0],
+              changes: ['Automatic design tokens and responsive rules upgrade']
+            },
+            ...t.changelog
+          ]
+        };
+      }
+      return t;
+    });
+
+    setThemes(updated);
+    localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
+
+    logAuditEvent({
+      action: 'THEME_INSTALLED',
+      entityType: 'theme',
+      entityName: target.name,
+      details: `Updated theme from v${target.version} to v${target.latestVersion}`,
+      severity: 'success'
+    });
   };
 
   const duplicateTheme = (themeId: string): ThemeManifest | null => {
@@ -235,10 +283,23 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_INSTALLED',
       entityType: 'theme',
       entityName: manifest.name,
-      details: `Installed frontend theme version ${manifest.version} by ${manifest.author}`,
+      details: `Installed frontend theme v${manifest.version} by ${manifest.author}`,
       severity: 'success'
     });
     return true;
+  };
+
+  const installFromLibrary = (themeId: string): boolean => {
+    const catalogItem = THEME_LIBRARY_CATALOG.find((t) => t.id === themeId);
+    if (!catalogItem) return false;
+
+    const manifest: ThemeManifest = {
+      ...catalogItem,
+      isActive: false,
+      installedAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    return installTheme(manifest);
   };
 
   const deleteTheme = (themeId: string): boolean => {
@@ -247,7 +308,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // Prevent deletion of Blush Core default theme
     if (target.isDefault || target.id === 'theme-blush-core') {
-      alert('The built-in default "Blush Core" theme is permanent and cannot be deleted.');
+      alert('The built-in default "Blush Core" theme is permanent and protected from deletion.');
       return false;
     }
 
@@ -330,9 +391,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       value={{
         themes,
         activeTheme,
+        libraryThemes: THEME_LIBRARY_CATALOG,
         activateTheme,
-        duplicateTheme,
+        deactivateTheme,
+        updateThemeVersion,
         installTheme,
+        installFromLibrary,
+        duplicateTheme,
         deleteTheme,
         customizeTheme,
         rollbackTheme,

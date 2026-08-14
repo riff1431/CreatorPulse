@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Layers, Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
 
 interface Category {
   id: string;
@@ -56,7 +56,7 @@ export default function AdminCategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="text-[#EC4899]" size={22} />
+            <Layers className="text-indigo-600" size={22} />
             <h1 className="text-xl font-black text-[#18181B]">Categories</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">Manage creator and content categories.</p>
@@ -73,7 +73,7 @@ export default function AdminCategoriesPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Category name..."
-            className="flex-1 bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
             autoFocus
           />
           <Button variant="primary" size="sm" onClick={handleAdd}>Save</Button>
@@ -84,7 +84,7 @@ export default function AdminCategoriesPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 w-8"></th>
               <th className="py-3.5 px-4 font-bold">Name</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Slug</th>
@@ -94,9 +94,9 @@ export default function AdminCategoriesPage() {
               <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {categories.map((c) => (
-              <tr key={c.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4 text-[#A1A1AA] cursor-grab"><GripVertical size={14} /></td>
                 <td className="py-3 px-4 font-bold text-[#18181B]">{c.name}</td>
                 <td className="py-3 px-4 text-[#71717A] font-mono hidden sm:table-cell">{c.slug}</td>
@@ -110,7 +110,7 @@ export default function AdminCategoriesPage() {
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm"><Pencil size={13} /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}><Trash2 size={13} className="text-[#F43F5E]" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}><Trash2 size={13} className="text-red-600" /></Button>
                   </div>
                 </td>
               </tr>

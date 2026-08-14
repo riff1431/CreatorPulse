@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { Clock, Search, Trash2 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const allStories = [
   { id: '1', creator: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', caption: 'Workspace preview! Recording today\'s design masterclass 🎨', views: 340, status: 'active', expiresAt: '21h remaining' },
@@ -25,7 +25,7 @@ export default function AdminStoriesPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <Clock className="text-[#EC4899]" size={22} />
+          <Clock className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Content Moderation — Stories</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">Monitor active and expired 24-hour creator stories.</p>
@@ -34,7 +34,7 @@ export default function AdminStoriesPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Creator</th>
               <th className="py-3.5 px-4 font-bold">Caption</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Views</th>
@@ -43,9 +43,9 @@ export default function AdminStoriesPage() {
               <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {stories.map((s) => (
-              <tr key={s.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-3">
                     <Avatar src={s.avatar} alt={s.creator} size="sm" hasStory={s.status === 'active'} />
@@ -60,7 +60,7 @@ export default function AdminStoriesPage() {
                 </td>
                 <td className="py-3 px-4 text-right">
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(s.id)}>
-                    <Trash2 size={13} className="text-[#F43F5E]" />
+                    <Trash2 size={13} className="text-red-600" />
                   </Button>
                 </td>
               </tr>

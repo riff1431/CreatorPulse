@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { FileText, Search, Filter, Eye, EyeOff, Trash2, Image, Video, BarChart2, Type, Volume2 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const allPosts = [
   { id: '1', author: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', title: 'Modern Micro-Interactions in Web Apps', type: 'image', visibility: 'public', likes: 342, comments: 28, views: 2410, status: 'published', date: '2026-08-12' },
@@ -16,8 +16,8 @@ const allPosts = [
 ];
 
 const typeIcons: Record<string, React.ReactNode> = {
-  image: <Image size={12} className="text-[#EC4899]" />,
-  video: <Video size={12} className="text-[#BE185D]" />,
+  image: <Image size={12} className="text-indigo-600" />,
+  video: <Video size={12} className="text-indigo-700" />,
   poll: <BarChart2 size={12} className="text-amber-500" />,
   text: <Type size={12} className="text-[#71717A]" />,
   audio: <Volume2 size={12} className="text-purple-500" />,
@@ -46,7 +46,7 @@ export default function AdminPostsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <FileText className="text-[#EC4899]" size={22} />
+          <FileText className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Content Moderation — Posts</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">Review, moderate, hide, or delete user and creator posts.</p>
@@ -60,13 +60,13 @@ export default function AdminPostsPage() {
             placeholder="Search posts by title or author..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
           />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
         >
           <option value="all">All Types</option>
           <option value="image">Image</option>
@@ -80,7 +80,7 @@ export default function AdminPostsPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Post Title</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Author</th>
               <th className="py-3.5 px-4 font-bold">Type</th>
@@ -90,9 +90,9 @@ export default function AdminPostsPage() {
               <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {filtered.map((p) => (
-              <tr key={p.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <p className="font-bold text-[#18181B] truncate max-w-[280px]">{p.title}</p>
                   <p className="text-[10px] text-[#A1A1AA]">{p.date}</p>
@@ -116,10 +116,10 @@ export default function AdminPostsPage() {
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm" onClick={() => handleToggleHide(p.id)}>
-                      {p.status === 'published' ? <EyeOff size={13} /> : <Eye size={13} className="text-[#EC4899]" />}
+                      {p.status === 'published' ? <EyeOff size={13} /> : <Eye size={13} className="text-indigo-600" />}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
-                      <Trash2 size={13} className="text-[#F43F5E]" />
+                      <Trash2 size={13} className="text-red-600" />
                     </Button>
                   </div>
                 </td>

@@ -1,10 +1,11 @@
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import './admin.css';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="admin-portal-isolated min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FFE4E6] selection:text-[#BE123C]">
+    <div className="admin-portal-isolated min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-blue-100 selection:text-blue-900">
       <AdminHeader />
       <div className="flex flex-1 min-h-[calc(100vh-64px)]">
         <AdminSidebar />

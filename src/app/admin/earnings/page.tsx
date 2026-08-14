@@ -3,8 +3,8 @@
 import React from 'react';
 import { TrendingUp, DollarSign } from 'lucide-react';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
-import { Card } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const earningsData = [
   { month: 'Feb', revenue: 18000, fees: 900, payouts: 15300 },
@@ -31,7 +31,7 @@ export default function AdminEarningsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <TrendingUp className="text-[#EC4899]" size={22} />
+          <TrendingUp className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Platform Earnings</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">Revenue overview, platform fees, and creator earnings breakdown.</p>
@@ -39,8 +39,8 @@ export default function AdminEarningsPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <AdminStatsCard label="Total Revenue" value="$241,500" icon={<DollarSign size={16} className="text-emerald-600" />} trend="+18.2% this month" trendColor="text-emerald-600" />
-        <AdminStatsCard label="Platform Fees" value="$12,075" icon={<DollarSign size={16} className="text-[#EC4899]" />} trend="5% commission" trendColor="text-[#BE185D]" />
-        <AdminStatsCard label="Creator Payouts" value="$198,425" icon={<DollarSign size={16} className="text-[#EC4899]" />} trend="82.1% of revenue" trendColor="text-[#71717A]" />
+        <AdminStatsCard label="Platform Fees" value="$12,075" icon={<DollarSign size={16} className="text-indigo-600" />} trend="5% commission" trendColor="text-indigo-700" />
+        <AdminStatsCard label="Creator Payouts" value="$198,425" icon={<DollarSign size={16} className="text-indigo-600" />} trend="82.1% of revenue" trendColor="text-[#71717A]" />
         <AdminStatsCard label="Net Platform Earnings" value="$31,000" icon={<TrendingUp size={16} className="text-amber-600" />} trend="After payouts + fees" trendColor="text-amber-600" />
       </div>
 
@@ -53,7 +53,7 @@ export default function AdminEarningsPage() {
               <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] text-[#71717A] font-bold">${(d.revenue / 1000).toFixed(0)}k</span>
                 <div className="w-full flex flex-col gap-0.5" style={{ height: `${(d.revenue / maxRevenue) * 100}%` }}>
-                  <div className="flex-1 bg-gradient-to-t from-[#EC4899] to-[#F472B6] rounded-t-xl shadow-sm shadow-[#EC4899]/15" />
+                  <div className="flex-1 bg-gradient-to-t from-[#4F46E5] to-[#6366F1] rounded-t-xl shadow-sm shadow-[#4F46E5]/15" />
                 </div>
                 <span className="text-[11px] text-[#71717A] font-semibold">{d.month}</span>
               </div>
@@ -66,7 +66,7 @@ export default function AdminEarningsPage() {
           <h3 className="text-sm font-bold text-[#18181B]">Top Earning Creators</h3>
           <div className="space-y-3">
             {topCreators.map((c, i) => (
-              <div key={c.name} className="flex items-center justify-between text-xs p-2 rounded-xl hover:bg-[#FFF9FC]">
+              <div key={c.name} className="flex items-center justify-between text-xs p-2 rounded-xl hover:bg-slate-50">
                 <div className="flex items-center gap-3">
                   <span className="text-[#A1A1AA] font-bold w-4">{i + 1}</span>
                   <Avatar src={c.avatar} alt={c.name} size="sm" />

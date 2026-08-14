@@ -33,6 +33,11 @@ export interface ThemeChangelog {
   changes: string[];
 }
 
+export interface ThemeAssets {
+  fonts?: string[];
+  cssOverrides?: string;
+}
+
 export interface ThemeManifest {
   id: string;
   name: string;
@@ -47,10 +52,14 @@ export interface ThemeManifest {
   minAppVersion: string;
   tokens: ThemeTokens;
   settings: ThemeVisualSettings;
+  assets?: ThemeAssets;
   changelog: ThemeChangelog[];
-  isDefault?: boolean;     // True for "Blush Core" (cannot be deleted)
+  isDefault?: boolean;     // True for "Blush Core" (permanently protected)
   isCustom?: boolean;
   isActive?: boolean;
+  hasUpdate?: boolean;
+  latestVersion?: string;
+  isLibraryItem?: boolean;
   installedAt: string;
   updatedAt: string;
 }

@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { UserCheck, Search, Filter, MoreVertical, Star, DollarSign } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const creators = [
   { id: '1', name: 'Sarah Jenkins', username: 'sarahdesign', email: 'sarah@designcode.com', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', category: 'Art & Design', subscribers: 840, earnings: '$34,500', status: 'verified' },
@@ -29,7 +29,7 @@ export default function AdminCreatorsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <UserCheck className="text-[#EC4899]" size={22} />
+          <UserCheck className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Creator Management</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">Manage verified creators, categories, and earnings performance.</p>
@@ -43,13 +43,13 @@ export default function AdminCreatorsPage() {
             placeholder="Search creators..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
         >
           <option value="all">All Categories</option>
           <option value="Art & Design">Art & Design</option>
@@ -63,7 +63,7 @@ export default function AdminCreatorsPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Creator</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Category</th>
               <th className="py-3.5 px-4 font-bold">Subscribers</th>
@@ -72,9 +72,9 @@ export default function AdminCreatorsPage() {
               <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {filtered.map((c) => (
-              <tr key={c.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-3">
                     <Avatar src={c.avatar} alt={c.name} size="sm" isVerified={c.status === 'verified'} />

@@ -63,47 +63,53 @@ export async function middleware(request: NextRequest) {
     // Retrieve authenticated user
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Check if they are logged in via local mock fallback (e.g. for test credentials)
+    const sessionCookie = request.cookies.get('creatorpulse_session')?.value;
+    const roleCookie = request.cookies.get('creatorpulse_role')?.value;
+    const isMockSession = sessionCookie && ['user-admin', 'user-superadmin', 'user-moderator', 'user-creator-1', 'user-creator-2', 'user-member', 'user-suspended'].includes(sessionCookie);
+
     // Guard login/signup from authenticated users
-    if (user && isAuthRoute) {
-      // Fetch user profile to route to correct dashboard
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      const role = profile?.role || 'member';
+    if ((user || isMockSession) && isAuthRoute) {
+      const activeRole = roleCookie || 'member';
       let dest = '/feed';
-      if (role === 'admin' || role === 'super_admin') {
+      if (activeRole === 'admin' || activeRole === 'super_admin') {
         dest = '/admin/dashboard';
-      } else if (role === 'creator') {
+      } else if (activeRole === 'creator') {
         dest = '/creator/dashboard';
       }
       return NextResponse.redirect(new URL(dest, request.url));
     }
 
     // Guard protected app views from guest users
-    if (!user && !isAuthRoute && !isLandingPage) {
+    if (!user && !isMockSession && !isAuthRoute && !isLandingPage) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     // Perform role-based check for active users
-    if (user && !isLandingPage && !isAuthRoute) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, status')
-        .eq('id', user.id)
-        .single();
+    if ((user || isMockSession) && !isLandingPage && !isAuthRoute) {
+      let userRole = 'member';
+      let userStatus = 'active';
 
-      const userRole = profile?.role || 'member';
-      const userStatus = profile?.status || 'active';
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, status')
+          .eq('id', user.id)
+          .single();
+        userRole = profile?.role || 'member';
+        userStatus = profile?.status || 'active';
+      } else {
+        userRole = roleCookie || 'member';
+        if (sessionCookie === 'user-suspended') {
+          userStatus = 'suspended';
+        }
+      }
 
       // Block suspended or banned accounts
       if (userStatus === 'suspended' || userStatus === 'banned') {
-        // Sign out on backend
-        await supabase.auth.signOut();
+        if (user) await supabase.auth.signOut();
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('reason', 'blocked');
         

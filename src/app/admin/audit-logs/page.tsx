@@ -7,9 +7,9 @@ import {
 } from 'lucide-react';
 import { getAuditLogs, logAuditEvent } from '@/lib/extensions/package-installer';
 import { AuditLogEntry } from '@/lib/extensions/plugin-types';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/admin/ui/Card';
+import { Button } from '@/components/admin/ui/Button';
+import { Badge } from '@/components/admin/ui/Badge';
 
 export default function AdminAuditLogsPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -65,10 +65,10 @@ export default function AdminAuditLogsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3DCE8] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <History className="text-[#EC4899]" size={24} />
+            <History className="text-indigo-600" size={24} />
             <h1 className="text-2xl font-black text-[#18181B]">Extension Audit Logs & Security Trail</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
@@ -105,8 +105,8 @@ export default function AdminAuditLogsPage() {
               onClick={() => setSelectedSeverity(sev)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                 selectedSeverity === sev
-                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                  : 'bg-white text-[#71717A] border border-[#F3DCE8] hover:text-[#18181B]'
+                  ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
+                  : 'bg-white text-[#71717A] border border-slate-200 hover:text-[#18181B]'
               }`}
             >
               {sev}
@@ -121,7 +121,7 @@ export default function AdminAuditLogsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search audit trail..."
-            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
           />
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function AdminAuditLogsPage() {
       <Card className="p-0 overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] text-[#71717A] bg-[#FFF9FC]">
+            <tr className="border-b border-slate-200 text-[#71717A] bg-slate-50">
               <th className="py-3 px-4 font-bold">Timestamp</th>
               <th className="py-3 px-4 font-bold">Action</th>
               <th className="py-3 px-4 font-bold">Target Entity</th>
@@ -139,7 +139,7 @@ export default function AdminAuditLogsPage() {
               <th className="py-3 px-4 font-bold">Severity</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8] text-[#18181B]">
+          <tbody className="divide-y divide-slate-200 text-[#18181B]">
             {filteredLogs.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-8 text-center text-[#71717A] font-medium">
@@ -148,11 +148,11 @@ export default function AdminAuditLogsPage() {
               </tr>
             ) : (
               filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-[#FFF9FC] transition-colors">
+                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-3 px-4 font-mono text-[11px] text-[#71717A] whitespace-nowrap">
                     {log.timestamp}
                   </td>
-                  <td className="py-3 px-4 font-mono font-bold text-[#BE185D] whitespace-nowrap">
+                  <td className="py-3 px-4 font-mono font-bold text-indigo-700 whitespace-nowrap">
                     {log.action}
                   </td>
                   <td className="py-3 px-4 font-bold text-[#18181B] whitespace-nowrap">

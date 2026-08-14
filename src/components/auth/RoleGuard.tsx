@@ -31,8 +31,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 space-y-3">
-        <div className="w-10 h-10 rounded-full border-3 border-[#EC4899]/30 border-t-[#EC4899] animate-spin"></div>
-        <p className="text-xs text-[#71717A] font-bold">Verifying security credentials & access rights...</p>
+        <div className="w-10 h-10 rounded-full border-3 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] animate-spin"></div>
+        <p className="text-xs text-[var(--color-text-secondary)] font-bold">Verifying security credentials & access rights...</p>
       </div>
     );
   }
@@ -62,31 +62,31 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
 
     return (
       <div className="max-w-xl mx-auto py-12 px-4 space-y-6">
-        <Card className="p-8 text-center space-y-6 border border-[#F3DCE8] shadow-lg shadow-[#EC4899]/5">
-          <div className="w-16 h-16 rounded-3xl bg-[#FFE4E6] border border-[#FECDD3] flex items-center justify-center text-[#F43F5E] mx-auto shadow-sm">
+        <Card className="p-8 text-center space-y-6 border border-[var(--color-border)] shadow-lg">
+          <div className="w-16 h-16 rounded-3xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500 mx-auto shadow-sm">
             <ShieldAlert size={32} />
           </div>
 
           <div className="space-y-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#F43F5E] bg-[#FFE4E6] px-3 py-1 rounded-full border border-[#FECDD3]">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">
               Access Restricted
             </span>
-            <h2 className="text-2xl font-black text-[#18181B] mt-2">
+            <h2 className="text-2xl font-black text-[var(--color-text-primary)] mt-2">
               {fallbackTitle || 'Security Clearance Required'}
             </h2>
-            <p className="text-xs text-[#71717A] leading-relaxed max-w-md mx-auto font-medium">
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed max-w-md mx-auto font-medium">
               {fallbackMessage ||
                 `You are currently logged in as ${user?.fullName || 'Guest'} with the "${role.toUpperCase()}" role. This operation requires the privilege "${label}".`}
             </p>
           </div>
 
           {authorizedRoles.length > 0 && (
-            <div className="bg-[#FFF9FC] p-4 rounded-2xl border border-[#F3DCE8] space-y-3 text-left">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#18181B]">
-                <Sparkles size={14} className="text-[#EC4899]" />
+            <div className="bg-[var(--color-surface-secondary)] p-4 rounded-2xl border border-[var(--color-border)] space-y-3 text-left">
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-primary)]">
+                <Sparkles size={14} className="text-[var(--color-primary)]" />
                 <span>Sandbox Instant Demo Bypass:</span>
               </div>
-              <p className="text-[11px] text-[#71717A]">
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
                 Switch your active role instantly to test this protected view:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -109,7 +109,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 border-t border-[#F3DCE8]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 border-t border-[var(--color-border)]">
             <Link href="/auth/login" className="w-full sm:w-auto">
               <Button variant="outline" size="sm" className="w-full" leftIcon={<LogIn size={14} />}>
                 Sign In with Different Account

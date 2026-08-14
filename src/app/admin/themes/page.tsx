@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Palette, Upload, Sparkles, Check, Download, RotateCcw, 
-  Trash2, Sliders, ExternalLink, ShieldCheck, Info, X, CheckCircle2, 
-  AlertTriangle, Layers, Eye, Copy, RefreshCw, Lock, Heart, MessageSquare, 
-  Star, Settings, Image as ImageIcon, SlidersHorizontal, Sparkle
+import {
+  Palette, Upload, Check, Download, RotateCcw, Trash2, Sliders,
+  ExternalLink, ShieldCheck, Info, X, CheckCircle2, AlertTriangle,
+  Layers, Eye, Copy, RefreshCw, Lock, Heart, MessageSquare, Star,
+  BookOpen, Terminal, Plus, Search, Sparkles, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import { useTheme } from '@/lib/extensions/theme-engine';
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from '@/lib/extensions/theme-types';
@@ -16,24 +16,35 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
 export default function AdminThemesPage() {
-  const { 
-    themes, 
-    activeTheme, 
-    activateTheme, 
+  const {
+    themes,
+    activeTheme,
+    libraryThemes,
+    activateTheme,
+    deactivateTheme,
+    updateThemeVersion,
+    installTheme,
+    installFromLibrary,
     duplicateTheme,
-    installTheme, 
-    deleteTheme, 
-    customizeTheme, 
-    rollbackTheme, 
-    exportTheme 
+    deleteTheme,
+    customizeTheme,
+    rollbackTheme,
+    exportTheme
   } = useTheme();
 
+  const [activeTab, setActiveTab] = useState<'installed' | 'active' | 'inactive' | 'updates' | 'library'>('installed');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Modals
   const [selectedThemeForDetails, setSelectedThemeForDetails] = useState<ThemeManifest | null>(null);
   const [customizerTheme, setCustomizerTheme] = useState<ThemeManifest | null>(null);
   const [livePreviewTheme, setLivePreviewTheme] = useState<ThemeManifest | null>(null);
   const [previewTab, setPreviewTab] = useState<'feed' | 'profile' | 'landing'>('feed');
-
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isDocsOpen, setIsDocsOpen] = useState(false);
+
+  // Upload state
   const [uploadText, setUploadText] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -54,7 +65,7 @@ export default function AdminThemesPage() {
 
   const triggerNotice = (msg: string) => {
     setNotificationMsg(msg);
-    setTimeout(() => setNotificationMsg(''), 3000);
+    setTimeout(() => setNotificationMsg(''), 3500);
   };
 
   const openCustomizer = (theme: ThemeManifest) => {
@@ -94,7 +105,7 @@ export default function AdminThemesPage() {
       }
     );
     setCustomizerTheme(null);
-    triggerNotice(`Saved customizations for ${customizerTheme.name}!`);
+    triggerNotice(`Saved customizations for "${customizerTheme.name}"!`);
   };
 
   const handleDuplicate = (theme: ThemeManifest) => {
@@ -104,7 +115,7 @@ export default function AdminThemesPage() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
     setUploadSuccess(false);
     const file = e.target.files?.[0];
@@ -119,6 +130,11 @@ export default function AdminThemesPage() {
 
         if (!result.valid || !result.theme) {
           setUploadError(result.error || 'Failed to validate theme package.');
+          return;
+        }
+
+        if (themes.some((t) => t.id === result.theme!.id)) {
+          setUploadError(`A theme with ID "${result.theme!.id}" is already installed.`);
           return;
         }
 
@@ -146,6 +162,12 @@ export default function AdminThemesPage() {
         setUploadError(result.error || 'Validation error');
         return;
       }
+
+      if (themes.some((t) => t.id === result.theme!.id)) {
+        setUploadError(`A theme with ID "${result.theme!.id}" is already installed.`);
+        return;
+      }
+
       installTheme(result.theme);
       setUploadSuccess(true);
       triggerNotice(`Installed theme "${result.theme.name}"!`);
@@ -165,11 +187,97 @@ export default function AdminThemesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${theme.slug}-frontend-theme-v${theme.version}.json`;
+    a.download = `${theme.slug}-theme-v${theme.version}.json`;
     a.click();
     URL.revokeObjectURL(url);
     triggerNotice(`Exported ${theme.name} JSON package`);
   };
+
+  const handleDownloadStarter = () => {
+    const starterTheme = {
+      id: 'theme-starter-template',
+      name: 'CreatorPulse Starter Theme',
+      slug: 'starter-template',
+      description: 'Official template demonstrating Theme SDK v1.0 with color tokens, corner geometry, container layout, and component styling.',
+      version: '1.0.0',
+      author: 'Your Design Studio',
+      authorUrl: 'https://yourdesignstudio.com',
+      previewImageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
+      category: 'Modern Light',
+      tags: ['Starter', 'SDK v1.0', 'Template'],
+      minAppVersion: '1.0.0',
+      tokens: {
+        primary: '#EC4899',
+        primaryHover: '#DB2777',
+        softPrimary: '#FCE7F3',
+        lightPrimary: '#FDF2F8',
+        accent: '#F43F5E',
+        background: '#FFF9FC',
+        surface: '#FFFFFF',
+        surfaceSecondary: '#FFF1F7',
+        border: '#F3DCE8',
+        textPrimary: '#18181B',
+        textSecondary: '#71717A',
+        textMuted: '#A1A1AA',
+        cardRadius: '20px',
+        buttonRadius: '14px',
+        fontFamily: 'Plus Jakarta Sans, sans-serif',
+        fontHeading: 'Plus Jakarta Sans, sans-serif',
+        isDark: false
+      },
+      settings: {
+        logoUrl: '',
+        faviconUrl: '',
+        containerWidth: 'max-w-7xl',
+        buttonStyle: 'gradient-glow',
+        animationIntensity: 'normal',
+        cardShadow: 'soft-pink'
+      },
+      changelog: [
+        { version: '1.0.0', date: new Date().toISOString().split('T')[0], changes: ['Initial starter release'] }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(starterTheme, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'creatorpulse-theme-starter-v1.0.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    triggerNotice('Downloaded CreatorPulse Theme SDK v1.0 Starter Template!');
+  };
+
+  // Filter themes based on tab, search, and category
+  const filteredInstalledThemes = themes.filter((t) => {
+    if (activeTab === 'active' && t.id !== activeTheme.id) return false;
+    if (activeTab === 'inactive' && t.id === activeTheme.id) return false;
+    if (activeTab === 'updates' && !t.hasUpdate) return false;
+
+    const matchesSearch =
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredLibraryThemes = libraryThemes.filter((t) => {
+    const isAlreadyInstalled = themes.some((installed) => installed.id === t.id);
+    const matchesSearch =
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+
+    return !isAlreadyInstalled && matchesSearch && matchesCategory;
+  });
+
+  const updateCount = themes.filter((t) => t.hasUpdate).length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -178,28 +286,36 @@ export default function AdminThemesPage() {
         <div>
           <div className="flex items-center gap-2">
             <Palette className="text-[#EC4899]" size={24} />
-            <h1 className="text-2xl font-black text-[#18181B]">Frontend Theme System</h1>
+            <h1 className="text-2xl font-black text-[#18181B]">Theme Management</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Manage frontend branding and visual styles. Default theme: <strong className="text-[#BE185D]">Blush Core</strong>.
+            Manage public and member visual styles. Built-in default: <strong className="text-[#BE185D]">Blush Core</strong>. Standard Theme SDK v1.0.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<BookOpen size={14} />}
+            onClick={() => setIsDocsOpen(true)}
+          >
+            Theme SDK Docs
+          </Button>
           <Button
             variant="primary"
             size="sm"
             leftIcon={<Upload size={14} />}
             onClick={() => setIsUploadOpen(true)}
           >
-            Import Theme (ZIP / JSON)
+            Upload Theme (.ZIP / JSON)
           </Button>
         </div>
       </div>
 
       {/* Toast Notification Alert */}
       {notificationMsg && (
-        <div className="p-3.5 bg-[#FFF1F7] border border-[#FBCFE8] rounded-2xl text-xs text-[#BE185D] font-bold flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+        <div className="p-3.5 bg-[#FFF1F7] border border-[#FBCFE8] rounded-2xl text-xs text-[#BE185D] font-bold flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={16} className="text-[#EC4899]" />
             <span>{notificationMsg}</span>
@@ -210,7 +326,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Admin Panel Isolation Notice */}
+      {/* Admin Panel Isolation Guarantee Banner */}
       <div className="p-4 bg-white border border-[#F3DCE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -218,13 +334,13 @@ export default function AdminThemesPage() {
           </div>
           <div>
             <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
-              <span>Admin Panel Isolation Active</span>
+              <span>Admin Panel Isolation Guarantee</span>
               <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
                 Permanently Independent
               </span>
             </h4>
             <p className="text-[11px] text-[#71717A] mt-0.5">
-              Frontend themes exclusively modify public website styling, feeds, creator profiles, and member portals. The Admin Panel UI is permanently locked to core administrative tokens.
+              Frontend themes exclusively control public website views, feeds, creator profiles, and member portals. The Admin Panel is permanently locked to standard administrative tokens.
             </p>
           </div>
         </div>
@@ -236,209 +352,374 @@ export default function AdminThemesPage() {
         </Link>
       </div>
 
-      {/* Active Theme Card */}
-      <Card className="p-6 bg-gradient-to-br from-white to-[#FFF1F7] border border-[#F3DCE8] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-[#F3DCE8] shadow-md">
-              <img src={activeTheme.previewImageUrl} alt={activeTheme.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE7F3] text-[#BE185D] px-2.5 py-0.5 rounded-full border border-[#FBCFE8]">
-                  Active Theme
-                </span>
-                {activeTheme.isDefault && (
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200 flex items-center gap-1">
-                    <Lock size={10} /> Built-in Default
-                  </span>
-                )}
-                <Badge variant="emerald" size="sm">v{activeTheme.version}</Badge>
-              </div>
-              <h2 className="text-xl font-black text-[#18181B]">{activeTheme.name}</h2>
-              <p className="text-xs text-[#71717A] max-w-xl leading-relaxed font-medium">{activeTheme.description}</p>
-            </div>
+      {/* Navigation Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F3DCE8] pb-3">
+        <div className="flex items-center gap-2 text-xs font-bold">
+          <button
+            onClick={() => setActiveTab('installed')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'installed'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>All Installed</span>
+            <span className="text-[10px] bg-white text-[#BE185D] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+              {themes.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'active'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Active</span>
+            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full border border-emerald-200">
+              1 Active
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('inactive')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'inactive'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>Inactive</span>
+            <span className="text-[10px] bg-[#FFF9FC] text-[#71717A] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
+              {themes.length - 1}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('updates')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'updates'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <span>Updates</span>
+            {updateCount > 0 && (
+              <span className="text-[10px] bg-[#F43F5E] text-white px-1.5 py-0.5 rounded-full font-bold">
+                {updateCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'library'
+                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+                : 'text-[#71717A] hover:text-[#18181B]'
+            }`}
+          >
+            <Sparkles size={13} className="text-[#EC4899]" />
+            <span>Theme Library</span>
+            <span className="text-[10px] bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white px-1.5 py-0.5 rounded-full">
+              New
+            </span>
+          </button>
+        </div>
+
+        {/* Search & Category Filter Bar */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-60">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
+            <input
+              type="text"
+              placeholder="Search themes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium"
+            />
           </div>
 
-          {/* Palette Swatches & Actions */}
-          <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-[#F3DCE8] shadow-xs">
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-xl border border-black/10 shadow-xs" style={{ backgroundColor: activeTheme.tokens.primary }}></div>
-              <span className="text-[9px] text-[#71717A] font-bold block mt-1">Primary</span>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+          >
+            <option value="all">All Categories</option>
+            <option value="Modern Light">Modern Light</option>
+            <option value="Dark Cyber">Dark Cyber</option>
+            <option value="Frosted Pastel">Frosted Pastel</option>
+            <option value="Warm Vibrant">Warm Vibrant</option>
+            <option value="Luxury Dark">Luxury Dark</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Themes Content Area */}
+      {activeTab !== 'library' ? (
+        /* Installed Themes Grid */
+        <div className="space-y-4">
+          {filteredInstalledThemes.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-3xl border border-[#F3DCE8] p-8 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#FFF1F7] text-[#EC4899] flex items-center justify-center mx-auto text-xl">
+                🎨
+              </div>
+              <h3 className="font-bold text-sm text-[#18181B]">No Themes Found</h3>
+              <p className="text-xs text-[#71717A] max-w-sm mx-auto">
+                No themes match the selected tab and filter criteria. You can browse the Theme Library to discover new aesthetics.
+              </p>
+              <Button variant="primary" size="sm" onClick={() => setActiveTab('library')}>
+                Browse Theme Library
+              </Button>
             </div>
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-xl border border-black/10 shadow-xs" style={{ backgroundColor: activeTheme.tokens.accent }}></div>
-              <span className="text-[9px] text-[#71717A] font-bold block mt-1">Accent</span>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredInstalledThemes.map((theme) => {
+                const isActive = theme.id === activeTheme.id;
+                return (
+                  <Card
+                    key={theme.id}
+                    className={`p-0 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-[#EC4899]/10 ${
+                      isActive ? 'border-2 border-[#EC4899] ring-2 ring-[#EC4899]/20' : 'hover:border-[#F472B6]/50'
+                    }`}
+                  >
+                    {/* Thumbnail Header */}
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-900 group">
+                      <img
+                        src={theme.previewImageUrl}
+                        alt={theme.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                      <div className="absolute top-3 left-3 flex items-center gap-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                          {theme.category}
+                        </span>
+                        {theme.isDefault && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
+                            <Lock size={9} /> Built-in Default
+                          </span>
+                        )}
+                        {theme.isCustom && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
+                            Custom
+                          </span>
+                        )}
+                      </div>
+
+                      {isActive && (
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
+                          <Check size={12} strokeWidth={3} /> Active Theme
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+                        <div>
+                          <h4 className="font-extrabold text-sm text-white drop-shadow-sm">{theme.name}</h4>
+                          <p className="text-[10px] text-white/80 font-medium">By {theme.author}</p>
+                        </div>
+                        <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">v{theme.version}</span>
+                      </div>
+                    </div>
+
+                    {/* Body Details */}
+                    <div className="p-4 space-y-4 flex-1 flex flex-col justify-between">
+                      <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
+
+                      {/* Token Color Bar Preview */}
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.primary }} title={`Primary: ${theme.tokens.primary}`} />
+                        <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.accent }} title={`Accent: ${theme.tokens.accent}`} />
+                        <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} title={`Background: ${theme.tokens.background}`} />
+                        <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} title={`Surface: ${theme.tokens.surface}`} />
+                        <span className="text-[10px] text-[#A1A1AA] font-mono ml-1">{theme.tokens.isDark ? '🌙 Dark' : '☀️ Light'}</span>
+                      </div>
+
+                      {/* Action Controls */}
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#F3DCE8]">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setLivePreviewTheme(theme)}
+                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Live Preview"
+                          >
+                            <Eye size={15} />
+                          </button>
+                          <button
+                            onClick={() => openCustomizer(theme)}
+                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Configure & Customize Tokens"
+                          >
+                            <Sliders size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDuplicate(theme)}
+                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Duplicate Theme"
+                          >
+                            <Copy size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleExportTheme(theme)}
+                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Export JSON Manifest"
+                          >
+                            <Download size={15} />
+                          </button>
+                          <button
+                            onClick={() => setSelectedThemeForDetails(theme)}
+                            className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Specs & Changelog"
+                          >
+                            <Info size={15} />
+                          </button>
+                          {!theme.isDefault && (
+                            <button
+                              onClick={() => deleteTheme(theme.id)}
+                              className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
+                              title="Delete Custom Theme"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+
+                        {!isActive ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              activateTheme(theme.id);
+                              triggerNotice(`Activated theme "${theme.name}"!`);
+                            }}
+                          >
+                            Activate
+                          </Button>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                deactivateTheme(theme.id);
+                                triggerNotice(`Deactivated "${theme.name}", reverted to Blush Core default.`);
+                              }}
+                              disabled={theme.id === 'theme-blush-core'}
+                            >
+                              Deactivate
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                rollbackTheme(theme.id);
+                                triggerNotice(`Reset ${theme.name} to default tokens.`);
+                              }}
+                              leftIcon={<RotateCcw size={12} />}
+                            >
+                              Reset
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-xl border border-black/10 shadow-xs" style={{ backgroundColor: activeTheme.tokens.background }}></div>
-              <span className="text-[9px] text-[#71717A] font-bold block mt-1">Canvas</span>
-            </div>
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-xl border border-black/10 shadow-xs" style={{ backgroundColor: activeTheme.tokens.surface }}></div>
-              <span className="text-[9px] text-[#71717A] font-bold block mt-1">Card</span>
+          )}
+        </div>
+      ) : (
+        /* Theme Library / Discovery Marketplace */
+        <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-r from-[#FFF1F7] to-white border border-[#FBCFE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#EC4899] text-white flex items-center justify-center font-bold">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-[#18181B]">Official Theme Library & Discovery Hub</h4>
+                <p className="text-[11px] text-[#71717A] mt-0.5">
+                  Browse and install verified creator-platform themes with 1-click. All themes are 100% manifest-compliant with Theme SDK v1.0.
+                </p>
+              </div>
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Eye size={14} className="text-[#EC4899]" />}
-              onClick={() => setLivePreviewTheme(activeTheme)}
-              className="ml-2"
+              leftIcon={<Download size={13} />}
+              onClick={handleDownloadStarter}
             >
-              Live Preview
+              Download Theme SDK Starter
             </Button>
           </div>
-        </div>
-      </Card>
 
-      {/* Installed Themes Grid */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-extrabold text-base text-[#18181B] flex items-center gap-2">
-            <Layers size={18} className="text-[#EC4899]" />
-            <span>Installed Themes ({themes.length})</span>
-          </h3>
-          <span className="text-xs text-[#71717A] font-medium">Only one frontend theme is active at a time</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {themes.map((theme) => {
-            const isActive = theme.id === activeTheme.id;
-            return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredLibraryThemes.map((theme) => (
               <Card
                 key={theme.id}
-                className={`p-0 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-[#EC4899]/10 ${
-                  isActive ? 'border-2 border-[#EC4899] ring-2 ring-[#EC4899]/20' : 'hover:border-[#F472B6]/50'
-                }`}
+                className="p-0 overflow-hidden flex flex-col justify-between border-[#F3DCE8] bg-white transition-all duration-300 hover:shadow-xl hover:border-[#F472B6]/50"
               >
-                {/* Thumbnail Header */}
-                <div className="relative h-36 w-full overflow-hidden bg-slate-900 group">
-                  <img
-                    src={theme.previewImageUrl}
-                    alt={theme.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
-                      {theme.category}
-                    </span>
-                    {theme.isDefault && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
-                        <Lock size={9} /> Default
+                <div>
+                  <div className="relative h-36 w-full overflow-hidden bg-slate-900 group">
+                    <img
+                      src={theme.previewImageUrl}
+                      alt={theme.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                        {theme.category}
                       </span>
-                    )}
-                    {theme.isCustom && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
-                        Custom
-                      </span>
-                    )}
+                    </div>
+                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                      <h4 className="font-extrabold text-sm drop-shadow-sm">{theme.name}</h4>
+                      <p className="text-[10px] text-white/80">By {theme.author}</p>
+                    </div>
                   </div>
 
-                  {isActive && (
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
-                      <Check size={12} strokeWidth={3} /> Active Theme
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.primary }} />
+                      <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.accent }} />
+                      <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} />
+                      <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} />
                     </div>
-                  )}
-
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-                    <div>
-                      <h4 className="font-extrabold text-sm text-white drop-shadow-sm">{theme.name}</h4>
-                      <p className="text-[10px] text-white/80 font-medium">By {theme.author}</p>
-                    </div>
-                    <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">v{theme.version}</span>
                   </div>
                 </div>
 
-                {/* Body Details */}
-                <div className="p-4 space-y-4 flex-1 flex flex-col justify-between">
-                  <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
+                <div className="p-4 pt-0 flex items-center justify-between gap-2 border-t border-[#F3DCE8] mt-2 pt-3">
+                  <button
+                    onClick={() => setLivePreviewTheme(theme)}
+                    className="text-xs font-bold text-[#EC4899] hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <Eye size={13} /> Live Preview
+                  </button>
 
-                  {/* Token Color Bar Preview */}
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.primary }} title={`Primary: ${theme.tokens.primary}`} />
-                    <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.accent }} title={`Accent: ${theme.tokens.accent}`} />
-                    <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} title={`Background: ${theme.tokens.background}`} />
-                    <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} title={`Surface: ${theme.tokens.surface}`} />
-                    <span className="text-[10px] text-[#A1A1AA] font-mono ml-1">{theme.tokens.isDark ? '🌙 Dark' : '☀️ Light'}</span>
-                  </div>
-
-                  {/* Action Controls */}
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#F3DCE8]">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setLivePreviewTheme(theme)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Live Preview"
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        onClick={() => openCustomizer(theme)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Customize Theme"
-                      >
-                        <Sliders size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleDuplicate(theme)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Duplicate Theme"
-                      >
-                        <Copy size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleExportTheme(theme)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Export JSON"
-                      >
-                        <Download size={15} />
-                      </button>
-                      <button
-                        onClick={() => setSelectedThemeForDetails(theme)}
-                        className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Changelog & Details"
-                      >
-                        <Info size={15} />
-                      </button>
-                      {!theme.isDefault && (
-                        <button
-                          onClick={() => deleteTheme(theme.id)}
-                          className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
-                          title="Delete Custom Theme"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      )}
-                    </div>
-
-                    {!isActive ? (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => activateTheme(theme.id)}
-                      >
-                        Activate
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => rollbackTheme(theme.id)}
-                        leftIcon={<RotateCcw size={12} />}
-                      >
-                        Reset
-                      </Button>
-                    )}
-                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      installFromLibrary(theme.id);
+                      triggerNotice(`Installed theme "${theme.name}"! You can now activate and configure it.`);
+                    }}
+                    leftIcon={<Plus size={13} />}
+                  >
+                    Install Theme
+                  </Button>
                 </div>
               </Card>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Live Frontend Viewport Preview Modal */}
       {livePreviewTheme && (
@@ -511,7 +792,7 @@ export default function AdminThemesPage() {
                   onClick={() => {
                     activateTheme(livePreviewTheme.id);
                     setLivePreviewTheme(null);
-                    triggerNotice(`Activated theme "${livePreviewTheme.name}"`);
+                    triggerNotice(`Activated theme "${livePreviewTheme.name}"!`);
                   }}
                   leftIcon={<Check size={14} />}
                 >
@@ -863,7 +1144,7 @@ export default function AdminThemesPage() {
               <div className="space-y-3">
                 <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
                   <SlidersHorizontal size={14} className="text-[#EC4899]" />
-                  <span>Geometry & Button Styles</span>
+                  <span>Geometry & Layout Width</span>
                 </h4>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -960,10 +1241,10 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Details & Changelog Modal */}
+      {/* Manifest & Changelog Specs Modal */}
       {selectedThemeForDetails && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div>
                 <h3 className="font-bold text-base text-[#18181B]">{selectedThemeForDetails.name}</h3>
@@ -977,8 +1258,30 @@ export default function AdminThemesPage() {
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <p className="text-[#71717A] leading-relaxed font-medium">{selectedThemeForDetails.description}</p>
+
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-2">
+                <h4 className="font-bold text-[#18181B]">SDK Manifest Specifications</h4>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <span className="text-[#A1A1AA] block">Theme ID:</span>
+                    <span className="font-mono text-[#18181B] font-bold">{selectedThemeForDetails.id}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#A1A1AA] block">Min App Version:</span>
+                    <span className="font-mono text-[#18181B] font-bold">v{selectedThemeForDetails.minAppVersion}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#A1A1AA] block">Category:</span>
+                    <span className="font-bold text-[#BE185D]">{selectedThemeForDetails.category}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#A1A1AA] block">Color Mode:</span>
+                    <span className="font-bold text-[#18181B]">{selectedThemeForDetails.tokens.isDark ? 'Dark Mode' : 'Light Mode'}</span>
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <h4 className="font-bold text-[#18181B] mb-2">Version Changelog</h4>
@@ -1009,7 +1312,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Upload Theme Modal */}
+      {/* Upload Theme Package Modal */}
       {isUploadOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
@@ -1017,7 +1320,7 @@ export default function AdminThemesPage() {
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Upload size={18} className="text-[#EC4899]" />
-                  <span>Import Frontend Theme Package</span>
+                  <span>Upload Theme Package (.ZIP / JSON)</span>
                 </h3>
                 <p className="text-xs text-[#71717A]">Install custom public themes via JSON manifest or ZIP file</p>
               </div>
@@ -1048,14 +1351,14 @@ export default function AdminThemesPage() {
                 <input
                   type="file"
                   accept=".json,.zip"
-                  onChange={handleFileUpload}
+                  onChange={handleUploadFile}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center mx-auto">
                   <Upload size={22} />
                 </div>
                 <p className="font-bold text-[#18181B]">Click to browse or drop theme JSON/ZIP here</p>
-                <p className="text-[11px] text-[#71717A]">Valid formats: theme.json, package.zip (manifest-compliant)</p>
+                <p className="text-[11px] text-[#71717A]">Manifest compliant with Theme SDK v1.0 standard</p>
               </div>
 
               <div className="space-y-1.5">
@@ -1064,7 +1367,7 @@ export default function AdminThemesPage() {
                   value={uploadText}
                   onChange={(e) => setUploadText(e.target.value)}
                   rows={4}
-                  placeholder={`{\n  "name": "Custom Glow",\n  "version": "1.0.0",\n  "tokens": { "primary": "#EC4899", "background": "#FFF9FC", "surface": "#FFFFFF" }\n}`}
+                  placeholder={`{\n  "id": "theme-custom-style",\n  "name": "Custom Style",\n  "version": "1.0.0",\n  "tokens": { "primary": "#EC4899", "background": "#FFF9FC", "surface": "#FFFFFF" }\n}`}
                   className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 font-mono text-[11px] text-[#18181B] focus:outline-none focus:border-[#EC4899]"
                 />
               </div>
@@ -1081,6 +1384,83 @@ export default function AdminThemesPage() {
                 disabled={!uploadText.trim()}
               >
                 Validate & Install
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Developer SDK Docs Modal */}
+      {isDocsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                  <Terminal size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">Theme SDK v1.0 Developer Guide</h3>
+                  <p className="text-xs text-[#71717A]">Authoring custom frontend themes for CreatorPulse</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDocsOpen(false)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1 leading-relaxed">
+              <div>
+                <h4 className="font-bold text-[#18181B] text-sm mb-1">Standard Manifest Structure (`theme.json`)</h4>
+                <p className="text-[#71717A]">
+                  Every theme package is packaged as a `.zip` or `.json` file containing design tokens and layout geometry rules.
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-slate-950 text-pink-200 rounded-2xl font-mono text-[11px] space-y-1">
+                <p className="text-[#A1A1AA]">// Example theme.json</p>
+                <p>{`{`}</p>
+                <p className="pl-3">{`"id": "theme-custom-glow",`}</p>
+                <p className="pl-3">{`"name": "Custom Glow",`}</p>
+                <p className="pl-3">{`"version": "1.0.0",`}</p>
+                <p className="pl-3">{`"minAppVersion": "1.0.0",`}</p>
+                <p className="pl-3">{`"tokens": {`}</p>
+                <p className="pl-6">{`"primary": "#EC4899",`}</p>
+                <p className="pl-6">{`"background": "#FFF9FC",`}</p>
+                <p className="pl-6">{`"surface": "#FFFFFF",`}</p>
+                <p className="pl-6">{`"cardRadius": "20px"`}</p>
+                <p className="pl-3">{`},`}</p>
+                <p className="pl-3">{`"settings": {`}</p>
+                <p className="pl-6">{`"containerWidth": "max-w-7xl",`}</p>
+                <p className="pl-6">{`"buttonStyle": "gradient-glow"`}</p>
+                <p className="pl-3">{`}`}</p>
+                <p>{`}`}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-bold text-[#18181B]">Theming Rules & Admin Isolation</h4>
+                <ul className="list-disc list-inside text-[#71717A] space-y-1">
+                  <li><strong className="text-[#18181B]">Frontend Scoped:</strong> Themes exclusively control landing pages, user feeds, creator profiles, reels, and member portals.</li>
+                  <li><strong className="text-[#18181B]">Admin Panel Immune:</strong> The Admin Panel is permanently sandboxed to administrative tokens and never affected by theme changes.</li>
+                  <li><strong className="text-[#18181B]">Rollback Safe:</strong> If an invalid token or missing property is detected, the engine safely rolls back to Blush Core.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-[#F3DCE8] shrink-0">
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Download size={13} />}
+                onClick={handleDownloadStarter}
+              >
+                Download Starter Theme Template
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setIsDocsOpen(false)}>
+                Close Docs
               </Button>
             </div>
           </div>

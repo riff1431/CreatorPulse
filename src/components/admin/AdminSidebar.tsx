@@ -8,7 +8,7 @@ import {
   AlertTriangle, CreditCard, Star, Receipt, TrendingUp, Wallet,
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
-  Sparkles, Shield
+  Shield
 } from 'lucide-react';
 
 interface NavItem {
@@ -16,7 +16,7 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   badge?: number | string;
-  badgeVariant?: 'pink' | 'emerald' | 'amber';
+  badgeVariant?: 'indigo' | 'emerald' | 'amber' | 'blue' | 'rose' | 'slate';
   isExternal?: boolean;
 }
 
@@ -36,7 +36,7 @@ const allAdminNavGroups: NavGroup[] = [
   {
     title: 'Themes & Plugins',
     items: [
-      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'pink' },
+      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'indigo' },
       { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
       { label: 'System Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck },
     ],
@@ -47,7 +47,7 @@ const allAdminNavGroups: NavGroup[] = [
       { label: 'All Users', href: '/admin/users', icon: Users },
       { label: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
       { label: 'Creators', href: '/admin/creators', icon: UserCheck },
-      { label: 'Creator Applications', href: '/admin/applications', icon: FileText, badge: 2, badgeVariant: 'pink' },
+      { label: 'Creator Applications', href: '/admin/applications', icon: FileText, badge: 2, badgeVariant: 'blue' },
     ],
   },
   {
@@ -91,7 +91,6 @@ export const AdminSidebar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navFilter, setNavFilter] = useState('');
 
-  // Filter items by search query if admin types in filter
   const filteredGroups = allAdminNavGroups.map((group) => ({
     ...group,
     items: group.items.filter((item) =>
@@ -100,29 +99,29 @@ export const AdminSidebar: React.FC = () => {
   })).filter((group) => group.items.length > 0);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-[#F3DCE8]">
-      {/* Quick Menu Filter (Desktop Only when not collapsed) */}
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
+      {/* Quick Menu Filter */}
       {!collapsed && (
-        <div className="p-3 border-b border-[#F3DCE8] shrink-0 bg-[#FFF9FC]/50">
+        <div className="p-3 border-b border-slate-100 shrink-0 bg-slate-50/50">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
             <input
               type="text"
               placeholder="Filter menu items..."
               value={navFilter}
               onChange={(e) => setNavFilter(e.target.value)}
-              className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-8 pr-2.5 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium shadow-xs"
+              className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-2.5 py-1.5 text-[11px] text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 font-medium shadow-xs"
             />
           </div>
         </div>
       )}
 
       {/* Navigation Links Scrollable Area */}
-      <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin scrollbar-thumb-[#FCE7F3]">
+      <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1">
             {!collapsed && (
-              <p className="text-[10px] font-black uppercase tracking-wider text-[#A1A1AA] px-3 mb-1">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-1">
                 {group.title}
               </p>
             )}
@@ -138,35 +137,39 @@ export const AdminSidebar: React.FC = () => {
                     target={item.isExternal ? '_blank' : undefined}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all relative group ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all relative group ${
                       isActive
-                        ? 'bg-[#FCE7F3] text-[#BE185D] shadow-xs'
-                        : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
+                        ? 'bg-indigo-50 text-indigo-700 shadow-xs border border-indigo-100/30'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 z-10 min-w-0">
                       <Icon
-                        size={16}
+                        size={15}
                         className={`shrink-0 transition-colors duration-200 ${
-                          isActive ? 'text-[#EC4899]' : 'text-[#A1A1AA] group-hover:text-[#EC4899]'
+                          isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'
                         }`}
                       />
                       {!collapsed && (
                         <span className="font-semibold truncate flex items-center gap-1.5">
                           {item.label}
-                          {item.isExternal && <ExternalLink size={10} className="text-[#A1A1AA] shrink-0" />}
+                          {item.isExternal && <ExternalLink size={10} className="text-slate-400 shrink-0" />}
                         </span>
                       )}
                     </div>
 
                     {!collapsed && item.badge !== undefined && (
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none z-10 shrink-0 ml-1 ${
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none z-10 shrink-0 ml-1 ${
                           item.badgeVariant === 'emerald'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                             : item.badgeVariant === 'amber'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8]'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                            : item.badgeVariant === 'blue'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                            : item.badgeVariant === 'rose'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-100'
+                            : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
                         }`}
                       >
                         {item.badge}
@@ -175,7 +178,7 @@ export const AdminSidebar: React.FC = () => {
 
                     {/* Active left indicator pill */}
                     {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#EC4899] rounded-r-full" />
+                      <div className="absolute left-0 top-1.5 bottom-1.5 w-0.75 bg-indigo-600 rounded-r-full" />
                     )}
                   </Link>
                 );
@@ -186,13 +189,13 @@ export const AdminSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-[#F3DCE8] p-3 bg-[#FFF9FC] shrink-0">
+      <div className="hidden lg:block border-t border-slate-100 p-3 bg-slate-50/50 shrink-0">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 text-xs font-bold text-[#71717A] hover:text-[#18181B] py-2 rounded-xl hover:bg-white border border-transparent hover:border-[#F3DCE8] transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 py-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer shadow-2xs"
         >
-          {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
-          {!collapsed && <span>Collapse Sidebar</span>}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          {!collapsed && <span>Collapse Menu</span>}
         </button>
       </div>
     </div>
@@ -203,35 +206,35 @@ export const AdminSidebar: React.FC = () => {
       {/* Mobile Floating Menu Button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-[#EC4899] text-white shadow-xl shadow-[#EC4899]/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+        className="lg:hidden fixed bottom-4 right-4 z-50 w-11 h-11 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all hover:bg-indigo-700"
         aria-label="Open Admin Menu"
       >
-        <Menu size={20} />
+        <Menu size={18} />
       </button>
 
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-xs z-40"
+          className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar Drawer */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-[#F3DCE8] z-50 transition-transform duration-300 w-72 shadow-2xl ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-50 transition-transform duration-300 w-64 shadow-xl ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#F3DCE8] bg-[#FFF9FC]">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#EC4899] flex items-center justify-center text-white font-black text-xs">
+            <div className="w-6.5 h-6.5 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-[11px]">
               CP
             </div>
-            <span className="text-sm font-black text-[#18181B] tracking-tight">Admin Console</span>
+            <span className="text-xs font-extrabold text-slate-800 tracking-tight">Admin Console</span>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-[#71717A] hover:text-[#18181B]">
-            <ChevronLeft size={18} />
+          <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+            <ChevronLeft size={16} />
           </button>
         </div>
         {sidebarContent}
@@ -240,7 +243,7 @@ export const AdminSidebar: React.FC = () => {
       {/* Desktop Sidebar (Sticky to full height) */}
       <aside
         className={`hidden lg:flex flex-col bg-white shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
-          collapsed ? 'w-18' : 'w-64'
+          collapsed ? 'w-16' : 'w-60'
         }`}
       >
         {sidebarContent}

@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Star } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const plans = [
   { id: '1', creator: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', plan: 'Starter Community', price: '$5.00/mo', subscribers: 420, status: 'active' },
@@ -22,7 +22,7 @@ export default function AdminMembershipsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <Star className="text-[#EC4899]" size={22} />
+          <Star className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Membership Plans</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">View all membership plans created by creators across the platform.</p>
@@ -31,7 +31,7 @@ export default function AdminMembershipsPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Creator</th>
               <th className="py-3.5 px-4 font-bold">Plan Name</th>
               <th className="py-3.5 px-4 font-bold">Price</th>
@@ -39,9 +39,9 @@ export default function AdminMembershipsPage() {
               <th className="py-3.5 px-4 font-bold">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {plans.map((p) => (
-              <tr key={p.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2.5">
                     <Avatar src={p.avatar} alt={p.creator} size="sm" />

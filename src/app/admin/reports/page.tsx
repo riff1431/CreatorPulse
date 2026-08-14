@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, ShieldAlert, Flag, ShieldCheck } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Button } from '@/components/admin/ui/Button';
+import { Modal } from '@/components/admin/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
 interface Report {
@@ -70,27 +70,27 @@ export default function AdminReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="text-[#F43F5E]" size={22} />
+            <AlertTriangle className="text-red-600" size={22} />
             <h1 className="text-xl font-black text-[#18181B] tracking-tight">Reports & Moderation</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">Verify community reports, investigate content Visibilities, and moderate users.</p>
         </div>
 
         {/* Tab Filters */}
-        <div className="flex items-center gap-1 bg-white/70 p-1 border border-[#F3DCE8] rounded-2xl shadow-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-white/70 p-1 border border-slate-200 rounded-2xl shadow-xs self-start sm:self-auto">
           {(['all', 'post', 'reel', 'user'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer capitalize ${
                 activeTab === tab
-                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/50'
+                  ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-slate-100/50'
               }`}
             >
               {tab === 'all' ? 'All Queue' : `${tab}s`}
               {tab === 'all' && (
-                <span className="ml-1.5 bg-[#FFE4E6] text-[#BE123C] px-1.5 py-0.5 rounded-full text-[9px] font-black">
+                <span className="ml-1.5 bg-red-50 text-red-700 px-1.5 py-0.5 rounded-full text-[9px] font-black">
                   {reports.filter(r => r.status === 'pending').length}
                 </span>
               )}
@@ -118,8 +118,8 @@ export default function AdminReportsPage() {
               </div>
             </div>
 
-            <div className="bg-[#FFF9FC] p-4 rounded-2xl border border-[#F3DCE8] space-y-2 text-xs font-semibold text-[#18181B]">
-              <div className="flex items-start gap-1.5 text-[#BE123C]">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs font-semibold text-[#18181B]">
+              <div className="flex items-start gap-1.5 text-red-700">
                 <Flag size={12} className="shrink-0 mt-0.5" />
                 <p>Violation Claim: <span className="font-medium text-[#71717A]">{rep.reason}</span></p>
               </div>
@@ -129,7 +129,7 @@ export default function AdminReportsPage() {
             </div>
 
             {rep.status === 'pending' && (
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F3DCE8]/60">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60">
                 <Button variant="ghost" size="sm" onClick={() => handleDismiss(rep.id)}>
                   Dismiss Report
                 </Button>
@@ -177,11 +177,11 @@ export default function AdminReportsPage() {
               <div className="space-y-2">
                 <div
                   className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer select-none transition-all ${
-                    actionOption === 'warning' ? 'border-[#EC4899] bg-[#FFF9FC]' : 'border-[#F3DCE8] hover:bg-slate-50'
+                    actionOption === 'warning' ? 'border-[#4F46E5] bg-slate-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}
                   onClick={() => setActionOption('warning')}
                 >
-                  <input type="radio" checked={actionOption === 'warning'} onChange={() => {}} className="accent-[#EC4899]" />
+                  <input type="radio" checked={actionOption === 'warning'} onChange={() => {}} className="accent-[#4F46E5]" />
                   <div>
                     <p className="font-bold text-[#18181B]">Send Formal Warning</p>
                     <p className="text-[9px] text-[#71717A] font-medium">Deliver warnings to the creator with no penalties.</p>
@@ -190,11 +190,11 @@ export default function AdminReportsPage() {
 
                 <div
                   className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer select-none transition-all ${
-                    actionOption === 'remove' ? 'border-[#EC4899] bg-[#FFF9FC]' : 'border-[#F3DCE8] hover:bg-slate-50'
+                    actionOption === 'remove' ? 'border-[#4F46E5] bg-slate-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}
                   onClick={() => setActionOption('remove')}
                 >
-                  <input type="radio" checked={actionOption === 'remove'} onChange={() => {}} className="accent-[#EC4899]" />
+                  <input type="radio" checked={actionOption === 'remove'} onChange={() => {}} className="accent-[#4F46E5]" />
                   <div>
                     <p className="font-bold text-[#18181B]">Remove & Delete Content</p>
                     <p className="text-[9px] text-[#71717A] font-medium">Delete reported post/reel and send warning logs.</p>
@@ -203,11 +203,11 @@ export default function AdminReportsPage() {
 
                 <div
                   className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer select-none transition-all ${
-                    actionOption === 'suspend' ? 'border-[#EC4899] bg-[#FFF9FC]' : 'border-[#F3DCE8] hover:bg-slate-50'
+                    actionOption === 'suspend' ? 'border-[#4F46E5] bg-slate-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}
                   onClick={() => setActionOption('suspend')}
                 >
-                  <input type="radio" checked={actionOption === 'suspend'} onChange={() => {}} className="accent-[#EC4899]" />
+                  <input type="radio" checked={actionOption === 'suspend'} onChange={() => {}} className="accent-[#4F46E5]" />
                   <div>
                     <p className="font-bold text-[#18181B]">Suspend Account (7 Days)</p>
                     <p className="text-[9px] text-[#71717A] font-medium">Temporarily freeze all follow/creator privileges.</p>
@@ -216,11 +216,11 @@ export default function AdminReportsPage() {
 
                 <div
                   className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer select-none transition-all ${
-                    actionOption === 'ban' ? 'border-[#EC4899] bg-[#FFF9FC]' : 'border-[#F3DCE8] hover:bg-slate-50'
+                    actionOption === 'ban' ? 'border-[#4F46E5] bg-slate-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}
                   onClick={() => setActionOption('ban')}
                 >
-                  <input type="radio" checked={actionOption === 'ban'} onChange={() => {}} className="accent-[#EC4899]" />
+                  <input type="radio" checked={actionOption === 'ban'} onChange={() => {}} className="accent-[#4F46E5]" />
                   <div>
                     <p className="font-bold text-[#18181B]">Permanently Ban User Account</p>
                     <p className="text-[9px] text-[#71717A] font-medium">Block user and disable wallet withdrawal settlement.</p>
@@ -230,7 +230,7 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8] mt-4">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 mt-4">
               <Button variant="ghost" size="sm" onClick={() => setSelectedReport(null)}>
                 Cancel
               </Button>

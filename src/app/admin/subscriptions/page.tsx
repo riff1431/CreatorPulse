@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { CreditCard } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/admin/ui/Card';
+import { Badge } from '@/components/admin/ui/Badge';
+import { Avatar } from '@/components/admin/ui/Avatar';
 
 const subscriptions = [
   { id: '1', subscriber: 'Alex Vance', subscriberAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', creator: 'Sarah Jenkins', creatorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', plan: 'Pro Designer Tier', amount: '$15.00/mo', duration: '1 month', status: 'active', startDate: '2026-08-01', endDate: '2026-09-01' },
@@ -18,7 +18,7 @@ export default function AdminSubscriptionsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <CreditCard className="text-[#EC4899]" size={22} />
+          <CreditCard className="text-indigo-600" size={22} />
           <h1 className="text-xl font-black text-[#18181B]">Subscriptions</h1>
         </div>
         <p className="text-xs text-[#71717A] mt-1 font-medium">View and manage all active, cancelled, and expired subscriptions.</p>
@@ -27,7 +27,7 @@ export default function AdminSubscriptionsPage() {
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+            <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] text-left">
               <th className="py-3.5 px-4 font-bold">Subscriber</th>
               <th className="py-3.5 px-4 font-bold">Creator</th>
               <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Plan</th>
@@ -37,9 +37,9 @@ export default function AdminSubscriptionsPage() {
               <th className="py-3.5 px-4 font-bold hidden lg:table-cell">End Date</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F3DCE8]">
+          <tbody className="divide-y divide-slate-200">
             {subscriptions.map((s) => (
-              <tr key={s.id} className="hover:bg-[#FFF9FC] transition-colors">
+              <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2.5">
                     <Avatar src={s.subscriberAvatar} alt={s.subscriber} size="sm" />
