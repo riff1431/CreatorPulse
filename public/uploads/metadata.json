@@ -1,5 +1,45 @@
 [
   {
+    "id": "file_1786741771533_irof6v",
+    "name": "documents_1786741771533_cat__1_.png",
+    "originalName": "cat (1).png",
+    "folder": "documents",
+    "driver": "local",
+    "path": "documents/documents_1786741771533_cat__1_.png",
+    "url": "/uploads/documents/documents_1786741771533_cat__1_.png",
+    "sizeBytes": 27032,
+    "mimeType": "image/png",
+    "createdAt": "2026-08-14T21:09:31.535Z",
+    "updatedAt": "2026-08-14T21:09:31.536Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786741767851_77lrkp",
+    "name": "covers_1786741767851_cat__1_.png",
+    "originalName": "cat (1).png",
+    "folder": "covers",
+    "driver": "local",
+    "path": "covers/covers_1786741767851_cat__1_.png",
+    "url": "/uploads/covers/covers_1786741767851_cat__1_.png",
+    "sizeBytes": 27032,
+    "mimeType": "image/png",
+    "createdAt": "2026-08-14T21:09:27.852Z",
+    "updatedAt": "2026-08-14T21:09:27.852Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
     "id": "file_1786738134685_kkzsmk",
     "name": "documents_1786738134685_cat__1_.png",
     "originalName": "cat (1).png",

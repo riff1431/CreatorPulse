@@ -9,6 +9,7 @@ import {
   BookOpen, Terminal, Layers, ArrowRight, Play, Eye, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { usePlugins } from '@/lib/extensions/plugin-engine';
+import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
 import { PluginManifest, PluginHookType, PluginPermission } from '@/lib/extensions/plugin-types';
 import { validatePluginPackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/admin/ui/Card';
@@ -134,6 +135,7 @@ export default function AdminPluginsPage() {
   // Upload state
   const [uploadText, setUploadText] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [diagnosticReport, setDiagnosticReport] = useState<any | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
 
@@ -188,6 +190,7 @@ export default function AdminPluginsPage() {
 
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
+    setDiagnosticReport(null);
     setUploadSuccess(false);
     const file = e.target.files?.[0];
     if (!file) return;
@@ -210,7 +213,8 @@ export default function AdminPluginsPage() {
       updateProgress(0, 'success', 30, "File read completed.");
 
       updateProgress(1, 'running', 45, "Decompressing & extracting manifest...");
-      let manifestText = '';
+      let parsedPlugin: any = null;
+
       if (file.name.endsWith('.zip')) {
         const arrayBuffer = await file.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
@@ -220,24 +224,53 @@ export default function AdminPluginsPage() {
         }
         const base64 = btoa(binary);
 
-        manifestText = await extractPluginJsonFromZip(arrayBuffer);
-
-        // Send to server to extract all files physically into /plugins/<slug>
-        fetch('/api/admin/plugins', {
+        const res = await fetch('/api/admin/plugins', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'upload_zip', zipBase64: base64 })
-        }).catch((err) => console.warn('[Plugin upload] Server ZIP extraction warning:', err));
+        });
+        const resJson = await res.json();
+
+        if (!res.ok || !resJson.success) {
+          if (resJson.report) {
+            setDiagnosticReport(resJson.report);
+          }
+          throw new Error(resJson.error || 'Server compatibility checker validation failed.');
+        }
+
+        if (resJson.report) {
+          setDiagnosticReport(resJson.report);
+        }
+        parsedPlugin = resJson.plugin;
       } else {
         const text = await file.text();
-        manifestText = text;
+        const parsed = JSON.parse(text);
+
+        const res = await fetch('/api/admin/plugins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'install', manifest: parsed })
+        });
+        const resJson = await res.json();
+
+        if (!res.ok || !resJson.success) {
+          if (resJson.report) {
+            setDiagnosticReport(resJson.report);
+          }
+          throw new Error(resJson.error || 'Server compatibility checker validation failed.');
+        }
+
+        if (resJson.report) {
+          setDiagnosticReport(resJson.report);
+        }
+        parsedPlugin = resJson.plugin || parsed;
       }
+
       await new Promise((resolve) => setTimeout(resolve, 400));
       updateProgress(1, 'success', 60, "Manifest extracted.");
 
       updateProgress(2, 'running', 75, "Verifying Plugin SDK compliance...");
-      const parsed = JSON.parse(manifestText);
-      const result = validatePluginPackage(parsed);
+      const result = validatePluginPackage(parsedPlugin);
       if (!result.valid || !result.plugin) {
         throw new Error(result.error || 'Failed to validate plugin package.');
       }
@@ -257,6 +290,7 @@ export default function AdminPluginsPage() {
     } catch (err: any) {
       errorProgress(1, err.message || 'Error occurred.');
       setUploadError(err.message || 'Invalid package format. Please provide a valid plugin JSON manifest or ZIP.');
+      setIsUploadOpen(true); // Re-open modal so user sees diagnostic reports
     }
   };
 
@@ -480,6 +514,22 @@ export default function AdminPluginsPage() {
       try {
         updateProgress(0, 'running', 30, "Verifying system compliance...");
         await new Promise((resolve) => setTimeout(resolve, 600));
+
+        // Run compatibility diagnostics on activation
+        const targetPlugin = plugins.find((p) => p.id === pluginId);
+        if (targetPlugin) {
+          const report = CompatibilityChecker.checkPlugin(
+            targetPlugin,
+            [], // directories not needed on activate
+            plugins,
+            [] // migrations not checked on activate
+          );
+          if (!report.isValid) {
+            const firstError = report.issues.find(i => i.type === 'error')?.message || 'Plugin is incompatible.';
+            throw new Error(`Activation Blocked: ${firstError}`);
+          }
+        }
+
         updateProgress(0, 'success', 60, "Compliance checks OK.");
 
         updateProgress(1, 'running', 80, "Binding plugin event hooks...");
@@ -1221,6 +1271,72 @@ export default function AdminPluginsPage() {
                 </div>
               </div>
 
+              {/* Dynamic Operations & Integrations */}
+              <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-3">
+                <h4 className="font-bold text-[#18181B] flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs text-indigo-950">
+                    <Zap size={14} className="text-indigo-600" />
+                    <span>Dynamic Server & Database Controls</span>
+                  </span>
+                </h4>
+                
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/admin/plugins', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'run_migration', pluginId: detailsPlugin.id })
+                        });
+                        const data = await res.json();
+                        alert(`Migration status: ${data.message || 'Executed successfully'}`);
+                      } catch (e: any) {
+                        alert(`Migration failed: ${e.message}`);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-700 font-bold text-[11px] hover:bg-indigo-50 shadow-xs flex items-center gap-1 transition-all"
+                  >
+                    <Layers size={13} /> Run SQL Migration
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/admin/plugins/jobs', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ pluginId: detailsPlugin.id, jobName: 'sync-job' })
+                        });
+                        const data = await res.json();
+                        alert(`Job result: ${data.output || 'Executed'}`);
+                      } catch (e: any) {
+                        alert(`Job failed: ${e.message}`);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-700 font-bold text-[11px] hover:bg-indigo-50 shadow-xs flex items-center gap-1 transition-all"
+                  >
+                    <Play size={13} /> Execute Sync Job
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      try {
+                        const cleanId = detailsPlugin.id.replace(/^plugin-/, '');
+                        const res = await fetch(`/api/plugins/${cleanId}/test`);
+                        const data = await res.json();
+                        alert(`API gateway response:\n${JSON.stringify(data, null, 2)}`);
+                      } catch (e: any) {
+                        alert(`API test failed: ${e.message}`);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-700 font-bold text-[11px] hover:bg-indigo-50 shadow-xs flex items-center gap-1 transition-all"
+                  >
+                    <ExternalLink size={13} /> Test API Route
+                  </button>
+                </div>
+              </div>
+
               {/* Changelog */}
               <div>
                 <h4 className="font-bold text-[#18181B] mb-2">Version Changelog</h4>
@@ -1282,6 +1398,50 @@ export default function AdminPluginsPage() {
               <div className="p-3 bg-red-50 border border-[#FECDD3] rounded-2xl text-xs text-red-700 flex items-center gap-2">
                 <AlertTriangle size={16} className="shrink-0" />
                 <span>{uploadError}</span>
+              </div>
+            )}
+
+            {diagnosticReport && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <span className="font-bold text-[#18181B] flex items-center gap-1.5">
+                    <ShieldAlert size={15} className="text-indigo-600" />
+                    Plugin Diagnostics Report
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    diagnosticReport.isValid 
+                      ? 'bg-emerald-100 text-emerald-800' 
+                      : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {diagnosticReport.isValid ? 'Compatible' : 'Incompatible / Blocked'}
+                  </span>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                  {diagnosticReport.issues.length === 0 ? (
+                    <p className="text-emerald-700 italic text-[11px]">No compatibility issues detected. Fully compatible with CreatorPulse v1.2.0.</p>
+                  ) : (
+                    diagnosticReport.issues.map((issue: any, index: number) => (
+                      <div key={index} className={`p-2.5 rounded-xl border ${
+                        issue.type === 'error' 
+                          ? 'bg-rose-50/50 border-rose-200 text-rose-950' 
+                          : 'bg-amber-50/50 border-amber-200 text-amber-950'
+                      }`}>
+                        <div className="flex items-start gap-1.5">
+                          <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                            issue.type === 'error' ? 'bg-rose-200 text-rose-800' : 'bg-amber-200 text-amber-800'
+                          } shrink-0`}>
+                            {issue.type}
+                          </span>
+                          <div className="space-y-1">
+                            <p className="font-bold text-[11px]">Field: <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px]">{issue.field}</code></p>
+                            <p className="text-[11px] leading-relaxed">{issue.message}</p>
+                            <p className="text-[11px] italic text-slate-600 font-medium">Recommended Fix: {issue.fix}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
 

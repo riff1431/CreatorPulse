@@ -1,0 +1,10 @@
+[
+  {
+    "id": "evt-1786741597536-c50s",
+    "timestamp": "2026-08-14T21:06:37.536Z",
+    "gatewayId": "plugin-zapier-webhooks",
+    "eventType": "CHECKOUT",
+    "status": "Completed",
+    "details": "Cleared all secrets from vault."
+  }
+]

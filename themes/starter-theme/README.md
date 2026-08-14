@@ -1,20 +1,37 @@
 # CreatorPulse Starter Theme v1.0
 
-Welcome to the CreatorPulse Theme Development Kit!
+Welcome to the official CreatorPulse Theme SDK starter template! This folder serves as a boilerplate for creating fully custom public themes.
 
-## Directory Structure
-- `manifest.json`: Defines theme metadata, category, version, and default visual tokens.
-- `theme.config.ts`: Type-safe theme configuration export.
-- `tokens/index.ts`: Design token palette (colors, radii, fonts, dark/light modes).
-- `styles/theme.css`: Theme-specific CSS custom properties.
-- `components/`: Optional custom component overrides.
-- `layouts/`: Custom layout definitions for public frontend pages.
-- `pages/`: Custom hero templates or custom profile headers.
-- `preview/`: Preview screenshots and promotional assets.
+## Standard Directory Structure (Theme SDK compliance)
+To be recognized and loaded correctly, your theme package must contain only the following 17 folders. Unrecognized folder names will fail validation checks.
 
-## How to Package
-1. Zip the contents of your theme folder:
-   ```bash
-   zip -r my-theme.zip ./manifest.json ./theme.config.ts ./tokens ./styles ./components ./layouts ./preview
-   ```
-2. In the Admin Panel, navigate to **Themes -> Upload ZIP** to install and activate your theme.
+- `/pages/`: Page template overrides (e.g. `LandingPage.tsx` for custom landing layout).
+- `/layouts/`: Layout wrappers (e.g. `MainLayout.tsx` for header/sidebar/footer frames).
+- `/components/`: Atomic UI component overrides (e.g. `Button.tsx`).
+- `/icons/`: Custom SVG or React icon components.
+- `/images/`: Static image files (PNG/JPG/SVG).
+- `/fonts/`: Local font files. Import them using `@font-face` in `styles/theme.css`.
+- `/styles/`: CSS sheets. `theme.css` is processed dynamically to apply theme variables.
+- `/css/`: Supporting stylesheet assets (e.g. `components.css`).
+- `/js/`: Client side script behaviors (e.g. `client-effects.ts`).
+- `/animations/`: Shared CSS transition configurations.
+- `/assets/`: Supporting resource/media files.
+- `/templates/`: Structural templates (HTML/Handlebars/TSX).
+- `/partials/`: Reusable sub-components (e.g. `CreatorBadge.tsx`).
+- `/hooks/`: React state hooks (e.g. `useThemeEffects.ts`).
+- `/config/`: Configuration values. Core tokens must reside in `config/theme.tokens.ts`.
+- `/locales/`: Internationalization files (e.g. `en.json`).
+- `/preview/`: Administrative preview manifest and thumbnails.
+
+## Core Files
+- `manifest.json`: Configuration manifest defining version, author, preview image, and token defaults.
+- `theme.config.ts`: Entry configuration type binding the manifest to runtime design tokens.
+- `index.ts`: Standard JS module entry point exporting configurations.
+
+## How to Package as a ZIP Archive
+To install custom themes via the CreatorPulse Admin Dashboard (**Themes -> Upload ZIP**), you must package your theme inside a single root folder matching your theme slug (e.g., `/starter-theme/`). The ZIP archive must contain this single root folder as its only top-level element.
+
+From the parent directory of your theme:
+```bash
+zip -r starter-theme.zip starter-theme/ -x "*.git*"
+```

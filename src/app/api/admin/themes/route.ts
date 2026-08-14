@@ -4,6 +4,8 @@ import path from 'path';
 import JSZip from 'jszip';
 import { ThemeManifest } from '@/lib/extensions/theme-types';
 import { DISCOVERED_THEMES } from '@/lib/loaders/registry';
+import { generateRegistry } from '@/lib/loaders/registry-generator';
+import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
 
 const THEMES_DIR = path.join(process.cwd(), 'themes');
 
@@ -62,13 +64,23 @@ async function scanThemesOnDisk(): Promise<ThemeManifest[]> {
             cssOverrides = await fs.promises.readFile(cssPath, 'utf-8');
           }
 
+          // Introspect directory structure
+          const folderEntries = await fs.promises.readdir(path.join(THEMES_DIR, folder), { withFileTypes: true });
+          const existingDirs = folderEntries.filter(e => e.isDirectory()).map(e => e.name);
+
           loadedThemes.push({
             ...manifest,
             assets: {
               ...(manifest.assets || {}),
               cssOverrides: cssOverrides || manifest.assets?.cssOverrides || ''
+            },
+            directoryHealth: {
+              totalStandard: 17,
+              presentCount: existingDirs.length,
+              folders: existingDirs,
+              isCompliant: existingDirs.length >= 10
             }
-          });
+          } as any);
         } catch (err) {
           console.error(`[API /admin/themes] Failed parsing manifest for ${folder}:`, err);
         }
@@ -126,6 +138,8 @@ export async function POST(request: Request) {
       if (found) {
         await fs.promises.rm(found.folderPath, { recursive: true, force: true });
         console.log(`[API /admin/themes] Deleted theme directory: ${found.folderPath}`);
+        // Regenerate registry.ts dynamically
+        generateRegistry();
       }
 
       const updatedThemes = await scanThemesOnDisk();
@@ -141,40 +155,150 @@ export async function POST(request: Request) {
       const buffer = Buffer.from(zipBase64, 'base64');
       const zip = await JSZip.loadAsync(buffer);
 
-      // Look for manifest.json or theme.json inside zip
-      let manifestEntry = zip.file('manifest.json') || zip.file('theme.json');
-      if (!manifestEntry) {
-        const fileNames = Object.keys(zip.files);
-        const match = fileNames.find((k) => k.endsWith('/manifest.json') || k.endsWith('/theme.json'));
-        if (match) {
-          manifestEntry = zip.file(match);
+      const fileNames = Object.keys(zip.files);
+      // Filter out hidden directories/files (such as macOS double metadata __MACOSX)
+      const activeFileNames = fileNames.filter(
+        (name) => !name.startsWith('__MACOSX/') && name !== '.DS_Store' && !name.endsWith('.DS_Store')
+      );
+
+      if (activeFileNames.length === 0) {
+        return NextResponse.json({ success: false, error: 'ZIP archive is empty.' }, { status: 400 });
+      }
+
+      // Enforce path traversal check
+      for (const filename of activeFileNames) {
+        const normalized = filename.replace(/\\/g, '/');
+        if (
+          normalized.includes('../') ||
+          normalized.includes('/..') ||
+          normalized.startsWith('../') ||
+          normalized.startsWith('/') ||
+          normalized.includes('..\\') ||
+          normalized.includes('\\..')
+        ) {
+          return NextResponse.json(
+            { success: false, error: `Unsafe ZIP content: Path traversal sequence detected in: "${filename}"` },
+            { status: 400 }
+          );
         }
       }
 
+      // Enforce single root directory check
+      const firstParts = activeFileNames.map((name) => {
+        const normalized = name.replace(/\\/g, '/');
+        const idx = normalized.indexOf('/');
+        return idx > -1 ? normalized.substring(0, idx) : '';
+      });
+
+      const firstPart = firstParts[0];
+      const hasSingleRoot = firstPart !== '' && firstParts.every((part) => part === firstPart);
+
+      if (!hasSingleRoot) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid ZIP structure: Package must contain a single root folder (e.g. /theme-slug/) containing the Theme SDK structure. Flat files or multiple folders at the top level are not allowed.'
+          },
+          { status: 400 }
+        );
+      }
+
+      const rootFolder = firstPart;
+
+      // Locate manifest file within root folder
+      const manifestEntry = zip.file(`${rootFolder}/manifest.json`) || zip.file(`${rootFolder}/theme.json`);
       if (!manifestEntry) {
         return NextResponse.json(
-          { success: false, error: 'ZIP does not contain a valid manifest.json or theme.json' },
+          { success: false, error: `Invalid Theme package: manifest.json not found inside the root folder "${rootFolder}/".` },
           { status: 400 }
         );
       }
 
       const manifestRaw = await manifestEntry.async('text');
-      const parsedManifest: ThemeManifest = JSON.parse(manifestRaw);
-      const slug = parsedManifest.slug || parsedManifest.name.toLowerCase().replace(/[^a-z0-9_]/g, '-');
-      const targetDir = path.join(THEMES_DIR, slug);
-
-      if (!fs.existsSync(targetDir)) {
-        await fs.promises.mkdir(targetDir, { recursive: true });
+      let parsedManifest: ThemeManifest;
+      try {
+        parsedManifest = JSON.parse(manifestRaw);
+      } catch (err: any) {
+        return NextResponse.json(
+          { success: false, error: `Malformed manifest JSON file: ${err.message}` },
+          { status: 400 }
+        );
       }
 
-      // Extract all files into targetDir
+      // Run standard folders check
+      const expectedDirs = [
+        'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
+        'styles', 'css', 'js', 'animations', 'assets', 'templates',
+        'partials', 'hooks', 'config', 'locales', 'preview'
+      ];
+      const folderNames: string[] = [];
+      for (const name of activeFileNames) {
+        const normalized = name.replace(/\\/g, '/');
+        if (normalized === `${rootFolder}/manifest.json` || normalized === `${rootFolder}/theme.json`) continue;
+
+        const pathAfterRoot = normalized.substring(rootFolder.length + 1);
+        const folderIdx = pathAfterRoot.indexOf('/');
+        if (folderIdx > -1) {
+          const subDir = pathAfterRoot.substring(0, folderIdx);
+          if (expectedDirs.includes(subDir) && !folderNames.includes(subDir)) {
+            folderNames.push(subDir);
+          }
+        }
+      }
+
+      // Enforce slug matches zip root folder name
+      if (parsedManifest.slug !== rootFolder) {
+        return NextResponse.json(
+          { success: false, error: `Slug Mismatch: Theme slug in manifest ("${parsedManifest.slug}") must match ZIP root directory name ("${rootFolder}").` },
+          { status: 400 }
+        );
+      }
+
+      const existingThemes = await scanThemesOnDisk();
+
+      // Run compatibility diagnostics
+      const compatibilityReport = CompatibilityChecker.checkTheme(
+        parsedManifest,
+        folderNames,
+        existingThemes
+      );
+
+      if (!compatibilityReport.isValid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Theme compatibility validation failed.',
+            report: compatibilityReport
+          },
+          { status: 400 }
+        );
+      }
+
+      // Extract to /themes/{theme-slug}/
+      const slug = parsedManifest.slug;
+      const targetDir = path.join(THEMES_DIR, slug);
+
+      if (fs.existsSync(targetDir)) {
+        await fs.promises.rm(targetDir, { recursive: true, force: true });
+      }
+      await fs.promises.mkdir(targetDir, { recursive: true });
+
       for (const [filename, fileObj] of Object.entries(zip.files)) {
         if (fileObj.dir) continue;
-        // Strip parent folder prefix if packaged inside a root folder
-        const cleanName = filename.includes('/') ? filename.split('/').slice(1).join('/') || filename : filename;
-        const filePath = path.join(targetDir, cleanName);
-        const fileDir = path.dirname(filePath);
+        const normalized = filename.replace(/\\/g, '/');
+        if (!normalized.startsWith(`${rootFolder}/`)) continue;
 
+        const cleanName = normalized.substring(rootFolder.length + 1);
+        if (cleanName === '.DS_Store' || cleanName.startsWith('__MACOSX/')) continue;
+
+        const filePath = path.join(targetDir, cleanName);
+
+        // Traversal boundary validation
+        if (!filePath.startsWith(targetDir + path.sep) && filePath !== targetDir) {
+          return NextResponse.json({ success: false, error: 'Unsafe extraction: File path resolves outside theme boundary.' }, { status: 400 });
+        }
+
+        const fileDir = path.dirname(filePath);
         if (!fs.existsSync(fileDir)) {
           await fs.promises.mkdir(fileDir, { recursive: true });
         }
@@ -183,24 +307,23 @@ export async function POST(request: Request) {
         await fs.promises.writeFile(filePath, content);
       }
 
-      // Ensure all standard Theme SDK subdirectories exist
-      for (const dir of [
-        'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
-        'styles', 'css', 'js', 'animations', 'assets', 'templates',
-        'partials', 'hooks', 'config', 'locales', 'preview'
-      ]) {
+      // Auto-initialize standard SDK folders on disk
+      for (const dir of expectedDirs) {
         const subDir = path.join(targetDir, dir);
         if (!fs.existsSync(subDir)) {
           await fs.promises.mkdir(subDir, { recursive: true });
         }
       }
 
-      // Ensure manifest.json is placed at the root of the theme folder
+      // Place clean manifest.json at root of folder
       await fs.promises.writeFile(
         path.join(targetDir, 'manifest.json'),
         JSON.stringify(parsedManifest, null, 2),
         'utf-8'
       );
+
+      // Regenerate registry.ts dynamically
+      generateRegistry();
 
       const updatedThemes = await scanThemesOnDisk();
       return NextResponse.json({
@@ -215,6 +338,26 @@ export async function POST(request: Request) {
     if (action === 'install' && manifest) {
       const slug = manifest.slug || manifest.name.toLowerCase().replace(/[^a-z0-9_]/g, '-');
       const targetDir = path.join(THEMES_DIR, slug);
+
+      const existingThemes = await scanThemesOnDisk();
+
+      // Run compatibility diagnostics
+      const compatibilityReport = CompatibilityChecker.checkTheme(
+        manifest,
+        [],
+        existingThemes
+      );
+
+      if (!compatibilityReport.isValid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Theme compatibility validation failed.',
+            report: compatibilityReport
+          },
+          { status: 400 }
+        );
+      }
 
       if (!fs.existsSync(targetDir)) {
         await fs.promises.mkdir(targetDir, { recursive: true });
@@ -247,6 +390,9 @@ export async function POST(request: Request) {
         }
         await fs.promises.writeFile(path.join(stylesDir, 'theme.css'), manifest.assets.cssOverrides, 'utf-8');
       }
+
+      // Regenerate registry.ts dynamically
+      generateRegistry();
 
       const updatedThemes = await scanThemesOnDisk();
       return NextResponse.json({

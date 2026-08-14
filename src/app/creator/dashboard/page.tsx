@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
+import { PluginSlot } from '@/lib/extensions/plugin-slot';
 
 // Multi-dataset for different time periods
 const periodData = {
@@ -395,8 +396,9 @@ export default function CreatorDashboardPage() {
         </Card>
       </div>
 
-      {/* Dynamic Plugin Widgets Hook Point */}
+      {/* Dynamic Plugin Widgets Hook Point & Standard SDK Plugin Slots */}
       <HookPoint name="creator_dashboard_widgets" className="space-y-4" />
+      <PluginSlot hook="dashboard_widget" className="mt-4" />
 
       {/* Row 3: Recent Subscribers & Top Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,6 +1,6 @@
 import { ThemeManifest } from '@/lib/extensions/theme-types';
 import manifest from './manifest.json';
-import { starterThemeTokens } from './tokens';
+import { starterThemeTokens } from './config/theme.tokens';
 
 export const themeConfig: ThemeManifest = {
   ...(manifest as unknown as ThemeManifest),

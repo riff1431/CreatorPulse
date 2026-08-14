@@ -17,9 +17,10 @@ import { PostCard } from '@/components/post-card';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { MOCK_POSTS, MOCK_CREATOR_DETAILS, Post } from '@/lib/supabase/store';
 import { useAuth } from '@/lib/auth/auth-context';
+import { ThemeSlot } from '@/lib/extensions/theme-slot';
+import { PluginSlot } from '@/lib/extensions/plugin-slot';
 
 export default function FeedPage() {
   const { user, role } = useAuth();
@@ -369,6 +370,10 @@ export default function FeedPage() {
               ))}
             </div>
           </Card>
+
+          {/* Dynamic Plugin Widgets in Feed Sidebar */}
+          <PluginSlot hook="feed_sidebar_widget" />
+          <PluginSlot hook="feed_post_action" />
         </aside>
       </div>
 
