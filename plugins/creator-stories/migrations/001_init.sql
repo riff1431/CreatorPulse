@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-creator-stories
+-- Creates storage tables if applicable

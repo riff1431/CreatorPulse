@@ -1,0 +1,28 @@
+[
+  {
+    "id": "watermarkText",
+    "label": "Default Watermark Text",
+    "type": "text",
+    "defaultValue": "© CreatorPulse Protected",
+    "placeholder": "© CreatorPulse Protected"
+  },
+  {
+    "id": "watermarkOpacity",
+    "label": "Watermark Opacity (0.1 - 1.0)",
+    "type": "number",
+    "defaultValue": 0.4
+  },
+  {
+    "id": "includeViewerUsername",
+    "label": "Include Viewer Username Stamp",
+    "type": "boolean",
+    "defaultValue": true,
+    "description": "Disincentivizes screen recording by stamping active subscriber username."
+  },
+  {
+    "id": "blockRightClick",
+    "label": "Disable Right Click on Media",
+    "type": "boolean",
+    "defaultValue": true
+  }
+]

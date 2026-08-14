@@ -1,0 +1,20 @@
+[
+  {
+    "id": "minGiftValue",
+    "label": "Minimum Gift Value ($)",
+    "type": "number",
+    "defaultValue": 1
+  },
+  {
+    "id": "platformCutPercentage",
+    "label": "Platform Revenue Share (%)",
+    "type": "number",
+    "defaultValue": 10
+  },
+  {
+    "id": "enableConfettiAnimation",
+    "label": "Play Fullscreen Confetti Particle Burst",
+    "type": "boolean",
+    "defaultValue": true
+  }
+]

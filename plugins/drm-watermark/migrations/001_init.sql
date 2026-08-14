@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-drm-watermark
+-- Creates storage tables if applicable

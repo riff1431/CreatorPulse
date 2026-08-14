@@ -1,12 +1,59 @@
 import { PluginManifest, PluginHookType } from '@/lib/extensions/plugin-types';
 import { DISCOVERED_PLUGINS, DISCOVERED_PLUGIN_MANIFESTS } from './registry';
 
+export const STANDARD_PLUGIN_FOLDERS = [
+  'client',
+  'server',
+  'api',
+  'components',
+  'pages',
+  'routes',
+  'hooks',
+  'services',
+  'database',
+  'migrations',
+  'settings',
+  'permissions',
+  'icons',
+  'images',
+  'css',
+  'js',
+  'assets',
+  'locales',
+  'jobs',
+  'events',
+  'webhooks',
+  'tests',
+  'docs'
+] as const;
+
+export interface PluginExecutionContext {
+  pluginId: string;
+  version: string;
+}
+
+export interface PluginPackageConfig {
+  manifest: PluginManifest;
+  onInstall?: (ctx?: PluginExecutionContext) => void | Promise<void>;
+  onActivate?: (ctx?: PluginExecutionContext) => void | Promise<void>;
+  onDeactivate?: (ctx?: PluginExecutionContext) => void | Promise<void>;
+  onUpdate?: (ctx?: PluginExecutionContext, fromVersion?: string) => void | Promise<void>;
+  onUninstall?: (ctx?: PluginExecutionContext) => void | Promise<void>;
+}
+
 export interface PluginExecutionResult {
   success: boolean;
   error?: string;
 }
 
 export class PluginLoader {
+  /**
+   * Standard folder list for Plugin SDK v1.0 compliance
+   */
+  public static getStandardFolders(): readonly string[] {
+    return STANDARD_PLUGIN_FOLDERS;
+  }
+
   /**
    * Validate a plugin manifest for required properties
    */
@@ -30,6 +77,18 @@ export class PluginLoader {
       return { valid: false, error: 'Plugin hooks array is required' };
     }
     return { valid: true };
+  }
+
+  /**
+   * Validate directory compliance for a plugin package
+   */
+  public static validateDirectoryStructure(folderNames: string[]): { compliant: boolean; missingFolders: string[] } {
+    const present = new Set(folderNames);
+    const missing = STANDARD_PLUGIN_FOLDERS.filter(f => !present.has(f));
+    return {
+      compliant: missing.length === 0,
+      missingFolders: missing
+    };
   }
 
   /**

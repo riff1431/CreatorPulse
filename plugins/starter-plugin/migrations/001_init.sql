@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-starter-plugin
+-- Creates storage tables if applicable

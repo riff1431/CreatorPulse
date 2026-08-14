@@ -1,0 +1,15 @@
+[
+  {
+    "id": "sampleApiKey",
+    "label": "Custom Service API Key",
+    "type": "password",
+    "defaultValue": "",
+    "placeholder": "sk_test_..."
+  },
+  {
+    "id": "enableNotificationBadge",
+    "label": "Show Interactive Action Badge",
+    "type": "boolean",
+    "defaultValue": true
+  }
+]

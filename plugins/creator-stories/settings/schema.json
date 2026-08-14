@@ -1,0 +1,14 @@
+[
+  {
+    "id": "maxStoryDurationHours",
+    "label": "Story Expiration Time (Hours)",
+    "type": "number",
+    "defaultValue": 24
+  },
+  {
+    "id": "allowPublicReplies",
+    "label": "Allow Direct DM Replies on Stories",
+    "type": "boolean",
+    "defaultValue": true
+  }
+]

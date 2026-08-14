@@ -160,6 +160,19 @@ export async function POST(request: Request) {
         await fs.promises.writeFile(filePath, content);
       }
 
+      // Ensure all standard Plugin SDK subdirectories exist
+      for (const dir of [
+        'client', 'server', 'api', 'components', 'pages', 'routes', 'hooks',
+        'services', 'database', 'migrations', 'settings', 'permissions', 'icons',
+        'images', 'css', 'js', 'assets', 'locales', 'jobs', 'events',
+        'webhooks', 'tests', 'docs'
+      ]) {
+        const subDir = path.join(targetDir, dir);
+        if (!fs.existsSync(subDir)) {
+          await fs.promises.mkdir(subDir, { recursive: true });
+        }
+      }
+
       // Ensure manifest.json is placed at the root of the plugin folder
       await fs.promises.writeFile(
         path.join(targetDir, 'manifest.json'),
@@ -185,6 +198,19 @@ export async function POST(request: Request) {
         await fs.promises.mkdir(targetDir, { recursive: true });
       }
 
+      // Ensure all standard Plugin SDK subdirectories exist
+      for (const dir of [
+        'client', 'server', 'api', 'components', 'pages', 'routes', 'hooks',
+        'services', 'database', 'migrations', 'settings', 'permissions', 'icons',
+        'images', 'css', 'js', 'assets', 'locales', 'jobs', 'events',
+        'webhooks', 'tests', 'docs'
+      ]) {
+        const subDir = path.join(targetDir, dir);
+        if (!fs.existsSync(subDir)) {
+          await fs.promises.mkdir(subDir, { recursive: true });
+        }
+      }
+
       // Write manifest.json
       await fs.promises.writeFile(
         path.join(targetDir, 'manifest.json'),
@@ -195,7 +221,7 @@ export async function POST(request: Request) {
       // Write default plugin.config.ts if missing
       const configPath = path.join(targetDir, 'plugin.config.ts');
       if (!fs.existsSync(configPath)) {
-        const configCode = `import { PluginPackageConfig } from '@/lib/loaders/plugin-loader';\n\nexport const pluginConfig: PluginPackageConfig = {\n  manifest: ${JSON.stringify(manifest, null, 2)},\n  onActivate: async () => {\n    console.log('[Plugin] Activated ${manifest.name}');\n  },\n  onDeactivate: async () => {\n    console.log('[Plugin] Deactivated ${manifest.name}');\n  }\n};\n\nexport default pluginConfig;\n`;
+        const configCode = `import { PluginPackageConfig } from '@/lib/loaders/plugin-loader';\nimport manifest from './manifest.json';\n\nexport const pluginConfig: PluginPackageConfig = {\n  manifest,\n  onInstall: async () => {\n    console.log('[Plugin] Installed ${manifest.name}');\n  },\n  onActivate: async () => {\n    console.log('[Plugin] Activated ${manifest.name}');\n  },\n  onDeactivate: async () => {\n    console.log('[Plugin] Deactivated ${manifest.name}');\n  },\n  onUpdate: async (ctx, prevVer) => {\n    console.log('[Plugin] Updated ${manifest.name} from v' + prevVer);\n  },\n  onUninstall: async () => {\n    console.log('[Plugin] Uninstalled ${manifest.name}');\n  }\n};\n\nexport default pluginConfig;\n`;
         await fs.promises.writeFile(configPath, configCode, 'utf-8');
       }
 

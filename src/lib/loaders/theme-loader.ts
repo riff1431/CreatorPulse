@@ -1,10 +1,44 @@
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from '@/lib/extensions/theme-types';
 import { DISCOVERED_THEMES } from './registry';
 
-export const CURRENT_APP_VERSION = '1.0.0';
+export const CURRENT_APP_VERSION = '1.2.0';
+
+export const STANDARD_THEME_FOLDERS = [
+  'pages',
+  'layouts',
+  'components',
+  'icons',
+  'images',
+  'fonts',
+  'styles',
+  'css',
+  'js',
+  'animations',
+  'assets',
+  'templates',
+  'partials',
+  'hooks',
+  'config',
+  'locales',
+  'preview'
+] as const;
+
+export interface ThemePackageConfig {
+  manifest: ThemeManifest;
+  onInit?: () => void | Promise<void>;
+  onActivate?: () => void | Promise<void>;
+  onDeactivate?: () => void | Promise<void>;
+}
 
 export class ThemeLoader {
   private static defaultThemeSlug = 'blush-core';
+
+  /**
+   * Standard folder list for Theme SDK v1.0 compliance
+   */
+  public static getStandardFolders(): readonly string[] {
+    return STANDARD_THEME_FOLDERS;
+  }
 
   /**
    * Validate a theme manifest for required fields and structure
@@ -26,6 +60,18 @@ export class ThemeLoader {
       return { valid: false, error: 'Theme tokens object is required' };
     }
     return { valid: true };
+  }
+
+  /**
+   * Validate directory compliance for a theme package
+   */
+  public static validateDirectoryStructure(folderNames: string[]): { compliant: boolean; missingFolders: string[] } {
+    const present = new Set(folderNames);
+    const missing = STANDARD_THEME_FOLDERS.filter(f => !present.has(f));
+    return {
+      compliant: missing.length === 0,
+      missingFolders: missing
+    };
   }
 
   /**

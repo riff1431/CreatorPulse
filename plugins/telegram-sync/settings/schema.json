@@ -1,0 +1,16 @@
+[
+  {
+    "id": "botToken",
+    "label": "Telegram Bot API Token",
+    "type": "password",
+    "defaultValue": "",
+    "placeholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+  },
+  {
+    "id": "channelId",
+    "label": "Telegram VIP Channel / Group ID",
+    "type": "text",
+    "defaultValue": "@creator_vip_room",
+    "placeholder": "@channel_username or -100123456789"
+  }
+]

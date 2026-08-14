@@ -1,0 +1,25 @@
+[
+  {
+    "id": "twitterCardType",
+    "label": "Twitter Card Presentation",
+    "type": "select",
+    "defaultValue": "summary_large_image",
+    "options": [
+      {
+        "label": "Large Visual Summary Image",
+        "value": "summary_large_image"
+      },
+      {
+        "label": "Compact Thumbnail Summary",
+        "value": "summary"
+      }
+    ]
+  },
+  {
+    "id": "brandPrefix",
+    "label": "Social Meta Title Suffix",
+    "type": "text",
+    "defaultValue": "| CreatorPulse",
+    "placeholder": "| Your Brand Name"
+  }
+]

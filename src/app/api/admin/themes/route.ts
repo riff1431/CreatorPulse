@@ -183,6 +183,18 @@ export async function POST(request: Request) {
         await fs.promises.writeFile(filePath, content);
       }
 
+      // Ensure all standard Theme SDK subdirectories exist
+      for (const dir of [
+        'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
+        'styles', 'css', 'js', 'animations', 'assets', 'templates',
+        'partials', 'hooks', 'config', 'locales', 'preview'
+      ]) {
+        const subDir = path.join(targetDir, dir);
+        if (!fs.existsSync(subDir)) {
+          await fs.promises.mkdir(subDir, { recursive: true });
+        }
+      }
+
       // Ensure manifest.json is placed at the root of the theme folder
       await fs.promises.writeFile(
         path.join(targetDir, 'manifest.json'),
@@ -206,6 +218,18 @@ export async function POST(request: Request) {
 
       if (!fs.existsSync(targetDir)) {
         await fs.promises.mkdir(targetDir, { recursive: true });
+      }
+
+      // Ensure all standard Theme SDK subdirectories exist
+      for (const dir of [
+        'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
+        'styles', 'css', 'js', 'animations', 'assets', 'templates',
+        'partials', 'hooks', 'config', 'locales', 'preview'
+      ]) {
+        const subDir = path.join(targetDir, dir);
+        if (!fs.existsSync(subDir)) {
+          await fs.promises.mkdir(subDir, { recursive: true });
+        }
       }
 
       // Write manifest.json

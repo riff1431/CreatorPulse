@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-virtual-gifts
+-- Creates storage tables if applicable

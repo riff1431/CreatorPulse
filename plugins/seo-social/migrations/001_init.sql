@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-seo-social
+-- Creates storage tables if applicable

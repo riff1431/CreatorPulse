@@ -1,0 +1,2 @@
+-- Migration 001 for plugin-telegram-sync
+-- Creates storage tables if applicable
