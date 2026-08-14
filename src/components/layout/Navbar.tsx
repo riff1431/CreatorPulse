@@ -5,45 +5,37 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Sparkles, Search, Bell, Shield, LayoutDashboard, 
-  User, LogOut, PlusSquare, Compass
+  User, LogOut, PlusSquare, Compass, LogIn 
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { UserRole, MOCK_USERS } from '@/lib/supabase/store';
+import { useAuth } from '@/lib/auth/auth-context';
+import { MOCK_USERS } from '@/lib/supabase/store';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
-  const [activeRole, setActiveRole] = useState<UserRole>('member');
+  const { user, role, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const role = (localStorage.getItem('creatorpulse_active_role') as UserRole) || 'member';
-    setActiveRole(role);
-
-    const handleRoleEvent = (e: CustomEvent) => {
-      setActiveRole(e.detail);
-    };
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
     };
 
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
     };
   }, []);
 
-  const currentUser = activeRole === 'admin' 
+  const currentUser = user || (role === 'admin' 
     ? MOCK_USERS['user-admin'] 
-    : activeRole === 'creator' 
+    : role === 'creator' 
     ? MOCK_USERS['user-creator-1'] 
-    : MOCK_USERS['user-member'];
+    : MOCK_USERS['user-member']);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,14 +70,14 @@ export const Navbar: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search creators, topics, vertical shorts, or posts..."
-            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] focus:border-[#EC4899] focus:bg-white rounded-xl pl-10 pr-4 py-2 text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-3 focus:ring-[#EC4899]/15 transition-all shadow-inner"
+            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] focus:border-[#EC4899] focus:bg-white rounded-xl pl-10 pr-4 py-2 text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-3 focus:ring-[#EC4899]/15 transition-all shadow-inner font-medium"
           />
         </form>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Role specific quick action */}
-          {activeRole === 'creator' && (
+          {role === 'creator' && (
             <Link href="/creator/dashboard">
               <Button variant="primary" size="sm" leftIcon={<PlusSquare size={16} />}>
                 <span className="hidden sm:inline">New Post</span>
@@ -93,10 +85,10 @@ export const Navbar: React.FC = () => {
             </Link>
           )}
 
-          {activeRole === 'admin' && (
+          {role === 'admin' && (
             <Link href="/admin/dashboard">
               <Button variant="outline" size="sm" leftIcon={<Shield size={16} className="text-[#EC4899]" />}>
-                <span className="hidden sm:inline">Admin</span>
+                <span className="hidden sm:inline">Admin Panel</span>
               </Button>
             </Link>
           )}
@@ -105,7 +97,7 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2.5 rounded-xl text-[#71717A] hover:text-[#DB2777] hover:bg-[#FDF2F8] transition-colors relative border border-transparent hover:border-[#F3DCE8]"
+              className="p-2.5 rounded-xl text-[#71717A] hover:text-[#DB2777] hover:bg-[#FDF2F8] transition-colors relative border border-transparent hover:border-[#F3DCE8] cursor-pointer"
               title="Notifications"
             >
               <Bell size={18} />
@@ -142,7 +134,7 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#EC4899]/30 transition-all"
+              className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#EC4899]/30 transition-all cursor-pointer"
             >
               <Avatar
                 alt={currentUser.fullName}
@@ -153,13 +145,20 @@ export const Navbar: React.FC = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-60 bg-white border border-[#F3DCE8] rounded-2xl p-3 space-y-2 z-50 shadow-xl shadow-[#EC4899]/10">
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-[#F3DCE8] rounded-2xl p-3 space-y-2 z-50 shadow-xl shadow-[#EC4899]/10">
                 <div className="px-2.5 py-1.5 border-b border-[#F3DCE8] pb-2">
                   <p className="text-sm font-bold text-[#18181B]">{currentUser.fullName}</p>
                   <p className="text-xs text-[#71717A]">@{currentUser.username}</p>
-                  <span className="inline-block text-[10px] uppercase font-bold text-[#BE185D] bg-[#FCE7F3] px-2 py-0.5 rounded-full mt-1.5 border border-[#FBCFE8]">
-                    Role: {activeRole}
-                  </span>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <span className="inline-block text-[10px] uppercase font-bold text-[#BE185D] bg-[#FCE7F3] px-2.5 py-0.5 rounded-full border border-[#FBCFE8]">
+                      Role: {role}
+                    </span>
+                    {currentUser.isVerified && (
+                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
+                        Verified
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-1 text-xs text-[#18181B] font-medium">
@@ -171,33 +170,35 @@ export const Navbar: React.FC = () => {
                     <User size={15} className="text-[#EC4899]" /> My Profile
                   </Link>
 
-                  {activeRole === 'creator' && (
+                  {role === 'creator' && (
                     <Link
                       href="/creator/dashboard"
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFF1F7] text-[#BE185D] transition-colors"
                     >
-                      <LayoutDashboard size={15} className="text-[#EC4899]" /> Creator Dashboard
+                      <LayoutDashboard size={15} className="text-[#EC4899]" /> Creator Studio
                     </Link>
                   )}
 
-                  {activeRole === 'admin' && (
+                  {role === 'admin' && (
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFF1F7] text-[#BE123C] transition-colors"
                     >
-                      <Shield size={15} className="text-[#F43F5E]" /> Admin Portal
+                      <Shield size={15} className="text-[#F43F5E]" /> Admin Dashboard
                     </Link>
                   )}
 
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFE4E6] hover:text-[#BE123C] transition-colors text-[#71717A] border-t border-[#F3DCE8] mt-1 pt-2"
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      logout();
+                    }}
+                    className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFE4E6] hover:text-[#BE123C] transition-colors text-[#71717A] border-t border-[#F3DCE8] mt-1 pt-2 cursor-pointer font-bold"
                   >
-                    <LogOut size={15} /> Switch Account / Logout
-                  </Link>
+                    <LogOut size={15} className="text-[#F43F5E]" /> Sign Out
+                  </button>
                 </div>
               </div>
             )}

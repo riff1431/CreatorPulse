@@ -1,31 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Home, Compass, Film, Bookmark, LayoutDashboard, Shield, 
   Database, Wallet, Bell, MessageSquare, Sparkles 
 } from 'lucide-react';
-import { UserRole } from '@/lib/supabase/store';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const [activeRole, setActiveRole] = useState<UserRole>('member');
-
-  useEffect(() => {
-    const role = (localStorage.getItem('creatorpulse_active_role') as UserRole) || 'member';
-    setActiveRole(role);
-
-    const handleRoleEvent = (e: CustomEvent) => {
-      setActiveRole(e.detail);
-    };
-
-    window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    return () => {
-      window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    };
-  }, []);
+  const { role } = useAuth();
 
   const navItems = [
     { label: 'Home Feed', href: '/feed', icon: Home },
@@ -75,7 +61,7 @@ export const Sidebar: React.FC = () => {
           Management & Studio
         </p>
 
-        {activeRole === 'creator' && (
+        {role === 'creator' && (
           <Link
             href="/creator/dashboard"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
@@ -85,11 +71,11 @@ export const Sidebar: React.FC = () => {
             }`}
           >
             <LayoutDashboard size={18} className="text-[#EC4899]" />
-            <span>Creator Dashboard</span>
+            <span>Creator Studio</span>
           </Link>
         )}
 
-        {activeRole === 'admin' && (
+        {role === 'admin' && (
           <Link
             href="/admin/dashboard"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
@@ -116,7 +102,7 @@ export const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      {activeRole === 'member' && (
+      {role === 'member' && (
         <div className="mt-auto bg-gradient-to-br from-[#FFF1F7] to-[#FDF2F8] border border-[#F3DCE8] p-4 rounded-2xl space-y-3 relative overflow-hidden shadow-sm shadow-[#EC4899]/5">
           <div className="flex items-center gap-2 text-[#BE185D]">
             <Sparkles size={16} />

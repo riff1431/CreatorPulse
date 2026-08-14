@@ -3,30 +3,50 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, ArrowRight, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/lib/auth/auth-context';
 import { UserRole } from '@/lib/supabase/store';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { signup } = useAuth();
+
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>('member');
   const [category, setCategory] = useState('Education & Tech');
+  const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      localStorage.setItem('creatorpulse_active_role', role);
-      window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: role }));
-      router.push('/auth/verify');
-    }, 700);
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await signup(fullName, username, email, password, role, category);
+
+    if (!result.success) {
+      setErrorMessage(result.error || 'Signup failed. Please try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (role === 'creator') {
+      router.push('/creator/dashboard');
+    } else {
+      router.push('/feed');
+    }
   };
 
   return (
@@ -69,6 +89,13 @@ export default function SignupPage() {
               </button>
             </div>
           </div>
+
+          {errorMessage && (
+            <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-xl text-xs text-[#BE123C] flex items-center gap-2">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSignup} className="space-y-3.5 text-xs">
             <div>
@@ -126,14 +153,23 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-[#18181B] font-bold mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-3 pr-10 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white font-medium"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#18181B] cursor-pointer"
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
 
             <Button
@@ -144,7 +180,7 @@ export default function SignupPage() {
               isLoading={isLoading}
               rightIcon={<ArrowRight size={14} />}
             >
-              Create Account
+              Create Account & Log In
             </Button>
           </form>
 

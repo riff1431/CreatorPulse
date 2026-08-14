@@ -1,38 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { UserRole } from '@/lib/supabase/store';
 import { Shield, Sparkles, UserCheck, Eye } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export const RoleSwitcher: React.FC = () => {
-  const [activeRole, setActiveRole] = useState<UserRole>('member');
-
-  useEffect(() => {
-    const savedRole = localStorage.getItem('creatorpulse_active_role') as UserRole;
-    if (savedRole) {
-      setActiveRole(savedRole);
-    }
-  }, []);
-
-  const handleRoleChange = (role: UserRole) => {
-    setActiveRole(role);
-    localStorage.setItem('creatorpulse_active_role', role);
-    window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: role }));
-  };
+  const { role, switchRole } = useAuth();
 
   return (
     <div className="bg-white/95 backdrop-blur-md border-b border-[#F3DCE8] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50 shadow-xs">
       <div className="flex items-center gap-2 text-[#71717A]">
         <Sparkles size={14} className="text-[#EC4899] animate-pulse" />
-        <span className="font-bold text-[#18181B]">CreatorPulse Sandbox:</span>
-        <span className="text-[#71717A] hidden md:inline font-medium">Switch between Member, Creator Studio & Admin Portal</span>
+        <span className="font-bold text-[#18181B]">CreatorPulse Role Sandbox:</span>
+        <span className="text-[#71717A] hidden md:inline font-medium">Switch active demo role & permissions</span>
       </div>
 
       <div className="flex items-center gap-1.5 bg-[#FFF9FC] p-1 rounded-2xl border border-[#F3DCE8]">
         <button
-          onClick={() => handleRoleChange('member')}
+          onClick={() => switchRole('member')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-            activeRole === 'member'
+            role === 'member'
               ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
               : 'text-[#71717A] hover:text-[#18181B]'
           }`}
@@ -42,9 +30,9 @@ export const RoleSwitcher: React.FC = () => {
         </button>
 
         <button
-          onClick={() => handleRoleChange('creator')}
+          onClick={() => switchRole('creator')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-            activeRole === 'creator'
+            role === 'creator'
               ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
               : 'text-[#71717A] hover:text-[#18181B]'
           }`}
@@ -54,9 +42,9 @@ export const RoleSwitcher: React.FC = () => {
         </button>
 
         <button
-          onClick={() => handleRoleChange('admin')}
+          onClick={() => switchRole('admin')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-            activeRole === 'admin'
+            role === 'admin'
               ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
               : 'text-[#71717A] hover:text-[#18181B]'
           }`}

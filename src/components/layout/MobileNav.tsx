@@ -1,28 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Film, Compass, LayoutDashboard, Shield, Database } from 'lucide-react';
-import { UserRole } from '@/lib/supabase/store';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export const MobileNav: React.FC = () => {
   const pathname = usePathname();
-  const [activeRole, setActiveRole] = useState<UserRole>('member');
-
-  useEffect(() => {
-    const role = (localStorage.getItem('creatorpulse_active_role') as UserRole) || 'member';
-    setActiveRole(role);
-
-    const handleRoleEvent = (e: CustomEvent) => {
-      setActiveRole(e.detail);
-    };
-
-    window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    return () => {
-      window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    };
-  }, []);
+  const { role } = useAuth();
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-[#F3DCE8] px-3 py-2 flex items-center justify-around shadow-lg shadow-[#EC4899]/5">
@@ -56,7 +42,7 @@ export const MobileNav: React.FC = () => {
         <span>Explore</span>
       </Link>
 
-      {activeRole === 'creator' ? (
+      {role === 'creator' ? (
         <Link
           href="/creator/dashboard"
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
@@ -66,7 +52,7 @@ export const MobileNav: React.FC = () => {
           <LayoutDashboard size={18} />
           <span>Studio</span>
         </Link>
-      ) : activeRole === 'admin' ? (
+      ) : role === 'admin' ? (
         <Link
           href="/admin/dashboard"
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${

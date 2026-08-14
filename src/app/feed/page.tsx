@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   PlusSquare, Sparkles, Lock, Filter, Search, TrendingUp, 
@@ -17,30 +17,17 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
-import { MOCK_POSTS, MOCK_CREATOR_DETAILS, Post, UserRole } from '@/lib/supabase/store';
+import { MOCK_POSTS, MOCK_CREATOR_DETAILS, Post } from '@/lib/supabase/store';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function FeedPage() {
+  const { user, role } = useAuth();
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [feedTab, setFeedTab] = useState<'for_you' | 'following' | 'subscribed'>('for_you');
-  const [activeRole, setActiveRole] = useState<UserRole>('member');
   
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostVisibility, setNewPostVisibility] = useState<'public' | 'members_only'>('public');
-
-  useEffect(() => {
-    const role = (localStorage.getItem('creatorpulse_active_role') as UserRole) || 'member';
-    setActiveRole(role);
-
-    const handleRoleEvent = (e: CustomEvent) => {
-      setActiveRole(e.detail);
-    };
-
-    window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    return () => {
-      window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
-    };
-  }, []);
 
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +35,14 @@ export default function FeedPage() {
 
     const created: Post = {
       id: `post-${Date.now()}`,
-      authorId: activeRole === 'creator' ? 'user-creator-1' : 'user-member',
-      authorName: activeRole === 'creator' ? 'Sarah Jenkins' : 'Alex Vance',
-      authorUsername: activeRole === 'creator' ? 'sarahdesign' : 'alexvance',
-      authorAvatar: activeRole === 'creator'
+      authorId: user?.id || (role === 'creator' ? 'user-creator-1' : 'user-member'),
+      authorName: user?.fullName || (role === 'creator' ? 'Sarah Jenkins' : 'Alex Vance'),
+      authorUsername: user?.username || (role === 'creator' ? 'sarahdesign' : 'alexvance'),
+      authorAvatar: user?.avatarUrl || (role === 'creator'
         ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-      authorVerified: activeRole === 'creator',
-      authorCategory: 'Art & Design',
+        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'),
+      authorVerified: role === 'creator' || user?.isVerified || false,
+      authorCategory: user?.category || 'Art & Design',
       title: newPostTitle || undefined,
       content: newPostContent,
       postType: 'text',
@@ -92,11 +79,11 @@ export default function FeedPage() {
           <Card className="p-5 space-y-3.5">
             <div className="flex items-center gap-3">
               <Avatar
-                alt={activeRole === 'creator' ? 'Sarah Jenkins' : 'Alex Vance'}
+                alt={user?.fullName || (role === 'creator' ? 'Sarah Jenkins' : 'Alex Vance')}
                 src={
-                  activeRole === 'creator'
+                  user?.avatarUrl || (role === 'creator'
                     ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-                    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+                    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150')
                 }
                 size="md"
               />
@@ -105,7 +92,7 @@ export default function FeedPage() {
                 value={newPostTitle}
                 onChange={(e) => setNewPostTitle(e.target.value)}
                 placeholder="Post title or headline..."
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors"
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
               />
             </div>
 
@@ -113,12 +100,12 @@ export default function FeedPage() {
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
               placeholder={
-                activeRole === 'creator'
+                role === 'creator'
                   ? 'Publish a public post, poll, or exclusive VIP update...'
                   : 'Share thoughts or questions with creators...'
               }
               rows={2}
-              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors resize-none"
+              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors resize-none font-medium"
             />
 
             <div className="flex items-center justify-between border-t border-[#F3DCE8] pt-3 text-xs">
@@ -126,7 +113,7 @@ export default function FeedPage() {
                 <select
                   value={newPostVisibility}
                   onChange={(e) => setNewPostVisibility(e.target.value as any)}
-                  className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#71717A] focus:outline-none font-medium"
+                  className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#71717A] focus:outline-none font-semibold"
                 >
                   <option value="public">🌐 Public Post</option>
                   <option value="members_only">🔒 Members Only</option>
@@ -190,7 +177,7 @@ export default function FeedPage() {
               <PostCard
                 key={post.id}
                 post={post}
-                isMemberUnlocked={activeRole === 'creator' || activeRole === 'admin'}
+                isMemberUnlocked={role === 'creator' || role === 'admin'}
               />
             ))}
           </div>
