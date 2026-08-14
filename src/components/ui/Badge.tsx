@@ -20,7 +20,7 @@ export const Badge: React.FC<BadgeProps> = ({
     indigo: 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]',
     emerald: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]',
     amber: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]',
-    cyan: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]',
+    cyan: 'bg-[#ECFEFF] text-[#0E7490] border-[#CFFAFE]',
     slate: 'bg-[#F4F4F5] text-[#52525B] border-[#E4E4E7]'
   };
 

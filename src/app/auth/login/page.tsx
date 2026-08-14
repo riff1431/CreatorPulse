@@ -203,7 +203,7 @@ function LoginFormContent() {
         </form>
 
         <div className="text-center text-xs text-[#71717A] border-t border-[#F3DCE8] pt-4 font-medium">
-          Don't have an account yet?{' '}
+          Don&apos;t have an account yet?{' '}
           <Link href="/auth/signup" className="text-[#BE185D] font-extrabold hover:underline">
             Create an account
           </Link>

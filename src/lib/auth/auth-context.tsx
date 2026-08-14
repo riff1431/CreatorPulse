@@ -50,45 +50,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initialize auth state on mount
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(STORAGE_USER_KEY);
-      const storedRole = localStorage.getItem(STORAGE_ROLE_KEY) as UserRole;
+    const initAuth = () => {
+      try {
+        const storedUser = localStorage.getItem(STORAGE_USER_KEY);
+        const storedRole = localStorage.getItem(STORAGE_ROLE_KEY) as UserRole;
 
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser) as UserProfile;
-        setUser(parsed);
-        setRole(parsed.role || storedRole || 'member');
-        setCookie(COOKIE_ROLE_KEY, parsed.role || storedRole || 'member');
-        setCookie(COOKIE_SESSION_KEY, parsed.id);
-      } else if (storedRole) {
-        // Find mock user for role
-        const fallback = storedRole === 'admin'
-          ? MOCK_USERS['user-admin']
-          : storedRole === 'creator'
-          ? MOCK_USERS['user-creator-1']
-          : MOCK_USERS['user-member'];
-        setUser(fallback);
-        setRole(storedRole);
-        setCookie(COOKIE_ROLE_KEY, storedRole);
-        setCookie(COOKIE_SESSION_KEY, fallback.id);
-      } else {
-        // Default to member
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser) as UserProfile;
+          setUser(parsed);
+          setRole(parsed.role || storedRole || 'member');
+          setCookie(COOKIE_ROLE_KEY, parsed.role || storedRole || 'member');
+          setCookie(COOKIE_SESSION_KEY, parsed.id);
+        } else if (storedRole) {
+          // Find mock user for role
+          const fallback = storedRole === 'admin'
+            ? MOCK_USERS['user-admin']
+            : storedRole === 'creator'
+            ? MOCK_USERS['user-creator-1']
+            : MOCK_USERS['user-member'];
+          setUser(fallback);
+          setRole(storedRole);
+          setCookie(COOKIE_ROLE_KEY, storedRole);
+          setCookie(COOKIE_SESSION_KEY, fallback.id);
+        } else {
+          // Default to member
+          const defaultMember = MOCK_USERS['user-member'];
+          setUser(defaultMember);
+          setRole('member');
+          setCookie(COOKIE_ROLE_KEY, 'member');
+          setCookie(COOKIE_SESSION_KEY, defaultMember.id);
+          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(defaultMember));
+          localStorage.setItem(STORAGE_ROLE_KEY, 'member');
+        }
+      } catch (e) {
+        console.error('Failed to parse auth state', e);
         const defaultMember = MOCK_USERS['user-member'];
         setUser(defaultMember);
         setRole('member');
-        setCookie(COOKIE_ROLE_KEY, 'member');
-        setCookie(COOKIE_SESSION_KEY, defaultMember.id);
-        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(defaultMember));
-        localStorage.setItem(STORAGE_ROLE_KEY, 'member');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      console.error('Failed to parse auth state', e);
-      const defaultMember = MOCK_USERS['user-member'];
-      setUser(defaultMember);
-      setRole('member');
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    const timer = setTimeout(initAuth, 0);
 
     // Listen to cross-component role changes
     const handleRoleEvent = (e: CustomEvent<UserRole>) => {
@@ -108,9 +112,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
+    window.addEventListener('creatorpulse_role_changed', handleRoleEvent as EventListener);
     return () => {
-      window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
+      clearTimeout(timer);
+      window.removeEventListener('creatorpulse_role_changed', handleRoleEvent as EventListener);
     };
   }, []);
 
@@ -135,9 +140,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: authedUser.role }));
       setIsLoading(false);
       return { success: true, user: authedUser };
-    } catch (err: any) {
+    } catch (err) {
       setIsLoading(false);
-      return { success: false, error: err?.message || 'Login error' };
+      const errMsg = err instanceof Error ? err.message : 'Login error';
+      return { success: false, error: errMsg };
     }
   };
 
@@ -164,9 +170,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: registered.role }));
       setIsLoading(false);
       return { success: true, user: registered };
-    } catch (err: any) {
+    } catch (err) {
       setIsLoading(false);
-      return { success: false, error: err?.message || 'Registration error' };
+      const errMsg = err instanceof Error ? err.message : 'Registration error';
+      return { success: false, error: errMsg };
     }
   };
 

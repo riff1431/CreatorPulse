@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heart, DollarSign, Sparkles, X, CheckCircle2, ShieldCheck } from 'lucide-react';
+import gsap from 'gsap';
 import { Button } from './ui/Button';
 
 interface SupportModalProps {
@@ -21,6 +22,17 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   const [customAmount, setCustomAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const modalBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (modalBoxRef.current) {
+      gsap.fromTo(
+        modalBoxRef.current,
+        { scale: 0.85, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)', overwrite: 'auto' }
+      );
+    }
+  }, []);
 
   const selectedAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
   const platformFee = Math.round(selectedAmount * 0.05 * 100) / 100;
@@ -33,8 +45,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-[28px] max-w-md w-full p-6 space-y-5 relative border border-[#F3DCE8] shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+      <div ref={modalBoxRef} className="bg-white rounded-[28px] max-w-md w-full p-6 space-y-5 relative border border-[#F3DCE8] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
           <div className="flex items-center gap-2">
             <Heart className="text-[#EC4899] fill-[#EC4899]" size={20} />

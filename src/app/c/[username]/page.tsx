@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import gsap from 'gsap';
 import { 
   Sparkles, Lock, CheckCircle2, UserPlus, Heart, MessageSquare, 
-  Share2, ShieldCheck, Star, Users, Check, Globe, X, Film, Info, Image as ImageIcon 
+  Share2, ShieldCheck, Star, Users, Check, Globe, X, Film, Info, Image as ImageIcon, AlertCircle
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -46,10 +47,38 @@ export default function CreatorProfilePage() {
   // PRD Profile Tabs: Posts, Media, Reels, Memberships, About
   const [activeTab, setActiveTab] = useState<'posts' | 'media' | 'reels' | 'memberships' | 'about'>('posts');
 
+  const modalRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      gsap.fromTo(
+        node,
+        { scale: 0.85, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)', overwrite: 'auto' }
+      );
+    }
+  }, []);
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
   const creatorPosts = MOCK_POSTS.filter((p) => p.authorUsername === creator.username);
+
+  const mediaGallery = [
+    { id: 'gal-1', url: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600', title: 'Workstation Setup' },
+    { id: 'gal-2', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600', title: 'UI Kit Figma Workspace' },
+    { id: 'gal-3', url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600', title: 'Masterclass Design Guide' },
+    { id: 'gal-4', url: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600', title: 'Wireframing Board' }
+  ];
 
   const discountMultiplier = durationMonths === 12 ? 0.8 : durationMonths === 6 ? 0.85 : durationMonths === 3 ? 0.9 : 1.0;
   const totalPrice = Math.round(selectedPlan.priceMonthly * durationMonths * discountMultiplier * 100) / 100;
+
+  // Simulate loader on tab changes
+  useEffect(() => {
+    setIsTabLoading(true);
+    const timer = setTimeout(() => {
+      setIsTabLoading(false);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   const handleSubscribeConfirm = () => {
     setIsSubscribed(true);
@@ -67,11 +96,11 @@ export default function CreatorProfilePage() {
         <main className="flex-1 space-y-6 max-w-3xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
           {/* Cover & Profile Card */}
           <Card className="p-0 overflow-hidden relative border border-[#F3DCE8] shadow-sm shadow-[#EC4899]/5">
-            <div className="h-44 sm:h-56 relative bg-[#FFF1F7]">
+            <div className="h-44 sm:h-56 relative bg-[#FFF1F7] overflow-hidden group">
               <img
                 src={creator.coverImageUrl}
                 alt={creator.fullName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/20 to-transparent"></div>
             </div>
@@ -125,12 +154,12 @@ export default function CreatorProfilePage() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-[#18181B]">{creator.fullName}</h1>
+                  <h1 className="text-2xl font-black text-[#18181B] tracking-tight">{creator.fullName}</h1>
                   <Badge variant="pink" size="sm">{creator.category}</Badge>
                 </div>
                 <p className="text-xs text-[#BE185D] font-bold">@{creator.username}</p>
                 <p className="text-sm text-[#18181B] leading-relaxed font-semibold">{creator.headline}</p>
-                <p className="text-xs text-[#71717A] leading-relaxed font-medium">{creator.bio}</p>
+                <p className="text-xs text-[#71717A] leading-relaxed font-semibold">{creator.bio}</p>
               </div>
 
               <div className="flex items-center gap-6 text-xs text-[#71717A] border-t border-[#F3DCE8] pt-3 font-medium">
@@ -152,142 +181,169 @@ export default function CreatorProfilePage() {
 
           {/* Profile Tabs: Posts, Media, Reels, Memberships, About */}
           <div className="flex items-center border-b border-[#F3DCE8] text-xs font-bold overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`px-4 py-3 border-b-2 shrink-0 transition-all cursor-pointer ${
-                activeTab === 'posts' ? 'border-[#EC4899] text-[#BE185D]' : 'border-transparent text-[#71717A] hover:text-[#18181B]'
-              }`}
-            >
-              Posts
-            </button>
-            <button
-              onClick={() => setActiveTab('media')}
-              className={`px-4 py-3 border-b-2 shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'media' ? 'border-[#EC4899] text-[#BE185D]' : 'border-transparent text-[#71717A] hover:text-[#18181B]'
-              }`}
-            >
-              <ImageIcon size={13} /> Media Gallery
-            </button>
-            <button
-              onClick={() => setActiveTab('reels')}
-              className={`px-4 py-3 border-b-2 shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'reels' ? 'border-[#EC4899] text-[#BE185D]' : 'border-transparent text-[#71717A] hover:text-[#18181B]'
-              }`}
-            >
-              <Film size={13} /> Reels
-            </button>
-            <button
-              onClick={() => setActiveTab('memberships')}
-              className={`px-4 py-3 border-b-2 shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'memberships' ? 'border-[#BE185D] text-[#BE185D]' : 'border-transparent text-[#71717A] hover:text-[#18181B]'
-              }`}
-            >
-              <Lock size={13} /> Membership Plans
-            </button>
-            <button
-              onClick={() => setActiveTab('about')}
-              className={`px-4 py-3 border-b-2 shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'about' ? 'border-[#EC4899] text-[#BE185D]' : 'border-transparent text-[#71717A] hover:text-[#18181B]'
-              }`}
-            >
-              <Info size={13} /> About Creator
-            </button>
+            {[
+              { id: 'posts', label: 'Posts' },
+              { id: 'media', label: '🖼️ Media Gallery' },
+              { id: 'reels', label: '🎥 Reels' },
+              { id: 'memberships', label: '🔒 Membership Plans' },
+              { id: 'about', label: 'ℹ️ About Creator' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-3 border-b-2 shrink-0 transition-all cursor-pointer ${
+                  activeTab === tab.id 
+                    ? 'border-[#EC4899] text-[#BE185D]' 
+                    : 'border-transparent text-[#71717A] hover:text-[#18181B]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Tab Content */}
-          {activeTab === 'posts' && (
+          {/* Tab Content Display */}
+          {isTabLoading ? (
+            // Shimmer load state for tab layouts
             <div className="space-y-4">
-              {creatorPosts.map((post) => (
-                <PostCard key={post.id} post={post} isMemberUnlocked={isSubscribed} />
-              ))}
+              <div className="bg-white border border-[#F3DCE8] rounded-3xl p-5 space-y-3">
+                <div className="w-1/3 h-4 skeleton-shimmer rounded-full" />
+                <div className="w-full h-3 skeleton-shimmer rounded-full" />
+                <div className="w-5/6 h-3 skeleton-shimmer rounded-full" />
+              </div>
             </div>
-          )}
-
-          {activeTab === 'memberships' && (
-            <div className="grid md:grid-cols-3 gap-4">
-              {plans.map((plan) => (
-                <Card
-                  key={plan.id}
-                  className={`p-5 space-y-4 relative flex flex-col justify-between ${
-                    plan.popular ? 'border-[#EC4899] bg-[#FFF9FC] shadow-md shadow-[#EC4899]/10' : ''
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase font-extrabold bg-[#EC4899] text-white px-3 py-0.5 rounded-full shadow-sm">
-                      Most Popular
-                    </span>
+          ) : (
+            <>
+              {activeTab === 'posts' && (
+                <div className="space-y-4">
+                  {creatorPosts.length === 0 ? (
+                    <div className="text-center py-10 bg-white border border-[#F3DCE8] rounded-[24px]">
+                      <AlertCircle size={24} className="text-[#A1A1AA] mx-auto mb-2" />
+                      <p className="text-xs text-[#71717A] font-bold">No posts published by this creator yet.</p>
+                    </div>
+                  ) : (
+                    creatorPosts.map((post) => (
+                      <PostCard key={post.id} post={post} isMemberUnlocked={isSubscribed} />
+                    ))
                   )}
-
-                  <div className="space-y-2">
-                    <h3 className="font-extrabold text-base text-[#18181B]">{plan.name}</h3>
-                    <div className="text-3xl font-black text-[#BE185D]">${plan.priceMonthly.toFixed(2)} <span className="text-xs text-[#71717A] font-medium">/mo</span></div>
-                    <p className="text-xs text-[#71717A] font-medium leading-relaxed">{plan.description}</p>
-                    <ul className="space-y-2 text-xs text-[#18181B] pt-2 border-t border-[#F3DCE8]">
-                      {plan.benefits.map((b, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          <CheckCircle2 size={13} className="text-[#EC4899] shrink-0" />
-                          <span className="font-medium">{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-full mt-2"
-                    onClick={() => {
-                      setSelectedPlan(plan);
-                      setShowSubModal(true);
-                    }}
-                  >
-                    Select Plan
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'about' && (
-            <Card className="p-6 space-y-4 text-xs text-[#52525B]">
-              <h3 className="text-base font-extrabold text-[#18181B]">About {creator.fullName}</h3>
-              <p className="leading-relaxed">{creator.bio}</p>
-              <div className="space-y-2 border-t border-[#F3DCE8] pt-3 font-medium">
-                <p><strong className="text-[#18181B]">Category:</strong> {creator.category}</p>
-                <p><strong className="text-[#18181B]">Total Lifetime Revenue:</strong> ${creator.totalRevenue.toLocaleString()}</p>
-                <p><strong className="text-[#18181B]">Member Since:</strong> November 2025</p>
-              </div>
-            </Card>
-          )}
-
-          {activeTab === 'media' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl overflow-hidden bg-[#FFF1F7] border border-[#F3DCE8] h-44">
-                <img src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600" alt="Media" className="w-full h-full object-cover" />
-              </div>
-              <div className="rounded-2xl overflow-hidden bg-[#FFF1F7] border border-[#F3DCE8] h-44">
-                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600" alt="Media" className="w-full h-full object-cover" />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'reels' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl overflow-hidden bg-[#FFF1F7] border border-[#F3DCE8] h-64 relative group">
-                <img src="https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600" alt="Reel" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                  <Film size={24} className="text-white" />
                 </div>
-              </div>
-            </div>
+              )}
+
+              {activeTab === 'memberships' && (
+                <div className="grid md:grid-cols-3 gap-4">
+                  {plans.map((plan) => (
+                    <Card
+                      key={plan.id}
+                      className={`p-5 space-y-4 relative flex flex-col justify-between border ${
+                        plan.popular ? 'border-[#EC4899] bg-[#FFF9FC] shadow-sm shadow-[#EC4899]/10' : 'border-[#F3DCE8]'
+                      }`}
+                    >
+                      {plan.popular && (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] uppercase font-black bg-[#EC4899] text-white px-3 py-0.5 rounded-full shadow-sm">
+                          Most Popular
+                        </span>
+                      )}
+
+                      <div className="space-y-2">
+                        <h3 className="font-extrabold text-sm text-[#18181B]">{plan.name}</h3>
+                        <div className="text-2xl font-black text-[#BE185D]">${plan.priceMonthly.toFixed(2)} <span className="text-[10px] text-[#71717A] font-medium">/mo</span></div>
+                        <p className="text-[11px] text-[#71717A] leading-relaxed font-semibold">{plan.description}</p>
+                        <ul className="space-y-2 text-xs text-[#18181B] pt-2 border-t border-[#F3DCE8]">
+                          {plan.benefits.map((b, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <CheckCircle2 size={13} className="text-[#EC4899] shrink-0" />
+                              <span className="font-semibold text-[11px]">{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full mt-3"
+                        onClick={() => {
+                          setSelectedPlan(plan);
+                          setShowSubModal(true);
+                        }}
+                      >
+                        Select Plan
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'about' && (
+                <Card className="p-6 space-y-4 text-xs text-[#52525B] border border-[#F3DCE8]">
+                  <h3 className="text-sm font-black text-[#18181B] uppercase tracking-tight">About {creator.fullName}</h3>
+                  <p className="leading-relaxed font-semibold">{creator.bio}</p>
+                  <div className="space-y-2 border-t border-[#F3DCE8] pt-3 font-semibold text-[#71717A]">
+                    <p><strong className="text-[#18181B] font-extrabold">Category:</strong> {creator.category}</p>
+                    <p><strong className="text-[#18181B] font-extrabold">Starting Subscription:</strong> ${creator.startingPrice}/mo</p>
+                    <p><strong className="text-[#18181B] font-extrabold">Member Since:</strong> November 2025</p>
+                  </div>
+                </Card>
+              )}
+
+              {activeTab === 'media' && (
+                <div className="grid grid-cols-2 gap-4">
+                  {mediaGallery.map((item) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => setLightboxImage(item.url)}
+                      className="rounded-2xl overflow-hidden bg-[#FFF1F7] border border-[#F3DCE8] h-44 cursor-zoom-in relative group"
+                    >
+                      <img 
+                        src={item.url} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                      <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold gap-1.5">
+                        <ImageIcon size={16} /> Zoom View
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'reels' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl overflow-hidden bg-[#FFF1F7] border border-[#F3DCE8] h-64 relative group cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600" alt="Reel" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center text-white text-xs font-bold gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <Film size={18} className="animate-pulse" /> Play vertical reel
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
 
+      {/* Lightbox Modal overlay */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl bg-black border border-white/10">
+            <img src={lightboxImage} alt="Gallery Zoomed" className="max-w-full max-h-[80vh] object-contain select-none" />
+            <button 
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-4 right-4 p-2 bg-black/55 text-white rounded-full hover:bg-black border border-white/10 cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Subscription Duration Picker Modal */}
       {showSubModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[24px] max-w-md w-full p-6 space-y-5 relative border border-[#F3DCE8] shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+          <div ref={modalRef} className="bg-white rounded-[24px] max-w-md w-full p-6 space-y-5 relative border border-[#F3DCE8] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="text-[#EC4899]" size={20} />
@@ -298,7 +354,7 @@ export default function CreatorProfilePage() {
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-xs font-semibold">
               {/* Duration Choice: 1, 3, 6, 12 months */}
               <div>
                 <label className="block text-[#18181B] font-bold mb-1.5">Select Duration:</label>

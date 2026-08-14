@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -11,6 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
+import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
@@ -20,6 +21,9 @@ export const Navbar: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
@@ -28,6 +32,28 @@ export const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -76,6 +102,9 @@ export const Navbar: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Dynamic Plugin Actions Hook */}
+          <HookPoint name="navbar_actions" />
+
           {/* Role specific quick action */}
           {role === 'creator' && (
             <Link href="/creator/dashboard">
@@ -94,7 +123,7 @@ export const Navbar: React.FC = () => {
           )}
 
           {/* Notifications Dropdown Toggle */}
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2.5 rounded-xl text-[#71717A] hover:text-[#DB2777] hover:bg-[#FDF2F8] transition-colors relative border border-transparent hover:border-[#F3DCE8] cursor-pointer"
@@ -114,7 +143,7 @@ export const Navbar: React.FC = () => {
                   <div className="p-2.5 rounded-xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-start gap-2.5 hover:border-[#F472B6]/40 transition-colors">
                     <Avatar alt="Sarah Jenkins" size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" />
                     <div>
-                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Sarah Jenkins</strong> published a new member post: "Modern Micro-Interactions"</p>
+                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Sarah Jenkins</strong> published a new member post: &quot;Modern Micro-Interactions&quot;</p>
                       <span className="text-[10px] text-[#A1A1AA] mt-1 block">10 minutes ago</span>
                     </div>
                   </div>
@@ -131,7 +160,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* User Profile Avatar Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#EC4899]/30 transition-all cursor-pointer"

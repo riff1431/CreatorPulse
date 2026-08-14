@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import gsap from 'gsap';
 import { 
   PlusSquare, Sparkles, Lock, Filter, Search, TrendingUp, 
-  Users, CheckCircle2, ChevronRight, Image as ImageIcon, Video, Vote, BarChart2 
+  Users, CheckCircle2, ChevronRight, Image as ImageIcon, Video, Vote, BarChart2, AlertCircle 
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -24,14 +25,43 @@ export default function FeedPage() {
   const { user, role } = useAuth();
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [feedTab, setFeedTab] = useState<'for_you' | 'following' | 'subscribed'>('for_you');
+  const [isFeedLoading, setIsFeedLoading] = useState(false);
   
+  // Publisher options
+  const [activePublishType, setActivePublishType] = useState<'text' | 'image' | 'poll'>('text');
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostVisibility, setNewPostVisibility] = useState<'public' | 'members_only'>('public');
 
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (feedContainerRef.current) {
+      gsap.fromTo(
+        feedContainerRef.current.children,
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power2.out', overwrite: 'auto' }
+      );
+    }
+  }, [feedTab]);
+  const [imageUrl, setImageUrl] = useState('');
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOpt1, setPollOpt1] = useState('');
+  const [pollOpt2, setPollOpt2] = useState('');
+
+  // Simulate loader on feed tab switcher
+  useEffect(() => {
+    setIsFeedLoading(true);
+    const timer = setTimeout(() => {
+      setIsFeedLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [feedTab]);
+
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPostContent.trim()) return;
+    if (!newPostContent.trim() && activePublishType !== 'poll') return;
+    if (activePublishType === 'poll' && (!pollQuestion.trim() || !pollOpt1.trim() || !pollOpt2.trim())) return;
 
     const created: Post = {
       id: `post-${Date.now()}`,
@@ -44,8 +74,17 @@ export default function FeedPage() {
       authorVerified: role === 'creator' || user?.isVerified || false,
       authorCategory: user?.category || 'Art & Design',
       title: newPostTitle || undefined,
-      content: newPostContent,
-      postType: 'text',
+      content: activePublishType === 'poll' ? `Poll: ${pollQuestion}` : newPostContent,
+      postType: activePublishType,
+      mediaUrl: activePublishType === 'image' ? imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600' : undefined,
+      poll: activePublishType === 'poll' ? {
+        question: pollQuestion,
+        options: [
+          { id: 'o-1', text: pollOpt1, votes: 0 },
+          { id: 'o-2', text: pollOpt2, votes: 0 }
+        ],
+        totalVotes: 0
+      } : undefined,
       visibility: newPostVisibility,
       likesCount: 0,
       commentsCount: 0,
@@ -56,6 +95,10 @@ export default function FeedPage() {
     setPosts([created, ...posts]);
     setNewPostContent('');
     setNewPostTitle('');
+    setImageUrl('');
+    setPollQuestion('');
+    setPollOpt1('');
+    setPollOpt2('');
   };
 
   const filteredPosts = posts.filter((p) => {
@@ -76,7 +119,38 @@ export default function FeedPage() {
           <StoryBar />
 
           {/* Quick Publisher Box */}
-          <Card className="p-5 space-y-3.5">
+          <Card className="p-5 space-y-4 border border-[#F3DCE8] shadow-sm">
+            {/* Publisher Type Selector */}
+            <div className="flex items-center gap-2 border-b border-[#F3DCE8] pb-2 text-[11px] font-bold text-[#71717A]">
+              <button
+                type="button"
+                onClick={() => setActivePublishType('text')}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  activePublishType === 'text' ? 'bg-[#FCE7F3] text-[#BE185D]' : 'hover:bg-[#FFF1F7] hover:text-[#18181B]'
+                }`}
+              >
+                ✍️ Text Update
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivePublishType('image')}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  activePublishType === 'image' ? 'bg-[#FCE7F3] text-[#BE185D]' : 'hover:bg-[#FFF1F7] hover:text-[#18181B]'
+                }`}
+              >
+                🖼️ Image Post
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivePublishType('poll')}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  activePublishType === 'poll' ? 'bg-[#FCE7F3] text-[#BE185D]' : 'hover:bg-[#FFF1F7] hover:text-[#18181B]'
+                }`}
+              >
+                📊 Create Poll
+              </button>
+            </div>
+
             <div className="flex items-center gap-3">
               <Avatar
                 alt={user?.fullName || (role === 'creator' ? 'Sarah Jenkins' : 'Alex Vance')}
@@ -91,28 +165,68 @@ export default function FeedPage() {
                 type="text"
                 value={newPostTitle}
                 onChange={(e) => setNewPostTitle(e.target.value)}
-                placeholder="Post title or headline..."
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
+                placeholder="Post title or headline (optional)..."
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-semibold"
               />
             </div>
 
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder={
-                role === 'creator'
-                  ? 'Publish a public post, poll, or exclusive VIP update...'
-                  : 'Share thoughts or questions with creators...'
-              }
-              rows={2}
-              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors resize-none font-medium"
-            />
+            {activePublishType === 'poll' ? (
+              <div className="space-y-2 text-xs font-semibold">
+                <input
+                  type="text"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  placeholder="Ask the community a question..."
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={pollOpt1}
+                    onChange={(e) => setPollOpt1(e.target.value)}
+                    placeholder="Option 1"
+                    className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white"
+                  />
+                  <input
+                    type="text"
+                    value={pollOpt2}
+                    onChange={(e) => setPollOpt2(e.target.value)}
+                    placeholder="Option 2"
+                    className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white"
+                  />
+                </div>
+              </div>
+            ) : (
+              <textarea
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder={
+                  role === 'creator'
+                    ? 'Publish a public post, or exclusive VIP update...'
+                    : 'Share thoughts or questions with creators...'
+                }
+                rows={2}
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors resize-none font-semibold"
+              />
+            )}
+
+            {activePublishType === 'image' && (
+              <div>
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Paste image URL (e.g. Unsplash link)..."
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-semibold"
+                />
+              </div>
+            )}
 
             <div className="flex items-center justify-between border-t border-[#F3DCE8] pt-3 text-xs">
               <div className="flex items-center gap-2">
                 <select
                   value={newPostVisibility}
-                  onChange={(e) => setNewPostVisibility(e.target.value as any)}
+                  onChange={(e) => setNewPostVisibility(e.target.value as 'public' | 'members_only')}
                   className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#71717A] focus:outline-none font-semibold"
                 >
                   <option value="public">🌐 Public Post</option>
@@ -124,7 +238,7 @@ export default function FeedPage() {
                 variant="primary"
                 size="sm"
                 onClick={handleCreatePost}
-                disabled={!newPostContent.trim()}
+                disabled={activePublishType === 'poll' ? (!pollQuestion.trim() || !pollOpt1.trim() || !pollOpt2.trim()) : !newPostContent.trim()}
               >
                 Publish Post
               </Button>
@@ -168,18 +282,52 @@ export default function FeedPage() {
               </button>
             </div>
 
-            <span className="text-xs text-[#A1A1AA] hidden sm:inline font-medium">{filteredPosts.length} posts</span>
+            <span className="text-xs text-[#A1A1AA] hidden sm:inline font-bold">{filteredPosts.length} posts</span>
           </div>
 
           {/* Posts Stream */}
-          <div className="space-y-4">
-            {filteredPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                isMemberUnlocked={role === 'creator' || role === 'admin'}
-              />
-            ))}
+          <div ref={feedContainerRef} className="space-y-4">
+            {isFeedLoading ? (
+              // Shimmer Cards Loading State
+              <>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-[#F3DCE8] rounded-[24px] p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full skeleton-shimmer" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="w-28 h-3.5 skeleton-shimmer rounded-full" />
+                        <div className="w-16 h-2.5 skeleton-shimmer rounded-full" />
+                      </div>
+                    </div>
+                    <div className="w-full h-4 skeleton-shimmer rounded-full" />
+                    <div className="w-5/6 h-4 skeleton-shimmer rounded-full" />
+                    <div className="w-full h-40 skeleton-shimmer rounded-2xl" />
+                  </div>
+                ))}
+              </>
+            ) : filteredPosts.length === 0 ? (
+              // Premium Empty Feed State
+              <div className="text-center py-16 px-6 bg-white border border-[#F3DCE8] rounded-[24px] space-y-4">
+                <AlertCircle className="w-12 h-12 text-[#BE185D] mx-auto animate-bounce" />
+                <h3 className="font-extrabold text-[#18181B] text-base">No Subscribed Posts</h3>
+                <p className="text-xs text-[#71717A] max-w-sm mx-auto leading-relaxed font-semibold">
+                  You are not currently subscribed to any premium creator tiers. Explore trending creators and subscribe to unlock.
+                </p>
+                <Link href="/explore" className="inline-block">
+                  <Button variant="primary" size="sm">
+                    Discover Creators
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  isMemberUnlocked={role === 'creator' || role === 'admin'}
+                />
+              ))
+            )}
           </div>
         </main>
 

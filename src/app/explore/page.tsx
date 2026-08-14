@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Search, Compass, Sparkles, Filter, Users, ArrowRight } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -13,9 +14,18 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
 
-export default function ExplorePage() {
+function ExplorePageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const searchParams = useSearchParams();
+
+  // Read search term from URL query parameter (e.g. from global search)
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query !== null) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   const categories = ['All', 'Art & Design', 'Education & Tech', 'Fitness & Wellness', 'Business & Coaching', 'Music & Sound'];
 
@@ -108,5 +118,20 @@ export default function ExplorePage() {
 
       <MobileNav />
     </div>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col justify-center items-center">
+        <div className="animate-pulse flex flex-col items-center gap-2">
+          <Compass className="text-[#EC4899] animate-spin" size={32} />
+          <p className="text-xs text-[#71717A] font-medium">Loading Explore...</p>
+        </div>
+      </div>
+    }>
+      <ExplorePageContent />
+    </Suspense>
   );
 }

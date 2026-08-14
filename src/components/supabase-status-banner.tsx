@@ -1,17 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Database, CheckCircle2, AlertCircle, Copy, Code, ExternalLink, X } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import gsap from 'gsap';
 import { Button } from './ui/Button';
 
 export const SupabaseStatusBanner: React.FC = () => {
-  const [configured, setConfigured] = useState(false);
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    setConfigured(isSupabaseConfigured());
+  const configured = isSupabaseConfigured();
+
+  const modalRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      gsap.fromTo(
+        node,
+        { scale: 0.85, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)', overwrite: 'auto' }
+      );
+    }
   }, []);
 
   const handleCopySchemaNotice = () => {
@@ -58,8 +66,8 @@ CREATE TABLE public.profiles (...);
       </div>
 
       {showSqlModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[28px] max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto border border-[#F3DCE8] shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+          <div ref={modalRef} className="bg-white rounded-[28px] max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto border border-[#F3DCE8] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div className="flex items-center gap-2">
                 <Database className="text-[#EC4899]" size={20} />

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { ThemeProvider } from "@/lib/extensions/theme-engine";
+import { PluginProvider } from "@/lib/extensions/plugin-engine";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -19,9 +22,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${plusJakartaSans.variable} font-sans h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#FFF9FC] text-[#18181B] selection:bg-[#FCE7F3] selection:text-[#DB2777]">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <PluginProvider>
+            <AuthProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </AuthProvider>
+          </PluginProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

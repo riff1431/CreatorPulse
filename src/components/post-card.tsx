@@ -10,6 +10,7 @@ import { Post, Comment } from '@/lib/supabase/store';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
+import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 interface PostCardProps {
   post: Post;
@@ -19,6 +20,7 @@ interface PostCardProps {
 export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = false }) => {
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const [isLiking, setIsLiking] = useState(false);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([
@@ -32,8 +34,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
       createdAt: '30m ago'
     }
   ]);
+  const [likedCommentIds, setLikedCommentIds] = useState<string[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [copiedShare, setCopiedShare] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Poll state
   const [pollOptions, setPollOptions] = useState(post.poll?.options || []);
@@ -45,18 +49,28 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
   const isLocked = post.visibility === 'members_only' && !isMemberUnlocked;
 
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2200);
+  };
+
   const handleToggleLike = () => {
     if (isLiked) {
       setLikesCount(likesCount - 1);
       setIsLiked(false);
+      setIsLiking(false);
     } else {
       setLikesCount(likesCount + 1);
       setIsLiked(true);
+      setIsLiking(true);
+      setTimeout(() => setIsLiking(false), 450);
     }
   };
 
   const handleToggleSave = () => {
-    setIsSaved(!isSaved);
+    const nextSavedState = !isSaved;
+    setIsSaved(nextSavedState);
+    triggerToast(nextSavedState ? "💾 Post saved to Bookmarks!" : "🗑️ Post removed from Bookmarks!");
   };
 
   const handleVote = (optionId: string) => {
@@ -68,6 +82,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
     setPollOptions(updated);
     setUserVotedId(optionId);
     setTotalVotes(totalVotes + 1);
+    triggerToast("🗳️ Thank you for voting!");
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -86,16 +101,26 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
     setComments([...comments, created]);
     setNewCommentText('');
+    triggerToast("💬 Comment posted successfully!");
+  };
+
+  const handleToggleCommentLike = (commentId: string) => {
+    if (likedCommentIds.includes(commentId)) {
+      setLikedCommentIds(likedCommentIds.filter(id => id !== commentId));
+    } else {
+      setLikedCommentIds([...likedCommentIds, commentId]);
+    }
   };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.origin + `/feed#${post.id}`);
     setCopiedShare(true);
+    triggerToast("🔗 Link copied to clipboard!");
     setTimeout(() => setCopiedShare(false), 2000);
   };
 
   return (
-    <article id={post.id} className="bg-white/90 backdrop-blur-md border border-[#F3DCE8] rounded-[24px] p-5 space-y-4 shadow-sm shadow-[#EC4899]/5 hover:shadow-md hover:shadow-[#EC4899]/10 transition-all">
+    <article id={post.id} className="bg-white/90 backdrop-blur-md border border-[#F3DCE8] rounded-[24px] p-5 space-y-4 shadow-sm shadow-[#EC4899]/5 hover:shadow-md hover:shadow-[#EC4899]/10 transition-all relative">
       {/* Header Info */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -173,7 +198,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
                   {Boolean(userVotedId) && (
                     <div
                       style={{ width: `${percentage}%` }}
-                      className="absolute inset-y-0 left-0 bg-[#FCE7F3] transition-all duration-500"
+                      className="absolute inset-y-0 left-0 bg-[#FCE7F3]/60 transition-all duration-500"
                     ></div>
                   )}
 
@@ -274,7 +299,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               isLiked ? 'text-[#EC4899] font-bold' : 'hover:text-[#EC4899]'
             }`}
           >
-            <Heart size={16} className={`transition-transform duration-200 ${isLiked ? 'fill-[#EC4899] text-[#EC4899] scale-115' : 'hover:scale-110'}`} />
+            <Heart 
+              size={16} 
+              className={`transition-transform duration-200 ${
+                isLiked ? 'fill-[#EC4899] text-[#EC4899]' : 'hover:scale-110'
+              } ${isLiking ? 'animate-heart-pop' : ''}`} 
+            />
             <span>{likesCount}</span>
           </button>
 
@@ -317,17 +347,50 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
       {showComments && (
         <div className="border-t border-[#F3DCE8] pt-3 space-y-3">
           <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-            {comments.map((comment) => (
-              <div key={comment.id} className="bg-[#FFF9FC] border border-[#F3DCE8] p-3 rounded-2xl flex items-start gap-2.5">
-                <Avatar alt={comment.userName} src={comment.userAvatar} size="sm" />
-                <div className="flex-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#18181B]">{comment.userName}</span>
-                    <span className="text-[10px] text-[#A1A1AA] font-medium">{comment.createdAt}</span>
+            {comments.length === 0 ? (
+              <p className="text-[11px] text-[#A1A1AA] text-center py-3 font-semibold">No comments yet. Support the creator by posting one!</p>
+            ) : (
+              comments.map((comment) => {
+                const isCommentLiked = likedCommentIds.includes(comment.id);
+                return (
+                  <div key={comment.id} className="bg-[#FFF9FC] border border-[#F3DCE8] p-3 rounded-2xl flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2.5 flex-1">
+                      <Avatar alt={comment.userName} src={comment.userAvatar} size="sm" />
+                      <div className="flex-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#18181B]">{comment.userName}</span>
+                          <span className="text-[10px] text-[#A1A1AA] font-medium">{comment.createdAt}</span>
+                        </div>
+                        <p className="text-[#52525B] mt-1 font-normal leading-relaxed">{comment.content}</p>
+                      </div>
+                    </div>
+
+                    {/* Like Comment Button */}
+                    <button 
+                      onClick={() => handleToggleCommentLike(comment.id)}
+                      className={`text-[#A1A1AA] hover:text-[#EC4899] transition-colors p-1 rounded-lg ${
+                        isCommentLiked ? 'text-[#EC4899]' : ''
+                      }`}
+                    >
+                      <Heart size={12} className={isCommentLiked ? 'fill-[#EC4899] text-[#EC4899]' : ''} />
+                    </button>
                   </div>
-                  <p className="text-[#52525B] mt-1 font-normal">{comment.content}</p>
-                </div>
-              </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Quick Comments Emoji Selector */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {['❤️', '👍', '🔥', '😂', '😮', '👏', '🙌'].map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => setNewCommentText((prev) => prev + emoji)}
+                className="hover:scale-110 active:scale-95 transition-transform bg-[#FFF9FC] border border-[#F3DCE8] px-2.5 py-1 rounded-xl text-xs cursor-pointer font-normal"
+              >
+                {emoji}
+              </button>
             ))}
           </div>
 
@@ -343,6 +406,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               Post
             </Button>
           </form>
+        </div>
+      )}
+
+      {/* Extensible Plugin Hook Point */}
+      <HookPoint name="post_card_footer" context={{ post }} />
+
+      {/* Floating Card Toast alert notice */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] text-white px-4 py-2.5 rounded-2xl flex items-center gap-2.5 text-[11px] font-bold border border-white/10 shadow-2xl z-50 animate-toast-in">
+          <span>{toastMessage}</span>
         </div>
       )}
     </article>

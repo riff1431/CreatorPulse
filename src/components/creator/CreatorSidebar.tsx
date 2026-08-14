@@ -76,12 +76,12 @@ export const CreatorSidebar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white/70">
-      <div className="flex-1 overflow-y-auto py-5 px-3 space-y-5 scrollbar-none">
+    <div className="flex flex-col h-full bg-white/40 backdrop-blur-md">
+      <div className="flex-1 overflow-y-auto py-5 px-3.5 space-y-5 scrollbar-thin scrollbar-thumb-pink-200">
         {navGroups.map((group) => (
-          <div key={group.title}>
+          <div key={group.title} className="space-y-1.5">
             {!collapsed && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] px-3 mb-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA] px-3 mb-1">
                 {group.title}
               </p>
             )}
@@ -96,23 +96,29 @@ export const CreatorSidebar: React.FC = () => {
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all group ${
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all relative group ${
                       isActive
-                        ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/5'
-                        : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
+                        ? 'bg-[#FCE7F3]/90 text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/10'
+                        : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/70'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 z-10">
                       <Icon
                         size={16}
-                        className={isActive ? 'text-[#EC4899]' : 'text-[#71717A] group-hover:text-[#EC4899]'}
+                        className={`transition-colors duration-200 ${isActive ? 'text-[#EC4899]' : 'text-[#71717A] group-hover:text-[#EC4899]'}`}
                       />
-                      {!collapsed && <span>{item.label}</span>}
+                      {!collapsed && <span className="transition-opacity duration-200">{item.label}</span>}
                     </div>
+
                     {!collapsed && item.badge && item.badge > 0 && (
-                      <span className="text-[10px] font-bold bg-[#FFF1F7] text-[#BE185D] px-2 py-0.5 rounded-full leading-none border border-[#F3DCE8]">
+                      <span className="text-[10px] font-black bg-[#FFF1F7] text-[#BE185D] px-2 py-0.5 rounded-full leading-none border border-[#F3DCE8] z-10 shadow-xs">
                         {formatBadge(item.badge)}
                       </span>
+                    )}
+
+                    {/* Active side indicator glow */}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-[#EC4899] rounded-r-full shadow-lg shadow-[#EC4899]" />
                     )}
                   </Link>
                 );
@@ -123,12 +129,12 @@ export const CreatorSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-[#F3DCE8] p-3 bg-white/50">
+      <div className="hidden lg:block border-t border-[#F3DCE8]/80 p-3 bg-white/20">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-[#71717A] hover:text-[#18181B] py-2 rounded-xl hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 text-xs font-bold text-[#71717A] hover:text-[#18181B] py-2.5 rounded-xl hover:bg-[#FFF1F7]/70 transition-all cursor-pointer"
         >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           {!collapsed && <span>Collapse Sidebar</span>}
         </button>
       </div>
@@ -140,7 +146,7 @@ export const CreatorSidebar: React.FC = () => {
       {/* Mobile Toggle */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full gradient-btn text-white shadow-xl shadow-[#EC4899]/30 flex items-center justify-center cursor-pointer"
+        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full gradient-btn text-white shadow-xl shadow-[#EC4899]/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
       >
         <Menu size={20} />
       </button>
@@ -148,7 +154,7 @@ export const CreatorSidebar: React.FC = () => {
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-xs z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -159,16 +165,16 @@ export const CreatorSidebar: React.FC = () => {
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-14 flex items-center px-4 border-b border-[#F3DCE8]">
-          <span className="text-sm font-bold text-[#18181B]">Creator Studio</span>
+        <div className="h-16 flex items-center px-4 border-b border-[#F3DCE8]">
+          <span className="text-sm font-black text-[#18181B] tracking-tight">Creator Studio</span>
         </div>
         {sidebarContent}
       </aside>
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/70 shrink-0 transition-all duration-300 ${
-          collapsed ? 'w-16' : 'w-56'
+        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/40 shrink-0 transition-all duration-300 ${
+          collapsed ? 'w-18' : 'w-60'
         }`}
       >
         {sidebarContent}
