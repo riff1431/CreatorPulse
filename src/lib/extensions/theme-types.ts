@@ -14,7 +14,17 @@ export interface ThemeTokens {
   cardRadius: string;      // e.g. 20px
   buttonRadius: string;    // e.g. 14px
   fontFamily: string;      // e.g. 'Plus Jakarta Sans', sans-serif
+  fontHeading?: string;    // e.g. 'Plus Jakarta Sans', sans-serif
   isDark: boolean;
+}
+
+export interface ThemeVisualSettings {
+  logoUrl?: string;
+  faviconUrl?: string;
+  containerWidth: 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
+  buttonStyle: 'gradient-glow' | 'flat-solid' | 'soft-glass' | 'outline-neo';
+  animationIntensity: 'off' | 'subtle' | 'normal' | 'playful';
+  cardShadow: 'soft-pink' | 'elevated' | 'glow' | 'flat';
 }
 
 export interface ThemeChangelog {
@@ -36,7 +46,9 @@ export interface ThemeManifest {
   tags: string[];
   minAppVersion: string;
   tokens: ThemeTokens;
+  settings: ThemeVisualSettings;
   changelog: ThemeChangelog[];
+  isDefault?: boolean;     // True for "Blush Core" (cannot be deleted)
   isCustom?: boolean;
   isActive?: boolean;
   installedAt: string;
@@ -51,5 +63,11 @@ export interface ThemeCustomizerDraft {
   border: string;
   textPrimary: string;
   cardRadius: string;
+  buttonRadius: string;
   fontFamily: string;
+  logoUrl?: string;
+  containerWidth: 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
+  buttonStyle: 'gradient-glow' | 'flat-solid' | 'soft-glass' | 'outline-neo';
+  animationIntensity: 'off' | 'subtle' | 'normal' | 'playful';
+  cardShadow: 'soft-pink' | 'elevated' | 'glow' | 'flat';
 }

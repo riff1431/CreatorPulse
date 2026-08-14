@@ -2,17 +2,18 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { ThemeManifest, ThemeTokens } from './theme-types';
+import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from './theme-types';
 import { DEFAULT_THEMES } from './default-extensions';
 import { logAuditEvent } from './package-installer';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
   activeTheme: ThemeManifest;
-  activateTheme: (themeId: string) => void;
+  activateTheme: (themeId: string) => boolean;
   installTheme: (manifest: ThemeManifest) => boolean;
+  duplicateTheme: (themeId: string) => ThemeManifest | null;
   deleteTheme: (themeId: string) => boolean;
-  customizeTheme: (themeId: string, updatedTokens: Partial<ThemeTokens>) => void;
+  customizeTheme: (themeId: string, updatedTokens: Partial<ThemeTokens>, updatedSettings?: Partial<ThemeVisualSettings>) => void;
   rollbackTheme: (themeId: string) => void;
   exportTheme: (themeId: string) => string;
   previewTheme: ThemeManifest | null;
@@ -21,10 +22,11 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const STORAGE_THEMES_KEY = 'creatorpulse_themes';
-const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id';
+const STORAGE_THEMES_KEY = 'creatorpulse_themes_v2';
+const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id_v2';
+const CURRENT_APP_VERSION = '1.0.0';
 
-// Standard fixed Admin Control Panel tokens (Never altered by frontend themes)
+// Fixed Admin Control Panel tokens (Immune & isolated from frontend themes)
 export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
   primary: '#EC4899',
   primaryHover: '#DB2777',
@@ -41,38 +43,43 @@ export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
   cardRadius: '20px',
   buttonRadius: '14px',
   fontFamily: 'Plus Jakarta Sans, sans-serif',
+  fontHeading: 'Plus Jakarta Sans, sans-serif',
   isDark: false
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const [themes, setThemes] = useState<ThemeManifest[]>(DEFAULT_THEMES);
-  const [activeThemeId, setActiveThemeId] = useState<string>('theme-rose-blush');
-  const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);  // Load from localStorage on mount
+  const [activeThemeId, setActiveThemeId] = useState<string>('theme-blush-core');
+  const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
+
+  // Load from localStorage on mount
   useEffect(() => {
-    const initThemes = () => {
-      try {
-        const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
-        const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
+    try {
+      const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
+      const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
 
-        let currentThemes = DEFAULT_THEMES;
-        if (storedThemesRaw) {
-          currentThemes = JSON.parse(storedThemesRaw);
-          setThemes(currentThemes);
+      let currentThemes = DEFAULT_THEMES;
+      if (storedThemesRaw) {
+        currentThemes = JSON.parse(storedThemesRaw);
+        // Ensure Blush Core is always present as default
+        if (!currentThemes.some(t => t.id === 'theme-blush-core')) {
+          currentThemes = [DEFAULT_THEMES[0], ...currentThemes];
         }
-
-        if (storedActiveId && currentThemes.some((t) => t.id === storedActiveId)) {
-          setActiveThemeId(storedActiveId);
-        } else {
-          setActiveThemeId('theme-rose-blush');
-        }
-      } catch (e) {
-        console.error('Failed to load themes from storage', e);
+        setThemes(currentThemes);
       }
-    };
-    const timer = setTimeout(initThemes, 0);
-    return () => clearTimeout(timer);
+
+      if (storedActiveId && currentThemes.some((t) => t.id === storedActiveId)) {
+        setActiveThemeId(storedActiveId);
+      } else {
+        setActiveThemeId('theme-blush-core');
+      }
+    } catch (e) {
+      console.error('Failed to load themes from storage, reverting to Blush Core default', e);
+      setActiveThemeId('theme-blush-core');
+    }
   }, []);
+
   const activeTheme = themes.find((t) => t.id === activeThemeId) || themes[0] || DEFAULT_THEMES[0];
   const effectiveTheme = previewTheme || activeTheme;
 
@@ -103,33 +110,54 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       root.classList.add('admin-isolated');
     } else {
       // Apply active Frontend theme tokens across public & user portals
-      const tokens = effectiveTheme.tokens;
-      root.style.setProperty('--color-primary', tokens.primary);
-      root.style.setProperty('--color-primary-hover', tokens.primaryHover);
-      root.style.setProperty('--color-soft-primary', tokens.softPrimary);
-      root.style.setProperty('--color-light-primary', tokens.lightPrimary);
-      root.style.setProperty('--color-accent', tokens.accent);
-      root.style.setProperty('--color-bg', tokens.background);
-      root.style.setProperty('--color-surface', tokens.surface);
-      root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
-      root.style.setProperty('--color-border', tokens.border);
-      root.style.setProperty('--color-text-primary', tokens.textPrimary);
-      root.style.setProperty('--color-text-secondary', tokens.textSecondary);
-      root.style.setProperty('--radius-card', tokens.cardRadius);
-      root.style.setProperty('--radius-button', tokens.buttonRadius);
+      try {
+        const tokens = effectiveTheme.tokens;
+        const settings = effectiveTheme.settings || DEFAULT_THEMES[0].settings;
 
-      root.classList.remove('admin-isolated');
-      if (tokens.isDark) {
-        root.classList.add('dark-theme');
-      } else {
-        root.classList.remove('dark-theme');
+        root.style.setProperty('--color-primary', tokens.primary);
+        root.style.setProperty('--color-primary-hover', tokens.primaryHover);
+        root.style.setProperty('--color-soft-primary', tokens.softPrimary);
+        root.style.setProperty('--color-light-primary', tokens.lightPrimary);
+        root.style.setProperty('--color-accent', tokens.accent);
+        root.style.setProperty('--color-bg', tokens.background);
+        root.style.setProperty('--color-surface', tokens.surface);
+        root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
+        root.style.setProperty('--color-border', tokens.border);
+        root.style.setProperty('--color-text-primary', tokens.textPrimary);
+        root.style.setProperty('--color-text-secondary', tokens.textSecondary);
+        root.style.setProperty('--radius-card', tokens.cardRadius);
+        root.style.setProperty('--radius-button', tokens.buttonRadius);
+
+        // Visual Layout & Animation Settings
+        root.style.setProperty('--theme-container-width', settings.containerWidth || 'max-w-7xl');
+        root.style.setProperty('--theme-button-style', settings.buttonStyle || 'gradient-glow');
+        root.style.setProperty('--theme-animation-intensity', settings.animationIntensity || 'normal');
+
+        root.classList.remove('admin-isolated');
+        if (tokens.isDark) {
+          root.classList.add('dark-theme');
+        } else {
+          root.classList.remove('dark-theme');
+        }
+      } catch (err) {
+        console.error('Error applying theme tokens, falling back to Blush Core', err);
+        const fallback = DEFAULT_THEMES[0].tokens;
+        root.style.setProperty('--color-primary', fallback.primary);
+        root.style.setProperty('--color-bg', fallback.background);
+        root.style.setProperty('--color-surface', fallback.surface);
       }
     }
   }, [effectiveTheme, pathname]);
 
-  const activateTheme = (themeId: string) => {
+  const activateTheme = (themeId: string): boolean => {
     const target = themes.find((t) => t.id === themeId);
-    if (!target) return;
+    if (!target) return false;
+
+    // Version compatibility check
+    if (target.minAppVersion && target.minAppVersion > CURRENT_APP_VERSION) {
+      alert(`Cannot activate theme "${target.name}". It requires CreatorPulse v${target.minAppVersion} or higher.`);
+      return false;
+    }
 
     setActiveThemeId(themeId);
     localStorage.setItem(STORAGE_ACTIVE_THEME_ID, themeId);
@@ -148,6 +176,46 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       details: `Activated frontend theme version ${target.version} (${target.category})`,
       severity: 'success'
     });
+    return true;
+  };
+
+  const duplicateTheme = (themeId: string): ThemeManifest | null => {
+    const source = themes.find((t) => t.id === themeId);
+    if (!source) return null;
+
+    const clonedId = `theme-${source.slug}-copy-${Date.now().toString().slice(-4)}`;
+    const cloned: ThemeManifest = {
+      ...source,
+      id: clonedId,
+      name: `${source.name} (Copy)`,
+      slug: `${source.slug}-copy`,
+      isDefault: false,
+      isCustom: true,
+      isActive: false,
+      installedAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      changelog: [
+        {
+          version: '1.0.0',
+          date: new Date().toISOString().split('T')[0],
+          changes: [`Duplicated from ${source.name} v${source.version}`]
+        },
+        ...source.changelog
+      ]
+    };
+
+    const updated = [...themes, cloned];
+    setThemes(updated);
+    localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
+
+    logAuditEvent({
+      action: 'THEME_INSTALLED',
+      entityType: 'theme',
+      entityName: cloned.name,
+      details: `Duplicated theme from source "${source.name}"`,
+      severity: 'info'
+    });
+    return cloned;
   };
 
   const installTheme = (manifest: ThemeManifest): boolean => {
@@ -174,33 +242,38 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const deleteTheme = (themeId: string): boolean => {
-    if (themeId === 'theme-rose-blush') {
-      alert('The core default theme cannot be deleted.');
-      return false;
-    }
-
     const target = themes.find((t) => t.id === themeId);
     if (!target) return false;
+
+    // Prevent deletion of Blush Core default theme
+    if (target.isDefault || target.id === 'theme-blush-core') {
+      alert('The built-in default "Blush Core" theme is permanent and cannot be deleted.');
+      return false;
+    }
 
     const filtered = themes.filter((t) => t.id !== themeId);
     setThemes(filtered);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(filtered));
 
     if (activeThemeId === themeId) {
-      activateTheme('theme-rose-blush');
+      activateTheme('theme-blush-core');
     }
 
     logAuditEvent({
       action: 'THEME_DELETED',
       entityType: 'theme',
       entityName: target.name,
-      details: `Deleted frontend theme ${target.name}`,
+      details: `Deleted custom frontend theme ${target.name}`,
       severity: 'warning'
     });
     return true;
   };
 
-  const customizeTheme = (themeId: string, updatedTokens: Partial<ThemeTokens>) => {
+  const customizeTheme = (
+    themeId: string, 
+    updatedTokens: Partial<ThemeTokens>, 
+    updatedSettings?: Partial<ThemeVisualSettings>
+  ) => {
     const updated = themes.map((t) => {
       if (t.id === themeId) {
         return {
@@ -208,6 +281,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           tokens: {
             ...t.tokens,
             ...updatedTokens
+          },
+          settings: {
+            ...t.settings,
+            ...(updatedSettings || {})
           },
           updatedAt: new Date().toISOString().split('T')[0]
         };
@@ -221,16 +298,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     logAuditEvent({
       action: 'THEME_CUSTOMIZED',
       entityType: 'theme',
-      entityName: themes.find((t) => t.id === themeId)?.name || 'Theme',
-      details: `Customized frontend tokens (primary: ${updatedTokens.primary || 'unchanged'})`,
+      entityName: themes.find(t => t.id === themeId)?.name || 'Theme',
+      details: `Customized frontend design tokens & visual branding settings`,
       severity: 'info'
     });
   };
 
   const rollbackTheme = (themeId: string) => {
-    const defaultPreset = DEFAULT_THEMES.find((t) => t.id === themeId);
-    if (!defaultPreset) return;
-
+    const defaultPreset = DEFAULT_THEMES.find((t) => t.id === themeId) || DEFAULT_THEMES[0];
     const updated = themes.map((t) => (t.id === themeId ? defaultPreset : t));
     setThemes(updated);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
@@ -239,7 +314,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_ROLLBACK',
       entityType: 'theme',
       entityName: defaultPreset.name,
-      details: `Rolled back frontend theme to original default preset tokens`,
+      details: `Rolled back frontend theme to initial default preset tokens`,
       severity: 'info'
     });
   };
@@ -256,6 +331,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         themes,
         activeTheme,
         activateTheme,
+        duplicateTheme,
         installTheme,
         deleteTheme,
         customizeTheme,

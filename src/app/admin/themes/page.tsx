@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { 
   Palette, Upload, Sparkles, Check, Download, RotateCcw, 
   Trash2, Sliders, ExternalLink, ShieldCheck, Info, X, CheckCircle2, 
-  AlertTriangle, Layers, Eye, Monitor, Smartphone, User, Lock, Heart, MessageSquare, Star
+  AlertTriangle, Layers, Eye, Copy, RefreshCw, Lock, Heart, MessageSquare, 
+  Star, Settings, Image as ImageIcon, SlidersHorizontal, Sparkle
 } from 'lucide-react';
 import { useTheme } from '@/lib/extensions/theme-engine';
-import { ThemeManifest } from '@/lib/extensions/theme-types';
+import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from '@/lib/extensions/theme-types';
 import { validateThemePackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,7 @@ export default function AdminThemesPage() {
     themes, 
     activeTheme, 
     activateTheme, 
+    duplicateTheme,
     installTheme, 
     deleteTheme, 
     customizeTheme, 
@@ -35,13 +37,25 @@ export default function AdminThemesPage() {
   const [uploadText, setUploadText] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [notificationMsg, setNotificationMsg] = useState('');
 
   // Customizer state
   const [customPrimary, setCustomPrimary] = useState(activeTheme.tokens.primary);
   const [customAccent, setCustomAccent] = useState(activeTheme.tokens.accent);
   const [customBg, setCustomBg] = useState(activeTheme.tokens.background);
   const [customSurface, setCustomSurface] = useState(activeTheme.tokens.surface);
-  const [customRadius, setCustomRadius] = useState(activeTheme.tokens.cardRadius || '20px');
+  const [customBorder, setCustomBorder] = useState(activeTheme.tokens.border);
+  const [customCardRadius, setCustomCardRadius] = useState(activeTheme.tokens.cardRadius || '20px');
+  const [customButtonRadius, setCustomButtonRadius] = useState(activeTheme.tokens.buttonRadius || '14px');
+  const [customLogoUrl, setCustomLogoUrl] = useState(activeTheme.settings?.logoUrl || '');
+  const [customContainerWidth, setCustomContainerWidth] = useState<'max-w-6xl' | 'max-w-7xl' | 'max-w-full'>(activeTheme.settings?.containerWidth || 'max-w-7xl');
+  const [customButtonStyle, setCustomButtonStyle] = useState<'gradient-glow' | 'flat-solid' | 'soft-glass' | 'outline-neo'>(activeTheme.settings?.buttonStyle || 'gradient-glow');
+  const [customAnimationIntensity, setCustomAnimationIntensity] = useState<'off' | 'subtle' | 'normal' | 'playful'>(activeTheme.settings?.animationIntensity || 'normal');
+
+  const triggerNotice = (msg: string) => {
+    setNotificationMsg(msg);
+    setTimeout(() => setNotificationMsg(''), 3000);
+  };
 
   const openCustomizer = (theme: ThemeManifest) => {
     setCustomizerTheme(theme);
@@ -49,20 +63,45 @@ export default function AdminThemesPage() {
     setCustomAccent(theme.tokens.accent);
     setCustomBg(theme.tokens.background);
     setCustomSurface(theme.tokens.surface);
-    setCustomRadius(theme.tokens.cardRadius || '20px');
+    setCustomBorder(theme.tokens.border);
+    setCustomCardRadius(theme.tokens.cardRadius || '20px');
+    setCustomButtonRadius(theme.tokens.buttonRadius || '14px');
+    setCustomLogoUrl(theme.settings?.logoUrl || '');
+    setCustomContainerWidth(theme.settings?.containerWidth || 'max-w-7xl');
+    setCustomButtonStyle(theme.settings?.buttonStyle || 'gradient-glow');
+    setCustomAnimationIntensity(theme.settings?.animationIntensity || 'normal');
   };
 
   const handleSaveCustomization = () => {
     if (!customizerTheme) return;
-    customizeTheme(customizerTheme.id, {
-      primary: customPrimary,
-      primaryHover: customPrimary,
-      accent: customAccent,
-      background: customBg,
-      surface: customSurface,
-      cardRadius: customRadius
-    });
+    customizeTheme(
+      customizerTheme.id,
+      {
+        primary: customPrimary,
+        primaryHover: customPrimary,
+        accent: customAccent,
+        background: customBg,
+        surface: customSurface,
+        border: customBorder,
+        cardRadius: customCardRadius,
+        buttonRadius: customButtonRadius
+      },
+      {
+        logoUrl: customLogoUrl,
+        containerWidth: customContainerWidth,
+        buttonStyle: customButtonStyle,
+        animationIntensity: customAnimationIntensity
+      }
+    );
     setCustomizerTheme(null);
+    triggerNotice(`Saved customizations for ${customizerTheme.name}!`);
+  };
+
+  const handleDuplicate = (theme: ThemeManifest) => {
+    const cloned = duplicateTheme(theme.id);
+    if (cloned) {
+      triggerNotice(`Duplicated "${theme.name}" as "${cloned.name}"`);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,11 +124,12 @@ export default function AdminThemesPage() {
 
         installTheme(result.theme);
         setUploadSuccess(true);
+        triggerNotice(`Installed theme "${result.theme.name}"!`);
         setTimeout(() => {
           setIsUploadOpen(false);
           setUploadSuccess(false);
         }, 1200);
-      } catch (err) {
+      } catch (err: any) {
         setUploadError('Invalid file format. Please upload a valid JSON theme manifest or ZIP package.');
       }
     };
@@ -108,14 +148,14 @@ export default function AdminThemesPage() {
       }
       installTheme(result.theme);
       setUploadSuccess(true);
+      triggerNotice(`Installed theme "${result.theme.name}"!`);
       setTimeout(() => {
         setIsUploadOpen(false);
         setUploadSuccess(false);
         setUploadText('');
       }, 1200);
-    } catch (e) {
-      const errMsg = e instanceof Error ? e.message : 'Unknown syntax error';
-      setUploadError('JSON syntax error: ' + errMsg);
+    } catch (e: any) {
+      setUploadError('JSON syntax error: ' + e.message);
     }
   };
 
@@ -128,6 +168,7 @@ export default function AdminThemesPage() {
     a.download = `${theme.slug}-frontend-theme-v${theme.version}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    triggerNotice(`Exported ${theme.name} JSON package`);
   };
 
   return (
@@ -140,7 +181,7 @@ export default function AdminThemesPage() {
             <h1 className="text-2xl font-black text-[#18181B]">Frontend Theme System</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Control the visual appearance of public landing pages, user feeds, creator profiles, reels, and member dashboards.
+            Manage frontend branding and visual styles. Default theme: <strong className="text-[#BE185D]">Blush Core</strong>.
           </p>
         </div>
 
@@ -151,12 +192,25 @@ export default function AdminThemesPage() {
             leftIcon={<Upload size={14} />}
             onClick={() => setIsUploadOpen(true)}
           >
-            Upload Theme (ZIP / JSON)
+            Import Theme (ZIP / JSON)
           </Button>
         </div>
       </div>
 
-      {/* Admin Panel Isolation Guarantee Banner */}
+      {/* Toast Notification Alert */}
+      {notificationMsg && (
+        <div className="p-3.5 bg-[#FFF1F7] border border-[#FBCFE8] rounded-2xl text-xs text-[#BE185D] font-bold flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-[#EC4899]" />
+            <span>{notificationMsg}</span>
+          </div>
+          <button onClick={() => setNotificationMsg('')} className="text-[#A1A1AA] hover:text-[#18181B]">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Admin Panel Isolation Notice */}
       <div className="p-4 bg-white border border-[#F3DCE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -164,13 +218,13 @@ export default function AdminThemesPage() {
           </div>
           <div>
             <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
-              <span>Admin Panel Isolation Guarantee</span>
+              <span>Admin Panel Isolation Active</span>
               <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
-                Protected & Locked
+                Permanently Independent
               </span>
             </h4>
             <p className="text-[11px] text-[#71717A] mt-0.5">
-              Frontend themes exclusively modify public website styling, creator profiles, and member portals. The Admin Panel is strictly isolated and maintains its dedicated control room layout.
+              Frontend themes exclusively modify public website styling, feeds, creator profiles, and member portals. The Admin Panel UI is permanently locked to core administrative tokens.
             </p>
           </div>
         </div>
@@ -182,7 +236,7 @@ export default function AdminThemesPage() {
         </Link>
       </div>
 
-      {/* Active Frontend Theme Banner */}
+      {/* Active Theme Card */}
       <Card className="p-6 bg-gradient-to-br from-white to-[#FFF1F7] border border-[#F3DCE8] relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
           <div className="flex items-start gap-4">
@@ -192,8 +246,13 @@ export default function AdminThemesPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE7F3] text-[#BE185D] px-2.5 py-0.5 rounded-full border border-[#FBCFE8]">
-                  Active Frontend Theme
+                  Active Theme
                 </span>
+                {activeTheme.isDefault && (
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200 flex items-center gap-1">
+                    <Lock size={10} /> Built-in Default
+                  </span>
+                )}
                 <Badge variant="emerald" size="sm">v{activeTheme.version}</Badge>
               </div>
               <h2 className="text-xl font-black text-[#18181B]">{activeTheme.name}</h2>
@@ -201,7 +260,7 @@ export default function AdminThemesPage() {
             </div>
           </div>
 
-          {/* Palette Swatches */}
+          {/* Palette Swatches & Actions */}
           <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-[#F3DCE8] shadow-xs">
             <div className="text-center">
               <div className="w-8 h-8 rounded-xl border border-black/10 shadow-xs" style={{ backgroundColor: activeTheme.tokens.primary }}></div>
@@ -238,9 +297,9 @@ export default function AdminThemesPage() {
         <div className="flex items-center justify-between">
           <h3 className="font-extrabold text-base text-[#18181B] flex items-center gap-2">
             <Layers size={18} className="text-[#EC4899]" />
-            <span>Installed Frontend Themes ({themes.length})</span>
+            <span>Installed Themes ({themes.length})</span>
           </h3>
-          <span className="text-xs text-[#71717A] font-medium">Activate to update public visitor and member styling</span>
+          <span className="text-xs text-[#71717A] font-medium">Only one frontend theme is active at a time</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -266,6 +325,11 @@ export default function AdminThemesPage() {
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
                       {theme.category}
                     </span>
+                    {theme.isDefault && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
+                        <Lock size={9} /> Default
+                      </span>
+                    )}
                     {theme.isCustom && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
                         Custom
@@ -275,7 +339,7 @@ export default function AdminThemesPage() {
 
                   {isActive && (
                     <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
-                      <Check size={12} strokeWidth={3} /> Active Frontend Theme
+                      <Check size={12} strokeWidth={3} /> Active Theme
                     </div>
                   )}
 
@@ -307,16 +371,23 @@ export default function AdminThemesPage() {
                       <button
                         onClick={() => setLivePreviewTheme(theme)}
                         className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Live Frontend Preview"
+                        title="Live Preview"
                       >
                         <Eye size={15} />
                       </button>
                       <button
                         onClick={() => openCustomizer(theme)}
                         className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Customize Tokens"
+                        title="Customize Theme"
                       >
                         <Sliders size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(theme)}
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                        title="Duplicate Theme"
+                      >
+                        <Copy size={15} />
                       </button>
                       <button
                         onClick={() => handleExportTheme(theme)}
@@ -332,11 +403,11 @@ export default function AdminThemesPage() {
                       >
                         <Info size={15} />
                       </button>
-                      {theme.isCustom && (
+                      {!theme.isDefault && (
                         <button
                           onClick={() => deleteTheme(theme.id)}
                           className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
-                          title="Delete Theme"
+                          title="Delete Custom Theme"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -349,7 +420,7 @@ export default function AdminThemesPage() {
                         size="sm"
                         onClick={() => activateTheme(theme.id)}
                       >
-                        Activate Theme
+                        Activate
                       </Button>
                     ) : (
                       <Button
@@ -358,7 +429,7 @@ export default function AdminThemesPage() {
                         onClick={() => rollbackTheme(theme.id)}
                         leftIcon={<RotateCcw size={12} />}
                       >
-                        Reset Defaults
+                        Reset
                       </Button>
                     )}
                   </div>
@@ -369,7 +440,7 @@ export default function AdminThemesPage() {
         </div>
       </div>
 
-      {/* Interactive Frontend Live Preview Modal */}
+      {/* Live Frontend Viewport Preview Modal */}
       {livePreviewTheme && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-4xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
@@ -383,7 +454,7 @@ export default function AdminThemesPage() {
                     Frontend Live Preview: {livePreviewTheme.name}
                   </h3>
                   <p className="text-xs text-[#71717A]">
-                    Simulating public website appearance under {livePreviewTheme.name} tokens
+                    Simulating public website appearance under {livePreviewTheme.name} design tokens
                   </p>
                 </div>
               </div>
@@ -440,6 +511,7 @@ export default function AdminThemesPage() {
                   onClick={() => {
                     activateTheme(livePreviewTheme.id);
                     setLivePreviewTheme(null);
+                    triggerNotice(`Activated theme "${livePreviewTheme.name}"`);
                   }}
                   leftIcon={<Check size={14} />}
                 >
@@ -662,17 +734,17 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Live Customizer Modal */}
+      {/* Theme Customizer Modal */}
       {customizerTheme && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Sliders size={18} className="text-[#EC4899]" />
-                  <span>Customize Frontend Tokens: {customizerTheme.name}</span>
+                  <span>Customize Theme: {customizerTheme.name}</span>
                 </h3>
-                <p className="text-xs text-[#71717A]">Fine-tune public palette, canvas, and card radius</p>
+                <p className="text-xs text-[#71717A]">Fine-tune branding, design tokens, and layout geometry</p>
               </div>
               <button
                 onClick={() => setCustomizerTheme(null)}
@@ -683,93 +755,173 @@ export default function AdminThemesPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-[#18181B] mb-1">Primary Color</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={customPrimary}
-                      onChange={(e) => setCustomPrimary(e.target.value)}
-                      className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
-                    />
-                    <input
-                      type="text"
-                      value={customPrimary}
-                      onChange={(e) => setCustomPrimary(e.target.value)}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#18181B] mb-1">Accent Color</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={customAccent}
-                      onChange={(e) => setCustomAccent(e.target.value)}
-                      className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
-                    />
+              {/* Branding Section */}
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-3">
+                <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
+                  <ImageIcon size={14} className="text-[#EC4899]" />
+                  <span>Brand Assets</span>
+                </h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Custom Logo URL (Optional)</label>
                     <input
                       type="text"
-                      value={customAccent}
-                      onChange={(e) => setCustomAccent(e.target.value)}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
+                      value={customLogoUrl}
+                      onChange={(e) => setCustomLogoUrl(e.target.value)}
+                      placeholder="https://yourdomain.com/logo.svg"
+                      className="w-full bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899]"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-[#18181B] mb-1">Canvas Background</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={customBg}
-                      onChange={(e) => setCustomBg(e.target.value)}
-                      className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
-                    />
-                    <input
-                      type="text"
-                      value={customBg}
-                      onChange={(e) => setCustomBg(e.target.value)}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
-                    />
+              {/* Color Tokens */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
+                  <Palette size={14} className="text-[#EC4899]" />
+                  <span>Color Tokens</span>
+                </h4>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Primary Color</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={customPrimary}
+                        onChange={(e) => setCustomPrimary(e.target.value)}
+                        className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={customPrimary}
+                        onChange={(e) => setCustomPrimary(e.target.value)}
+                        className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Accent Color</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={customAccent}
+                        onChange={(e) => setCustomAccent(e.target.value)}
+                        className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={customAccent}
+                        onChange={(e) => setCustomAccent(e.target.value)}
+                        className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-[#18181B] mb-1">Card Surface</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={customSurface}
-                      onChange={(e) => setCustomSurface(e.target.value)}
-                      className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
-                    />
-                    <input
-                      type="text"
-                      value={customSurface}
-                      onChange={(e) => setCustomSurface(e.target.value)}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Canvas Background</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={customBg}
+                        onChange={(e) => setCustomBg(e.target.value)}
+                        className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={customBg}
+                        onChange={(e) => setCustomBg(e.target.value)}
+                        className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Card Surface</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={customSurface}
+                        onChange={(e) => setCustomSurface(e.target.value)}
+                        className="w-9 h-9 rounded-xl border border-[#F3DCE8] cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={customSurface}
+                        onChange={(e) => setCustomSurface(e.target.value)}
+                        className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-[#18181B] mb-1">Card Border Radius ({customRadius})</label>
-                <input
-                  type="range"
-                  min="8"
-                  max="32"
-                  step="2"
-                  value={parseInt(customRadius) || 20}
-                  onChange={(e) => setCustomRadius(`${e.target.value}px`)}
-                  className="w-full accent-[#EC4899] cursor-pointer"
-                />
+              {/* Layout & Geometry */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
+                  <SlidersHorizontal size={14} className="text-[#EC4899]" />
+                  <span>Geometry & Button Styles</span>
+                </h4>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Card Radius ({customCardRadius})</label>
+                    <input
+                      type="range"
+                      min="8"
+                      max="32"
+                      step="2"
+                      value={parseInt(customCardRadius) || 20}
+                      onChange={(e) => setCustomCardRadius(`${e.target.value}px`)}
+                      className="w-full accent-[#EC4899] cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Button Radius ({customButtonRadius})</label>
+                    <input
+                      type="range"
+                      min="6"
+                      max="24"
+                      step="2"
+                      value={parseInt(customButtonRadius) || 14}
+                      onChange={(e) => setCustomButtonRadius(`${e.target.value}px`)}
+                      className="w-full accent-[#EC4899] cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Container Width</label>
+                    <select
+                      value={customContainerWidth}
+                      onChange={(e) => setCustomContainerWidth(e.target.value as any)}
+                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-medium"
+                    >
+                      <option value="max-w-6xl">Compact (max-w-6xl)</option>
+                      <option value="max-w-7xl">Standard (max-w-7xl)</option>
+                      <option value="max-w-full">Fluid Full Width</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#18181B] mb-1">Button Visual Style</label>
+                    <select
+                      value={customButtonStyle}
+                      onChange={(e) => setCustomButtonStyle(e.target.value as any)}
+                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-medium"
+                    >
+                      <option value="gradient-glow">Glow Gradient</option>
+                      <option value="flat-solid">Flat Solid</option>
+                      <option value="soft-glass">Soft Glass</option>
+                      <option value="outline-neo">Outline Neo</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* Real-time Preview Mock Card */}
@@ -778,17 +930,20 @@ export default function AdminThemesPage() {
                 style={{
                   backgroundColor: customSurface,
                   borderColor: customPrimary,
-                  borderRadius: customRadius
+                  borderRadius: customCardRadius
                 }}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs" style={{ color: customPrimary }}>Live Token Preview</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-bold" style={{ backgroundColor: customAccent }}>
+                  <span
+                    className="text-[10px] px-2.5 py-0.5 rounded-full text-white font-bold"
+                    style={{ backgroundColor: customAccent, borderRadius: customButtonRadius }}
+                  >
                     Accent Badge
                   </span>
                 </div>
                 <p className="text-[11px] text-[#71717A]">
-                  This preview renders in real time using the updated CSS color and corner tokens.
+                  This preview renders in real time using the updated CSS color, border, and geometry tokens.
                 </p>
               </div>
             </div>
@@ -862,7 +1017,7 @@ export default function AdminThemesPage() {
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Upload size={18} className="text-[#EC4899]" />
-                  <span>Upload Frontend Theme Package</span>
+                  <span>Import Frontend Theme Package</span>
                 </h3>
                 <p className="text-xs text-[#71717A]">Install custom public themes via JSON manifest or ZIP file</p>
               </div>

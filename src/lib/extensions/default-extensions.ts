@@ -3,17 +3,18 @@ import { PluginManifest, AuditLogEntry } from './plugin-types';
 
 export const DEFAULT_THEMES: ThemeManifest[] = [
   {
-    id: 'theme-rose-blush',
-    name: 'Rose Blush',
-    slug: 'rose-blush',
-    description: 'The signature modern light pink creator platform style with rose gold accents and soft shadows.',
+    id: 'theme-blush-core',
+    name: 'Blush Core',
+    slug: 'blush-core',
+    description: 'The signature built-in default frontend creator-platform theme with soft rose pink hues, warm blush canvas, and editorial typography.',
     version: '1.2.0',
     author: 'CreatorPulse Core Team',
     authorUrl: 'https://creatorpulse.com',
     previewImageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
     category: 'Modern Light',
-    tags: ['Official', 'Light Pink', 'Pastel', 'Rose'],
+    tags: ['Built-in Default', 'Blush Core', 'Light Pink', 'Official'],
     minAppVersion: '1.0.0',
+    isDefault: true, // Cannot be deleted; serves as the ultimate fallback
     isActive: true,
     installedAt: '2026-08-01',
     updatedAt: '2026-08-14',
@@ -33,10 +34,19 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       cardRadius: '20px',
       buttonRadius: '14px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: false
     },
+    settings: {
+      logoUrl: '',
+      faviconUrl: '',
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'normal',
+      cardShadow: 'soft-pink'
+    },
     changelog: [
-      { version: '1.2.0', date: '2026-08-14', changes: ['Optimized pink radial glow', 'Added Plus Jakarta Sans editorial weights'] },
+      { version: '1.2.0', date: '2026-08-14', changes: ['Standardized as official built-in default Blush Core theme', 'Added complete visual customization schema'] },
       { version: '1.0.0', date: '2026-08-01', changes: ['Initial official release'] }
     ]
   },
@@ -71,7 +81,14 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       cardRadius: '24px',
       buttonRadius: '16px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: true
+    },
+    settings: {
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'playful',
+      cardShadow: 'glow'
     },
     changelog: [
       { version: '1.1.4', date: '2026-08-12', changes: ['Deepened background contrast', 'Enhanced glow on active badges'] },
@@ -109,7 +126,14 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       cardRadius: '22px',
       buttonRadius: '14px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: false
+    },
+    settings: {
+      containerWidth: 'max-w-6xl',
+      buttonStyle: 'soft-glass',
+      animationIntensity: 'subtle',
+      cardShadow: 'soft-pink'
     },
     changelog: [
       { version: '1.0.8', date: '2026-08-10', changes: ['Refined frosted glass card borders'] }
@@ -146,7 +170,14 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       cardRadius: '20px',
       buttonRadius: '12px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: false
+    },
+    settings: {
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'normal',
+      cardShadow: 'elevated'
     },
     changelog: [
       { version: '1.0.2', date: '2026-08-09', changes: ['Initial release of Sunset Coral theme'] }
@@ -183,7 +214,14 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       cardRadius: '16px',
       buttonRadius: '10px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: true
+    },
+    settings: {
+      containerWidth: 'max-w-7xl',
+      buttonStyle: 'flat-solid',
+      animationIntensity: 'subtle',
+      cardShadow: 'elevated'
     },
     changelog: [
       { version: '1.3.0', date: '2026-08-11', changes: ['Enhanced champagne gold gradients', 'Reduced border blur'] }
@@ -387,11 +425,11 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     id: 'log-001',
     action: 'THEME_ACTIVATED',
     entityType: 'theme',
-    entityName: 'Rose Blush',
-    details: 'Theme activated as default platform theme.',
+    entityName: 'Blush Core',
+    details: 'Set as the official active default frontend theme.',
     user: 'Elena Rostova',
     role: 'admin',
-    timestamp: '2026-08-14 23:30:12',
+    timestamp: '2026-08-14 23:50:00',
     severity: 'success'
   },
   {

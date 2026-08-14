@@ -60,7 +60,9 @@ interface RawThemeManifest {
   tags?: unknown;
   minAppVersion?: unknown;
   tokens?: unknown;
+  settings?: unknown;
   changelog?: unknown;
+  isDefault?: unknown;
 }
 
 /**
@@ -90,11 +92,13 @@ export function validateThemePackage(manifest: unknown): { valid: boolean; error
     return { valid: false, error: 'Theme tokens must define primary, background, and surface colors.' };
   }
 
+  const settings = (pkg.settings as Record<string, unknown>) || {};
+
   const validatedTheme: ThemeManifest = {
     id: (pkg.id as string) || `theme-${Date.now()}`,
     name: pkg.name,
     slug: (pkg.slug as string) || pkg.name.toLowerCase().replace(/[^a-z0-9_]/g, '-'),
-    description: (pkg.description as string) || 'Custom installed CreatorPulse theme.',
+    description: (pkg.description as string) || 'Custom installed CreatorPulse frontend theme.',
     version: pkg.version,
     author: (pkg.author as string) || 'Custom Developer',
     authorUrl: (pkg.authorUrl as string) || '',
@@ -102,6 +106,7 @@ export function validateThemePackage(manifest: unknown): { valid: boolean; error
     category: (pkg.category as ThemeManifest['category']) || 'Modern Light',
     tags: Array.isArray(pkg.tags) ? (pkg.tags as string[]) : ['Custom', 'User-Installed'],
     minAppVersion: (pkg.minAppVersion as string) || '1.0.0',
+    isDefault: false,
     tokens: {
       primary: tokens.primary as string,
       primaryHover: (tokens.primaryHover as string) || (tokens.primary as string),
@@ -118,7 +123,16 @@ export function validateThemePackage(manifest: unknown): { valid: boolean; error
       cardRadius: (tokens.cardRadius as string) || '20px',
       buttonRadius: (tokens.buttonRadius as string) || '14px',
       fontFamily: (tokens.fontFamily as string) || 'Plus Jakarta Sans, sans-serif',
+      fontHeading: (tokens.fontHeading as string) || 'Plus Jakarta Sans, sans-serif',
       isDark: Boolean(tokens.isDark)
+    },
+    settings: {
+      logoUrl: (settings.logoUrl as string) || '',
+      faviconUrl: (settings.faviconUrl as string) || '',
+      containerWidth: (settings.containerWidth as ThemeManifest['settings']['containerWidth']) || 'max-w-7xl',
+      buttonStyle: (settings.buttonStyle as ThemeManifest['settings']['buttonStyle']) || 'gradient-glow',
+      animationIntensity: (settings.animationIntensity as ThemeManifest['settings']['animationIntensity']) || 'normal',
+      cardShadow: (settings.cardShadow as ThemeManifest['settings']['cardShadow']) || 'soft-pink'
     },
     changelog: Array.isArray(pkg.changelog) ? (pkg.changelog as ThemeManifest['changelog']) : [
       { version: pkg.version, date: new Date().toISOString().split('T')[0], changes: ['Initial custom install'] }
