@@ -99,6 +99,7 @@ const SEARCH_DATABASE = [
   { type: 'route', category: 'Navigation', title: 'Dashboard Overview', subtitle: 'Platform KPI metrics, earnings & growth stats', url: '/admin/dashboard' },
   { type: 'route', category: 'Navigation', title: 'Frontend Themes', subtitle: 'Manage active public themes & design tokens', url: '/admin/themes' },
   { type: 'route', category: 'Navigation', title: 'Plugins & Add-ons', subtitle: 'Configure DRM, Virtual Gifts & AI Add-ons', url: '/admin/plugins' },
+  { type: 'route', category: 'Navigation', title: 'Storage & Drives', subtitle: 'Manage local and cloud storage drivers and buckets', url: '/admin/storage' },
   { type: 'route', category: 'Navigation', title: 'Audit Logs', subtitle: 'Inspect system events, installs & security records', url: '/admin/audit-logs' },
   { type: 'route', category: 'Navigation', title: 'Creator Applications', subtitle: 'Review pending creator onboarding requests', url: '/admin/applications' },
   { type: 'route', category: 'Navigation', title: 'User Management', subtitle: 'Search, ban and manage fans & members', url: '/admin/users' },

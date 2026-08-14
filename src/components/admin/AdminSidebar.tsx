@@ -8,7 +8,7 @@ import {
   AlertTriangle, CreditCard, Star, Receipt, TrendingUp, Wallet,
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
-  Shield, Mail, Image as ImageIcon, Wrench, Bell
+  Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive
 } from 'lucide-react';
 
 interface NavItem {
@@ -37,6 +37,7 @@ const allAdminNavGroups: NavGroup[] = [
     title: 'Dynamic Managers',
     items: [
       { label: 'Site Settings', href: '/admin/settings', icon: Settings, badge: 'Dynamic', badgeVariant: 'indigo' },
+      { label: 'Storage & Drives', href: '/admin/storage', icon: HardDrive, badge: 'Dynamic', badgeVariant: 'emerald' },
       { label: 'Menu & Navigation', href: '/admin/navigation', icon: Menu },
       { label: 'Pages & CMS', href: '/admin/cms', icon: FileText },
       { label: 'Announcements', href: '/admin/announcements', icon: Bell, badge: 'Live', badgeVariant: 'emerald' },
