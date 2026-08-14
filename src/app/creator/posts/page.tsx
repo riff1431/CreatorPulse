@@ -15,11 +15,11 @@ const posts = [
 ];
 
 const typeIcons: Record<string, React.ReactNode> = {
-  image: <Image size={12} className="text-cyan-400" />,
-  video: <Video size={12} className="text-indigo-400" />,
-  poll: <BarChart2 size={12} className="text-amber-400" />,
-  text: <Type size={12} className="text-slate-400" />,
-  audio: <Volume2 size={12} className="text-violet-400" />,
+  image: <Image size={12} className="text-[#EC4899]" />,
+  video: <Video size={12} className="text-[#BE185D]" />,
+  poll: <BarChart2 size={12} className="text-amber-500" />,
+  text: <Type size={12} className="text-[#71717A]" />,
+  audio: <Volume2 size={12} className="text-purple-500" />,
 };
 
 export default function CreatorPostsPage() {
@@ -37,61 +37,69 @@ export default function CreatorPostsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="text-cyan-400" size={22} />
-            <h1 className="text-xl font-black text-white">My Posts</h1>
+            <FileText className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">My Posts</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Manage and track all your published and draft posts.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Manage and track all your published and draft posts.</p>
         </div>
         <Button variant="primary" size="sm" leftIcon={<PlusSquare size={14} />}>New Post</Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <input type="text" placeholder="Search posts..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={14} />
+          <input
+            type="text"
+            placeholder="Search posts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+        >
           <option value="all">All Status</option>
           <option value="published">Published</option>
           <option value="draft">Drafts</option>
         </select>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 font-semibold">Post</th>
-              <th className="py-3 px-4 font-semibold">Type</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Visibility</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Views</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Likes</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
-              <th className="py-3 px-4 font-semibold text-right">Actions</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 font-bold">Post</th>
+              <th className="py-3.5 px-4 font-bold">Type</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Visibility</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Views</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Likes</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
+              <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {filtered.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-900/50 transition-colors">
+              <tr key={p.id} className="hover:bg-[#FFF9FC] transition-colors">
                 <td className="py-3 px-4">
-                  <p className="font-bold text-slate-200 truncate max-w-[250px]">{p.title}</p>
-                  <p className="text-[10px] text-slate-500">{p.date}</p>
+                  <p className="font-bold text-[#18181B] truncate max-w-[280px]">{p.title}</p>
+                  <p className="text-[10px] text-[#A1A1AA]">{p.date}</p>
                 </td>
                 <td className="py-3 px-4"><Badge variant="slate" size="sm">{typeIcons[p.type]} {p.type}</Badge></td>
                 <td className="py-3 px-4 hidden sm:table-cell">
-                  <Badge variant={p.visibility === 'public' ? 'cyan' : 'indigo'} size="sm">{p.visibility}</Badge>
+                  <Badge variant={p.visibility === 'public' ? 'slate' : 'pink'} size="sm">{p.visibility}</Badge>
                 </td>
-                <td className="py-3 px-4 text-slate-300 hidden md:table-cell">{p.views.toLocaleString()}</td>
-                <td className="py-3 px-4 text-slate-300 hidden md:table-cell">{p.likes}</td>
+                <td className="py-3 px-4 text-[#18181B] font-bold hidden md:table-cell">{p.views.toLocaleString()}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden md:table-cell font-medium">{p.likes}</td>
                 <td className="py-3 px-4">
                   <Badge variant={p.status === 'published' ? 'emerald' : 'amber'} size="sm">{p.status}</Badge>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm"><EyeOff size={13} /></Button>
-                    <Button variant="ghost" size="sm"><Trash2 size={13} className="text-rose-400" /></Button>
+                    <Button variant="ghost" size="sm"><Trash2 size={13} className="text-[#F43F5E]" /></Button>
                   </div>
                 </td>
               </tr>

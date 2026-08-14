@@ -21,7 +21,6 @@ import { MOCK_POSTS, MOCK_CREATOR_DETAILS, Post, UserRole } from '@/lib/supabase
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
-  // PRD Section 11 Feed Tabs: For You, Following, Subscribed
   const [feedTab, setFeedTab] = useState<'for_you' | 'following' | 'subscribed'>('for_you');
   const [activeRole, setActiveRole] = useState<UserRole>('member');
   
@@ -78,7 +77,7 @@ export default function FeedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <SupabaseStatusBanner />
       <Navbar />
@@ -90,7 +89,7 @@ export default function FeedPage() {
           <StoryBar />
 
           {/* Quick Publisher Box */}
-          <Card className="p-4 space-y-3">
+          <Card className="p-5 space-y-3.5">
             <div className="flex items-center gap-3">
               <Avatar
                 alt={activeRole === 'creator' ? 'Sarah Jenkins' : 'Alex Vance'}
@@ -106,7 +105,7 @@ export default function FeedPage() {
                 value={newPostTitle}
                 onChange={(e) => setNewPostTitle(e.target.value)}
                 placeholder="Post title or headline..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors"
               />
             </div>
 
@@ -119,15 +118,15 @@ export default function FeedPage() {
                   : 'Share thoughts or questions with creators...'
               }
               rows={2}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors resize-none"
             />
 
-            <div className="flex items-center justify-between border-t border-slate-800 pt-2 text-xs">
+            <div className="flex items-center justify-between border-t border-[#F3DCE8] pt-3 text-xs">
               <div className="flex items-center gap-2">
                 <select
                   value={newPostVisibility}
                   onChange={(e) => setNewPostVisibility(e.target.value as any)}
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 focus:outline-none"
+                  className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#71717A] focus:outline-none font-medium"
                 >
                   <option value="public">🌐 Public Post</option>
                   <option value="members_only">🔒 Members Only</option>
@@ -145,15 +144,15 @@ export default function FeedPage() {
             </div>
           </Card>
 
-          {/* PRD Section 11 Feed Tabs: For You, Following, Subscribed */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div className="flex items-center gap-2 text-xs font-semibold">
+          {/* Feed Tabs: For You, Following, Subscribed */}
+          <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+            <div className="flex items-center gap-2 text-xs font-bold">
               <button
                 onClick={() => setFeedTab('for_you')}
-                className={`px-4 py-1.5 rounded-xl transition-all ${
+                className={`px-4 py-2 rounded-2xl transition-all cursor-pointer ${
                   feedTab === 'for_you'
-                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/5'
+                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
                 }`}
               >
                 For You
@@ -161,10 +160,10 @@ export default function FeedPage() {
 
               <button
                 onClick={() => setFeedTab('following')}
-                className={`px-4 py-1.5 rounded-xl transition-all ${
+                className={`px-4 py-2 rounded-2xl transition-all cursor-pointer ${
                   feedTab === 'following'
-                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/5'
+                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
                 }`}
               >
                 Following
@@ -172,17 +171,17 @@ export default function FeedPage() {
 
               <button
                 onClick={() => setFeedTab('subscribed')}
-                className={`px-4 py-1.5 rounded-xl transition-all flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-2xl transition-all flex items-center gap-1.5 cursor-pointer ${
                   feedTab === 'subscribed'
-                    ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/5'
+                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
                 }`}
               >
                 <Lock size={12} /> Subscribed
               </button>
             </div>
 
-            <span className="text-xs text-slate-500 hidden sm:inline">{filteredPosts.length} posts</span>
+            <span className="text-xs text-[#A1A1AA] hidden sm:inline font-medium">{filteredPosts.length} posts</span>
           </div>
 
           {/* Posts Stream */}
@@ -198,27 +197,27 @@ export default function FeedPage() {
         </main>
 
         <aside className="w-80 hidden xl:flex flex-col gap-6">
-          <Card className="p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div className="flex items-center gap-2 text-slate-100 font-bold text-xs">
-                <TrendingUp size={16} className="text-cyan-400" />
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <div className="flex items-center gap-2 text-[#18181B] font-bold text-xs">
+                <TrendingUp size={16} className="text-[#EC4899]" />
                 <span>Trending Creators</span>
               </div>
-              <Link href="/explore" className="text-[11px] text-cyan-400 hover:underline">
+              <Link href="/explore" className="text-[11px] text-[#BE185D] font-bold hover:underline">
                 View All
               </Link>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {Object.values(MOCK_CREATOR_DETAILS).map((creator) => (
                 <div key={creator.id} className="flex items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2.5">
                     <Avatar alt={creator.fullName} src={creator.avatarUrl} size="md" isVerified={creator.isVerified} />
                     <div>
-                      <Link href={`/c/${creator.username}`} className="font-bold text-slate-200 hover:text-cyan-400 block">
+                      <Link href={`/c/${creator.username}`} className="font-bold text-[#18181B] hover:text-[#EC4899] block transition-colors">
                         {creator.fullName}
                       </Link>
-                      <span className="text-[10px] text-slate-400">@{creator.username}</span>
+                      <span className="text-[10px] text-[#71717A]">@{creator.username}</span>
                     </div>
                   </div>
                   <Link href={`/c/${creator.username}`}>

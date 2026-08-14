@@ -48,7 +48,7 @@ export default function ShortsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -56,33 +56,33 @@ export default function ShortsPage() {
         <Sidebar />
 
         <main className="flex-1 flex flex-col items-center justify-center pb-20 lg:pb-8">
-          <div className="relative max-w-sm w-full h-[620px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col justify-between">
+          <div className="relative max-w-sm w-full h-[620px] bg-[#18181B] rounded-[32px] overflow-hidden shadow-2xl border border-[#F3DCE8] flex flex-col justify-between">
             {/* Background Video Media Mock */}
-            <div className="absolute inset-0 z-0 bg-slate-950">
+            <div className="absolute inset-0 z-0 bg-black">
               <img
                 src={activeShort.videoUrl}
                 alt={activeShort.title}
-                className="w-full h-full object-cover opacity-80"
+                className="w-full h-full object-cover opacity-85"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85"></div>
             </div>
 
             {/* Top Navigation Overlay */}
             <div className="relative z-10 p-4 flex items-center justify-between">
-              <span className="text-xs font-bold bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/30 backdrop-blur-md">
+              <span className="text-xs font-bold bg-[#FCE7F3] text-[#BE185D] px-3 py-1 rounded-full border border-[#FBCFE8] backdrop-blur-md shadow-sm">
                 {activeShort.category}
               </span>
 
               <div className="flex gap-2">
                 <button
                   onClick={handlePrev}
-                  className="p-2 bg-black/40 text-white rounded-full hover:bg-black/60 backdrop-blur-md"
+                  className="p-2 bg-black/40 text-white rounded-full hover:bg-black/60 backdrop-blur-md cursor-pointer transition-colors"
                 >
                   <ChevronUp size={18} />
                 </button>
                 <button
                   onClick={handleNext}
-                  className="p-2 bg-black/40 text-white rounded-full hover:bg-black/60 backdrop-blur-md"
+                  className="p-2 bg-black/40 text-white rounded-full hover:bg-black/60 backdrop-blur-md cursor-pointer transition-colors"
                 >
                   <ChevronDown size={18} />
                 </button>
@@ -93,25 +93,25 @@ export default function ShortsPage() {
             <div className="absolute right-4 bottom-24 z-20 flex flex-col items-center gap-5 text-white">
               <button
                 onClick={handleToggleLike}
-                className="flex flex-col items-center gap-1 group"
+                className="flex flex-col items-center gap-1 group cursor-pointer"
               >
-                <div className={`p-3 rounded-full backdrop-blur-md transition-all ${
-                  activeShort.isLiked ? 'bg-rose-500 text-white' : 'bg-black/40 hover:bg-rose-500/30 text-white'
+                <div className={`p-3.5 rounded-full backdrop-blur-md transition-all ${
+                  activeShort.isLiked ? 'bg-[#EC4899] text-white shadow-lg shadow-[#EC4899]/40 scale-110' : 'bg-black/40 hover:bg-[#EC4899]/40 text-white'
                 }`}>
                   <Heart size={22} className={activeShort.isLiked ? 'fill-white' : ''} />
                 </div>
                 <span className="text-xs font-bold">{activeShort.likesCount}</span>
               </button>
 
-              <button className="flex flex-col items-center gap-1">
-                <div className="p-3 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md">
+              <button className="flex flex-col items-center gap-1 cursor-pointer">
+                <div className="p-3.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors">
                   <MessageSquare size={22} />
                 </div>
                 <span className="text-xs font-bold">{activeShort.commentsCount}</span>
               </button>
 
-              <button className="flex flex-col items-center gap-1">
-                <div className="p-3 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md">
+              <button className="flex flex-col items-center gap-1 cursor-pointer">
+                <div className="p-3.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors">
                   <Share2 size={22} />
                 </div>
                 <span className="text-xs font-bold">{activeShort.sharesCount}</span>
@@ -120,7 +120,7 @@ export default function ShortsPage() {
 
             {/* Bottom Info Overlay */}
             <div className="relative z-10 p-5 space-y-3 pr-16">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <Link href={`/c/${activeShort.authorUsername}`}>
                   <Avatar alt={activeShort.authorName} src={activeShort.authorAvatar} size="md" isVerified />
                 </Link>
@@ -128,7 +128,7 @@ export default function ShortsPage() {
                   <Link href={`/c/${activeShort.authorUsername}`} className="font-bold text-sm text-white hover:underline block">
                     {activeShort.authorName}
                   </Link>
-                  <span className="text-[11px] text-slate-300">@{activeShort.authorUsername}</span>
+                  <span className="text-[11px] text-pink-200">@{activeShort.authorUsername}</span>
                 </div>
                 <Button variant="primary" size="sm" className="ml-2">
                   Follow

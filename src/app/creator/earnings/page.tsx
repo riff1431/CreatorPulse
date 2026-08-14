@@ -16,10 +16,10 @@ const earningsData = [
 ];
 
 const breakdownItems = [
-  { label: 'Subscription Earnings', value: '$22,400', icon: <CreditCard size={14} className="text-indigo-400" />, percentage: '64.9%' },
-  { label: 'Membership Earnings', value: '$6,800', icon: <Star size={14} className="text-amber-400" />, percentage: '19.7%' },
-  { label: 'Premium Content Unlock', value: '$3,200', icon: <Lock size={14} className="text-cyan-400" />, percentage: '9.3%' },
-  { label: 'Tips & Support Received', value: '$2,100', icon: <Gift size={14} className="text-emerald-400" />, percentage: '6.1%' },
+  { label: 'Subscription Earnings', value: '$22,400', icon: <CreditCard size={15} className="text-[#EC4899]" />, percentage: '64.9%' },
+  { label: 'Membership Earnings', value: '$6,800', icon: <Star size={15} className="text-[#BE185D]" />, percentage: '19.7%' },
+  { label: 'Premium Content Unlock', value: '$3,200', icon: <Lock size={15} className="text-[#F43F5E]" />, percentage: '9.3%' },
+  { label: 'Tips & Support Received', value: '$2,100', icon: <Gift size={15} className="text-emerald-600" />, percentage: '6.1%' },
 ];
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -33,16 +33,16 @@ export default function CreatorEarningsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <DollarSign className="text-emerald-400" size={22} />
-            <h1 className="text-xl font-black text-white">Earnings</h1>
+            <DollarSign className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">Earnings</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Detailed breakdown of all your revenue sources.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Detailed breakdown of all your revenue sources.</p>
         </div>
         <div className="flex items-center gap-1 text-xs">
           {(['daily', 'weekly', 'monthly', 'yearly'] as const).map((t) => (
             <button key={t} onClick={() => setTimeRange(t)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                timeRange === t ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer ${
+                timeRange === t ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]' : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >{t.charAt(0).toUpperCase() + t.slice(1)}</button>
           ))}
@@ -51,85 +51,85 @@ export default function CreatorEarningsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Total Earnings</span>
-            <DollarSign size={16} className="text-emerald-400" />
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <span className="font-bold uppercase tracking-wider">Total Earnings</span>
+            <DollarSign size={16} className="text-emerald-600" />
           </div>
-          <div className="text-2xl font-black text-white">$34,500</div>
-          <div className="text-[10px] text-emerald-400 font-medium">Lifetime</div>
+          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">$34,500</div>
+          <div className="text-[11px] text-emerald-600 font-bold">Lifetime</div>
         </Card>
-        <Card className="p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Available</span>
-            <TrendingUp size={16} className="text-indigo-400" />
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <span className="font-bold uppercase tracking-wider">Available</span>
+            <TrendingUp size={16} className="text-[#EC4899]" />
           </div>
-          <div className="text-2xl font-black text-white">$4,850</div>
-          <div className="text-[10px] text-indigo-400 font-medium">Ready for payout</div>
+          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">$4,850</div>
+          <div className="text-[11px] text-[#BE185D] font-bold">Ready for payout</div>
         </Card>
-        <Card className="p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Pending</span>
-            <Clock size={16} className="text-orange-400" />
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <span className="font-bold uppercase tracking-wider">Pending</span>
+            <Clock size={16} className="text-amber-500" />
           </div>
-          <div className="text-2xl font-black text-white">$1,200</div>
-          <div className="text-[10px] text-orange-400 font-medium">Processing</div>
+          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">$1,200</div>
+          <div className="text-[11px] text-amber-600 font-bold">Processing</div>
         </Card>
-        <Card className="p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">This Month</span>
-            <DollarSign size={16} className="text-cyan-400" />
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <span className="font-bold uppercase tracking-wider">This Month</span>
+            <DollarSign size={16} className="text-[#EC4899]" />
           </div>
-          <div className="text-2xl font-black text-white">$5,200</div>
-          <div className="text-[10px] text-cyan-400 font-medium">+15.6% vs last month</div>
+          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">$5,200</div>
+          <div className="text-[11px] text-emerald-600 font-bold">+15.6% vs last month</div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Earnings Chart */}
-        <Card className="lg:col-span-2 p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Earnings by Source (Monthly)</h3>
-          <div className="flex items-end gap-3 h-44">
+        <Card className="lg:col-span-2 p-6 space-y-5">
+          <h3 className="text-sm font-bold text-[#18181B]">Earnings by Source (Monthly)</h3>
+          <div className="flex items-end gap-3.5 h-48 pt-4">
             {earningsData.map((d) => {
               const total = d.subscription + d.membership + d.premium + d.support;
               const height = (total / maxVal) * 100;
               return (
-                <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-slate-400 font-medium">${(total / 1000).toFixed(1)}k</span>
-                  <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${height}%` }}>
+                <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
+                  <span className="text-[10px] text-[#71717A] font-bold">${(total / 1000).toFixed(1)}k</span>
+                  <div className="w-full rounded-t-xl overflow-hidden shadow-sm" style={{ height: `${height}%` }}>
                     <div className="h-full flex flex-col">
-                      <div className="bg-indigo-500" style={{ flex: d.subscription / total }} />
-                      <div className="bg-amber-500" style={{ flex: d.membership / total }} />
-                      <div className="bg-cyan-500" style={{ flex: d.premium / total }} />
+                      <div className="bg-[#EC4899]" style={{ flex: d.subscription / total }} />
+                      <div className="bg-[#BE185D]" style={{ flex: d.membership / total }} />
+                      <div className="bg-[#F43F5E]" style={{ flex: d.premium / total }} />
                       <div className="bg-emerald-500" style={{ flex: d.support / total }} />
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-500">{d.month}</span>
+                  <span className="text-[11px] text-[#71717A] font-semibold">{d.month}</span>
                 </div>
               );
             })}
           </div>
-          <div className="flex items-center gap-4 text-[10px] text-slate-400 pt-2">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500" /> Subscriptions</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Memberships</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Premium</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Support</span>
+          <div className="flex items-center gap-5 text-xs text-[#71717A] pt-2 font-medium">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#EC4899]" /> Subscriptions</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#BE185D]" /> Memberships</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F43F5E]" /> Premium</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Support</span>
           </div>
         </Card>
 
         {/* Breakdown */}
-        <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Revenue Breakdown</h3>
+        <Card className="p-6 space-y-4">
+          <h3 className="text-sm font-bold text-[#18181B]">Revenue Breakdown</h3>
           <div className="space-y-3">
             {breakdownItems.map((item) => (
-              <div key={item.label} className="flex items-center justify-between text-xs p-3 bg-slate-900/40 rounded-xl border border-slate-800/60">
+              <div key={item.label} className="flex items-center justify-between text-xs p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8]">
                 <div className="flex items-center gap-3">
                   {item.icon}
-                  <span className="text-slate-200 font-medium">{item.label}</span>
+                  <span className="text-[#18181B] font-bold">{item.label}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-white">{item.value}</p>
-                  <p className="text-[10px] text-slate-500">{item.percentage}</p>
+                  <p className="font-extrabold text-[#18181B]">{item.value}</p>
+                  <p className="text-[10px] text-[#71717A] font-medium">{item.percentage}</p>
                 </div>
               </div>
             ))}

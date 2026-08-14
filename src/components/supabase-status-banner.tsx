@@ -25,17 +25,17 @@ CREATE TABLE public.profiles (...);
 
   return (
     <>
-      <div className="bg-slate-900/60 border-b border-slate-800 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-[#FFF1F7]/80 border-b border-[#F3DCE8] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Database size={14} className="text-cyan-400" />
-          <span className="font-semibold text-slate-300">Supabase Engine:</span>
+          <Database size={14} className="text-[#EC4899]" />
+          <span className="font-bold text-[#18181B]">Database Engine:</span>
           {configured ? (
-            <span className="flex items-center gap-1 text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+            <span className="flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               <CheckCircle2 size={12} /> Connected Live
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-cyan-400 font-medium bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
-              <AlertCircle size={12} /> Local Reactive Engine (Ready for Live Key)
+            <span className="flex items-center gap-1 text-[#BE185D] font-bold bg-[#FCE7F3] px-2 py-0.5 rounded-full border border-[#FBCFE8]">
+              <AlertCircle size={12} /> Local Reactive Engine (Ready for Live Supabase Key)
             </span>
           )}
         </div>
@@ -43,13 +43,13 @@ CREATE TABLE public.profiles (...);
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowSqlModal(true)}
-            className="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1 underline underline-offset-2"
+            className="text-[#71717A] hover:text-[#EC4899] font-medium transition-colors flex items-center gap-1 underline underline-offset-2 cursor-pointer"
           >
             <Code size={13} /> View Supabase SQL Schema
           </button>
           <a
             href="/database"
-            className="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1"
+            className="text-[#71717A] hover:text-[#EC4899] font-medium transition-colors flex items-center gap-1 cursor-pointer"
           >
             <span>Database Inspector</span>
             <ExternalLink size={12} />
@@ -58,39 +58,39 @@ CREATE TABLE public.profiles (...);
       </div>
 
       {showSqlModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[28px] max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto border border-[#F3DCE8] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div className="flex items-center gap-2">
-                <Database className="text-cyan-400" size={20} />
-                <h3 className="text-lg font-bold text-slate-100">Supabase Database Setup Guide</h3>
+                <Database className="text-[#EC4899]" size={20} />
+                <h3 className="text-lg font-extrabold text-[#18181B]">Supabase Database Setup Guide</h3>
               </div>
               <button
                 onClick={() => setShowSqlModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-[#71717A] hover:text-[#18181B] p-1 rounded-lg cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-300">
+            <div className="space-y-3 text-sm text-[#52525B]">
               <p>
                 This application includes a complete PostgreSQL migration script located in{' '}
-                <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded font-mono">
+                <code className="text-[#BE185D] bg-[#FCE7F3] px-2 py-0.5 rounded-md font-mono text-xs font-bold">
                   supabase/schema.sql
                 </code>
                 .
               </p>
 
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <h4 className="font-semibold text-slate-200 text-xs uppercase tracking-wider text-cyan-400">
+              <div className="bg-[#FFF9FC] p-4 rounded-2xl border border-[#F3DCE8] space-y-2">
+                <h4 className="font-bold text-[#18181B] text-xs uppercase tracking-wider">
                   Quick Connection Steps:
                 </h4>
-                <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-400">
-                  <li>Create a new project on <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-cyan-400 underline">Supabase Dashboard</a>.</li>
+                <ol className="list-decimal list-inside space-y-1.5 text-xs text-[#71717A] font-medium">
+                  <li>Create a new project on <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-[#EC4899] underline font-bold">Supabase Dashboard</a>.</li>
                   <li>Open the <strong>SQL Editor</strong> tab in Supabase.</li>
-                  <li>Paste the contents of <code className="text-cyan-300">supabase/schema.sql</code> and click <strong>Run</strong>.</li>
-                  <li>Copy your Project URL and Anon API key into <code className="text-cyan-300">.env.local</code>.</li>
+                  <li>Paste the contents of <code className="text-[#BE185D]">supabase/schema.sql</code> and click <strong>Run</strong>.</li>
+                  <li>Copy your Project URL and Anon API key into <code className="text-[#BE185D]">.env.local</code>.</li>
                 </ol>
               </div>
 

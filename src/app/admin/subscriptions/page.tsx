@@ -18,49 +18,49 @@ export default function AdminSubscriptionsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <CreditCard className="text-emerald-400" size={22} />
-          <h1 className="text-xl font-black text-white">Subscriptions</h1>
+          <CreditCard className="text-[#EC4899]" size={22} />
+          <h1 className="text-xl font-black text-[#18181B]">Subscriptions</h1>
         </div>
-        <p className="text-xs text-slate-400 mt-1">View and manage all active, cancelled, and expired subscriptions.</p>
+        <p className="text-xs text-[#71717A] mt-1 font-medium">View and manage all active, cancelled, and expired subscriptions.</p>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 font-semibold">Subscriber</th>
-              <th className="py-3 px-4 font-semibold">Creator</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Plan</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Amount</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Duration</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
-              <th className="py-3 px-4 font-semibold hidden lg:table-cell">End Date</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 font-bold">Subscriber</th>
+              <th className="py-3.5 px-4 font-bold">Creator</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Plan</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Amount</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Duration</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
+              <th className="py-3.5 px-4 font-bold hidden lg:table-cell">End Date</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {subscriptions.map((s) => (
-              <tr key={s.id} className="hover:bg-slate-900/50 transition-colors">
+              <tr key={s.id} className="hover:bg-[#FFF9FC] transition-colors">
                 <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Avatar src={s.subscriberAvatar} alt={s.subscriber} size="sm" />
-                    <span className="font-semibold text-slate-200">{s.subscriber}</span>
+                    <span className="font-bold text-[#18181B]">{s.subscriber}</span>
                   </div>
                 </td>
                 <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Avatar src={s.creatorAvatar} alt={s.creator} size="sm" />
-                    <span className="text-slate-300">{s.creator}</span>
+                    <span className="text-[#52525B] font-medium">{s.creator}</span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{s.plan}</td>
-                <td className="py-3 px-4 text-emerald-400 font-bold hidden md:table-cell">{s.amount}</td>
-                <td className="py-3 px-4 text-slate-400 hidden md:table-cell">{s.duration}</td>
+                <td className="py-3 px-4 text-[#52525B] hidden sm:table-cell font-medium">{s.plan}</td>
+                <td className="py-3 px-4 text-emerald-600 font-bold hidden md:table-cell">{s.amount}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden md:table-cell font-medium">{s.duration}</td>
                 <td className="py-3 px-4">
                   <Badge variant={s.status === 'active' ? 'emerald' : s.status === 'cancelled' ? 'rose' : 'amber'} size="sm">
                     {s.status}
                   </Badge>
                 </td>
-                <td className="py-3 px-4 text-slate-500 hidden lg:table-cell">{s.endDate}</td>
+                <td className="py-3 px-4 text-[#A1A1AA] hidden lg:table-cell font-medium">{s.endDate}</td>
               </tr>
             ))}
           </tbody>

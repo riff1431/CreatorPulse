@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Sparkles, Search, Bell, Moon, Sun, Shield, LayoutDashboard, 
-  User, LogOut, PlusSquare
+  Sparkles, Search, Bell, Shield, LayoutDashboard, 
+  User, LogOut, PlusSquare, Compass
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
@@ -14,10 +14,10 @@ import { UserRole, MOCK_USERS } from '@/lib/supabase/store';
 export const Navbar: React.FC = () => {
   const router = useRouter();
   const [activeRole, setActiveRole] = useState<UserRole>('member');
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const role = (localStorage.getItem('creatorpulse_active_role') as UserRole) || 'member';
@@ -27,16 +27,17 @@ export const Navbar: React.FC = () => {
       setActiveRole(e.detail);
     };
 
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15);
+    };
+
+    window.addEventListener('scroll', handleScroll);
     window.addEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
     return () => {
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('creatorpulse_role_changed' as any, handleRoleEvent);
     };
   }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('light-mode');
-  };
 
   const currentUser = activeRole === 'admin' 
     ? MOCK_USERS['user-admin'] 
@@ -52,44 +53,37 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="bg-slate-950/85 backdrop-blur-xl border-b border-pink-500/15 sticky top-0 z-40 px-4 lg:px-8 py-3 transition-colors">
+    <header className={`bg-white/85 backdrop-blur-xl border-b border-[#F3DCE8] sticky top-0 z-40 px-4 lg:px-8 py-3 transition-all duration-300 ${
+      isScrolled ? 'shadow-md shadow-[#EC4899]/5 py-2.5 bg-white/95' : ''
+    }`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand Logo */}
         <Link href="/feed" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center shadow-lg shadow-pink-500/25 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
             <Sparkles className="text-white" size={20} />
           </div>
           <div>
-            <span className="text-lg font-black tracking-tight text-white flex items-center gap-1">
+            <span className="text-lg font-black tracking-tight text-[#18181B] flex items-center gap-1">
               Creator<span className="gradient-text">Pulse</span>
             </span>
-            <span className="text-[10px] text-pink-300/70 block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
+            <span className="text-[10px] text-[#71717A] block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
           </div>
         </Link>
 
         {/* Global Search Bar */}
         <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-md relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pink-400/60" size={16} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search creators, topics, vertical shorts, or posts..."
-            className="w-full bg-pink-950/20 border border-pink-500/20 focus:border-pink-400 rounded-xl pl-10 pr-4 py-2 text-sm text-pink-100 placeholder-pink-300/40 focus:outline-none focus:ring-2 focus:ring-pink-500/20 transition-all"
+            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] focus:border-[#EC4899] focus:bg-white rounded-xl pl-10 pr-4 py-2 text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-3 focus:ring-[#EC4899]/15 transition-all shadow-inner"
           />
         </form>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl text-pink-300/80 hover:text-pink-200 hover:bg-pink-500/10 transition-colors"
-            title="Toggle theme"
-          >
-            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-
           {/* Role specific quick action */}
           {activeRole === 'creator' && (
             <Link href="/creator/dashboard">
@@ -101,7 +95,7 @@ export const Navbar: React.FC = () => {
 
           {activeRole === 'admin' && (
             <Link href="/admin/dashboard">
-              <Button variant="outline" size="sm" leftIcon={<Shield size={16} className="text-pink-400" />}>
+              <Button variant="outline" size="sm" leftIcon={<Shield size={16} className="text-[#EC4899]" />}>
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             </Link>
@@ -111,32 +105,32 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-xl text-pink-300/80 hover:text-pink-200 hover:bg-pink-500/10 transition-colors relative"
+              className="p-2.5 rounded-xl text-[#71717A] hover:text-[#DB2777] hover:bg-[#FDF2F8] transition-colors relative border border-transparent hover:border-[#F3DCE8]"
+              title="Notifications"
             >
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-400"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EC4899] ring-2 ring-white"></span>
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 glass-card p-4 space-y-3 z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 border-pink-500/25">
-                <div className="flex items-center justify-between border-b border-pink-500/20 pb-2">
-                  <h4 className="font-semibold text-sm text-pink-100">Notifications</h4>
-                  <span className="text-[10px] text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded-full font-medium">3 New</span>
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-[#F3DCE8] rounded-2xl p-4 space-y-3 z-50 shadow-xl shadow-[#EC4899]/10 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-2">
+                  <h4 className="font-bold text-sm text-[#18181B]">Notifications</h4>
+                  <span className="text-[10px] text-[#DB2777] bg-[#FCE7F3] px-2 py-0.5 rounded-full font-bold">3 New</span>
                 </div>
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-pink-950/40 border border-pink-500/20 flex items-start gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-start gap-2.5 hover:border-[#F472B6]/40 transition-colors">
                     <Avatar alt="Sarah Jenkins" size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" />
                     <div>
-                      <p className="text-pink-100"><strong className="text-white">Sarah Jenkins</strong> published a new member post: "Modern Micro-Interactions"</p>
-                      <span className="text-[10px] text-pink-300/60 mt-1 block">10 minutes ago</span>
+                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Sarah Jenkins</strong> published a new member post: "Modern Micro-Interactions"</p>
+                      <span className="text-[10px] text-[#A1A1AA] mt-1 block">10 minutes ago</span>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-pink-950/40 border border-pink-500/20 flex items-start gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-[#FFF9FC] border border-[#F3DCE8] flex items-start gap-2.5 hover:border-[#F472B6]/40 transition-colors">
                     <Avatar alt="Marcus Vance" size="sm" src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150" />
                     <div>
-                      <p className="text-pink-100"><strong className="text-white">Marcus Vance</strong> added a new 24h Story</p>
-                      <span className="text-[10px] text-pink-300/60 mt-1 block">1 hour ago</span>
+                      <p className="text-[#18181B]"><strong className="text-[#18181B]">Marcus Vance</strong> added a new 24h Story</p>
+                      <span className="text-[10px] text-[#A1A1AA] mt-1 block">1 hour ago</span>
                     </div>
                   </div>
                 </div>
@@ -148,7 +142,7 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-1 rounded-xl hover:bg-pink-500/10 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#EC4899]/30 transition-all"
             >
               <Avatar
                 alt={currentUser.fullName}
@@ -159,31 +153,31 @@ export const Navbar: React.FC = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 glass-card p-3 space-y-2 z-50 shadow-2xl border-pink-500/25">
-                <div className="px-2 py-1 border-b border-pink-500/20 pb-2">
-                  <p className="text-sm font-bold text-pink-100">{currentUser.fullName}</p>
-                  <p className="text-xs text-pink-300/70">@{currentUser.username}</p>
-                  <span className="inline-block text-[10px] uppercase font-bold text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded mt-1 border border-pink-500/30">
+              <div className="absolute right-0 mt-2 w-60 bg-white border border-[#F3DCE8] rounded-2xl p-3 space-y-2 z-50 shadow-xl shadow-[#EC4899]/10">
+                <div className="px-2.5 py-1.5 border-b border-[#F3DCE8] pb-2">
+                  <p className="text-sm font-bold text-[#18181B]">{currentUser.fullName}</p>
+                  <p className="text-xs text-[#71717A]">@{currentUser.username}</p>
+                  <span className="inline-block text-[10px] uppercase font-bold text-[#BE185D] bg-[#FCE7F3] px-2 py-0.5 rounded-full mt-1.5 border border-[#FBCFE8]">
                     Role: {activeRole}
                   </span>
                 </div>
 
-                <div className="space-y-1 text-xs text-pink-200">
+                <div className="space-y-1 text-xs text-[#18181B] font-medium">
                   <Link
                     href={`/c/${currentUser.username}`}
                     onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFF1F7] text-[#18181B] hover:text-[#DB2777] transition-colors"
                   >
-                    <User size={14} className="text-pink-400" /> My Profile
+                    <User size={15} className="text-[#EC4899]" /> My Profile
                   </Link>
 
                   {activeRole === 'creator' && (
                     <Link
                       href="/creator/dashboard"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors text-pink-300 font-medium"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFF1F7] text-[#BE185D] transition-colors"
                     >
-                      <LayoutDashboard size={14} className="text-pink-400" /> Creator Dashboard
+                      <LayoutDashboard size={15} className="text-[#EC4899]" /> Creator Dashboard
                     </Link>
                   )}
 
@@ -191,18 +185,18 @@ export const Navbar: React.FC = () => {
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/15 transition-colors text-rose-300 font-medium"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFF1F7] text-[#BE123C] transition-colors"
                     >
-                      <Shield size={14} className="text-rose-400" /> Admin Portal
+                      <Shield size={15} className="text-[#F43F5E]" /> Admin Portal
                     </Link>
                   )}
 
                   <Link
                     href="/auth/login"
                     onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-pink-500/20 hover:text-pink-200 transition-colors text-pink-300/70 border-t border-pink-500/20 mt-1"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FFE4E6] hover:text-[#BE123C] transition-colors text-[#71717A] border-t border-[#F3DCE8] mt-1 pt-2"
                   >
-                    <LogOut size={14} /> Switch Account / Logout
+                    <LogOut size={15} /> Switch Account / Logout
                   </Link>
                 </div>
               </div>

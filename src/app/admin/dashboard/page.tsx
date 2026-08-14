@@ -10,7 +10,6 @@ import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
 
 const recentActivity = [
   { id: '1', text: 'David Miller submitted a creator application', type: 'application', time: '5m ago' },
@@ -38,10 +37,10 @@ export default function AdminDashboardPage() {
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2">
-          <Shield className="text-rose-400" size={22} />
-          <h1 className="text-xl font-black text-white">Admin Dashboard</h1>
+          <Shield className="text-[#EC4899]" size={22} />
+          <h1 className="text-xl font-black text-[#18181B]">Admin Dashboard</h1>
         </div>
-        <p className="text-xs text-slate-400 mt-1">Platform overview, metrics, and quick actions.</p>
+        <p className="text-xs text-[#71717A] mt-1 font-medium">Platform overview, metrics, and quick actions.</p>
       </div>
 
       {/* Stats Grid — 8 cards matching PRD Section 20 */}
@@ -49,130 +48,130 @@ export default function AdminDashboardPage() {
         <AdminStatsCard
           label="Total Members"
           value="48,920"
-          icon={<Users size={16} className="text-cyan-400" />}
+          icon={<Users size={16} className="text-[#EC4899]" />}
           trend="+1,240 this week"
-          trendColor="text-cyan-400"
+          trendColor="text-[#BE185D]"
         />
         <AdminStatsCard
           label="Total Creators"
           value="1,480"
-          icon={<UserCheck size={16} className="text-indigo-400" />}
+          icon={<UserCheck size={16} className="text-[#EC4899]" />}
           trend="+32 applications"
-          trendColor="text-indigo-400"
+          trendColor="text-[#BE185D]"
         />
         <AdminStatsCard
           label="Active Subscriptions"
           value="24,150"
-          icon={<CreditCard size={16} className="text-emerald-400" />}
+          icon={<CreditCard size={16} className="text-emerald-600" />}
           trend="+840 this month"
-          trendColor="text-emerald-400"
+          trendColor="text-emerald-600"
         />
         <AdminStatsCard
           label="Platform Revenue"
           value="$241.5k"
-          icon={<DollarSign size={16} className="text-amber-400" />}
+          icon={<DollarSign size={16} className="text-[#EC4899]" />}
           trend="+18.2% vs last month"
-          trendColor="text-amber-400"
+          trendColor="text-[#BE185D]"
         />
         <AdminStatsCard
           label="Creator Earnings"
           value="$198.4k"
-          icon={<TrendingUp size={16} className="text-violet-400" />}
+          icon={<TrendingUp size={16} className="text-[#EC4899]" />}
           trend="82.1% of revenue"
-          trendColor="text-violet-400"
+          trendColor="text-[#71717A]"
         />
         <AdminStatsCard
           label="Total Transactions"
           value="156,320"
-          icon={<Receipt size={16} className="text-sky-400" />}
+          icon={<Receipt size={16} className="text-[#EC4899]" />}
           trend="+4,280 this week"
-          trendColor="text-sky-400"
+          trendColor="text-[#BE185D]"
         />
         <AdminStatsCard
           label="Pending Payouts"
           value="$12,450"
-          icon={<Wallet size={16} className="text-orange-400" />}
+          icon={<Wallet size={16} className="text-amber-600" />}
           trend="3 requests awaiting"
-          trendColor="text-orange-400"
+          trendColor="text-amber-600"
         />
         <AdminStatsCard
           label="Open Reports"
           value="7"
-          icon={<AlertTriangle size={16} className="text-rose-400" />}
+          icon={<AlertTriangle size={16} className="text-[#F43F5E]" />}
           trend="2 high priority"
-          trendColor="text-rose-400"
+          trendColor="text-[#BE123C]"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <Card className="lg:col-span-2 p-5 space-y-4">
+        <Card className="lg:col-span-2 p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-100">Monthly Platform Revenue</h3>
-            <Badge variant="emerald" size="sm">+18.2%</Badge>
+            <h3 className="text-sm font-bold text-[#18181B]">Monthly Platform Revenue</h3>
+            <Badge variant="emerald" size="sm">+18.2% vs last month</Badge>
           </div>
-          <div className="flex items-end gap-3 h-44">
+          <div className="flex items-end gap-3.5 h-48 pt-4">
             {revenueData.map((d) => (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-slate-400 font-medium">
+              <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
+                <span className="text-[10px] text-[#71717A] font-bold">
                   ${(d.value / 1000).toFixed(0)}k
                 </span>
                 <div
-                  className="w-full bg-gradient-to-t from-rose-600 to-rose-400 rounded-t-lg transition-all hover:opacity-80"
+                  className="w-full bg-gradient-to-t from-[#EC4899] to-[#F472B6] rounded-t-xl transition-all hover:opacity-90 hover:scale-y-[1.02] shadow-sm shadow-[#EC4899]/15"
                   style={{ height: `${(d.value / maxVal) * 100}%` }}
                 />
-                <span className="text-[10px] text-slate-500">{d.month}</span>
+                <span className="text-[11px] text-[#71717A] font-semibold">{d.month}</span>
               </div>
             ))}
           </div>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Quick Actions</h3>
-          <div className="space-y-2">
+        <Card className="p-6 space-y-4">
+          <h3 className="text-sm font-bold text-[#18181B]">Quick Actions</h3>
+          <div className="space-y-2.5">
             <Link href="/admin/applications">
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 hover:border-rose-500/30 transition-colors flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                    <FileText size={14} />
+                  <div className="w-8 h-8 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold">
+                    <FileText size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">Review Applications</p>
-                    <p className="text-[10px] text-slate-500">2 pending</p>
+                    <p className="text-xs font-bold text-[#18181B]">Review Applications</p>
+                    <p className="text-[10px] text-[#71717A] font-medium">2 pending</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-slate-500 group-hover:text-rose-400 transition-colors" />
+                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
               </div>
             </Link>
 
             <Link href="/admin/payouts">
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 hover:border-rose-500/30 transition-colors flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
-                    <Wallet size={14} />
+                  <div className="w-8 h-8 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold">
+                    <Wallet size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">Process Payouts</p>
-                    <p className="text-[10px] text-slate-500">$12,450 pending</p>
+                    <p className="text-xs font-bold text-[#18181B]">Process Payouts</p>
+                    <p className="text-[10px] text-[#71717A] font-medium">$12,450 pending</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-slate-500 group-hover:text-rose-400 transition-colors" />
+                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
               </div>
             </Link>
 
             <Link href="/admin/reports">
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 hover:border-rose-500/30 transition-colors flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400">
-                    <AlertTriangle size={14} />
+                  <div className="w-8 h-8 rounded-xl bg-[#FFE4E6] flex items-center justify-center text-[#F43F5E] font-bold">
+                    <AlertTriangle size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">Moderate Reports</p>
-                    <p className="text-[10px] text-slate-500">7 open reports</p>
+                    <p className="text-xs font-bold text-[#18181B]">Moderate Reports</p>
+                    <p className="text-[10px] text-[#71717A] font-medium">7 open reports</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-slate-500 group-hover:text-rose-400 transition-colors" />
+                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#F43F5E] transition-colors" />
               </div>
             </Link>
           </div>
@@ -180,22 +179,22 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <Card className="p-5 space-y-4">
-        <h3 className="text-sm font-bold text-slate-100">Recent Activity</h3>
-        <div className="divide-y divide-slate-800/60">
+      <Card className="p-6 space-y-4">
+        <h3 className="text-sm font-bold text-[#18181B]">Recent Activity</h3>
+        <div className="divide-y divide-[#F3DCE8]">
           {recentActivity.map((item) => (
             <div key={item.id} className="py-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${
-                  item.type === 'report' ? 'bg-rose-400' :
-                  item.type === 'payout' ? 'bg-orange-400' :
-                  item.type === 'application' ? 'bg-indigo-400' :
-                  item.type === 'milestone' ? 'bg-amber-400' :
-                  'bg-cyan-400'
+                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  item.type === 'report' ? 'bg-[#F43F5E]' :
+                  item.type === 'payout' ? 'bg-amber-500' :
+                  item.type === 'application' ? 'bg-[#EC4899]' :
+                  item.type === 'milestone' ? 'bg-[#BE185D]' :
+                  'bg-[#EC4899]'
                 }`} />
-                <span className="text-slate-300">{item.text}</span>
+                <span className="text-[#18181B] font-medium">{item.text}</span>
               </div>
-              <span className="text-slate-500 shrink-0 ml-4">{item.time}</span>
+              <span className="text-[#A1A1AA] shrink-0 ml-4 font-medium">{item.time}</span>
             </div>
           ))}
         </div>

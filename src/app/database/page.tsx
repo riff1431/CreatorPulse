@@ -44,7 +44,7 @@ CREATE TABLE public.profiles (
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -53,13 +53,13 @@ CREATE TABLE public.profiles (
 
         <main className="flex-1 space-y-6 max-w-4xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3DCE8] pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Database className="text-emerald-400" size={24} />
-                <h1 className="text-2xl font-black text-white">Supabase Schema & Inspector</h1>
+                <Database className="text-[#EC4899]" size={24} />
+                <h1 className="text-2xl font-black text-[#18181B]">Supabase Schema & Inspector</h1>
               </div>
-              <p className="text-xs text-slate-400">Inspect PostgreSQL table structures, RLS policies, and query simulator.</p>
+              <p className="text-xs text-[#71717A] font-medium">Inspect PostgreSQL table structures, RLS policies, and query simulator.</p>
             </div>
 
             <Button
@@ -78,10 +78,10 @@ CREATE TABLE public.profiles (
               <button
                 key={tbl.name}
                 onClick={() => setSelectedTable(tbl.name)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all ${
+                className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
                   selectedTable === tbl.name
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
+                    ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm'
+                    : 'bg-white text-[#71717A] border border-[#F3DCE8] hover:text-[#18181B]'
                 }`}
               >
                 {tbl.name} ({tbl.rows} rows)
@@ -90,55 +90,53 @@ CREATE TABLE public.profiles (
           </div>
 
           {/* Table Structure Visualizer */}
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <Card className="p-0 overflow-x-auto">
+            <div className="p-5 flex items-center justify-between border-b border-[#F3DCE8]">
               <div>
-                <h3 className="font-bold text-base text-slate-100 font-mono">public.{currentTableObj.name}</h3>
-                <span className="text-xs text-slate-400">PostgreSQL Table • Row Level Security Enabled</span>
+                <h3 className="font-bold text-base text-[#18181B] font-mono">public.{currentTableObj.name}</h3>
+                <span className="text-xs text-[#71717A]">PostgreSQL Table • Row Level Security Enabled</span>
               </div>
-              <Badge variant="emerald" size="sm">RLS Protected</Badge>
+              <Badge variant="pink" size="sm">RLS Protected</Badge>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60">
-                    <th className="py-2.5 px-3 font-semibold">Column Name</th>
-                    <th className="py-2.5 px-3 font-semibold">PostgreSQL Type</th>
-                    <th className="py-2.5 px-3 font-semibold">Constraints</th>
+            <table className="w-full text-left text-xs font-mono">
+              <thead>
+                <tr className="border-b border-[#F3DCE8] text-[#71717A] bg-[#FFF9FC]">
+                  <th className="py-3 px-4 font-bold">Column Name</th>
+                  <th className="py-3 px-4 font-bold">PostgreSQL Type</th>
+                  <th className="py-3 px-4 font-bold">Constraints</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F3DCE8] text-[#18181B]">
+                {currentTableObj.columns.map((col, idx) => (
+                  <tr key={idx} className="hover:bg-[#FFF9FC]">
+                    <td className="py-3 px-4 font-bold text-[#BE185D]">{col}</td>
+                    <td className="py-3 px-4 text-[#71717A]">
+                      {col.includes('id') ? 'UUID' : col.includes('count') || col.includes('amount') ? 'NUMERIC/INT' : 'TEXT'}
+                    </td>
+                    <td className="py-3 px-4">
+                      {idx === 0 ? (
+                        <span className="text-[#F43F5E] font-bold">PRIMARY KEY</span>
+                      ) : col.includes('id') ? (
+                        <span className="text-purple-600 font-semibold">FOREIGN KEY</span>
+                      ) : (
+                        <span className="text-[#A1A1AA]">NOT NULL</span>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
-                  {currentTableObj.columns.map((col, idx) => (
-                    <tr key={idx} className="hover:bg-slate-900/40">
-                      <td className="py-2.5 px-3 font-bold text-cyan-400">{col}</td>
-                      <td className="py-2.5 px-3 text-slate-400">
-                        {col.includes('id') ? 'UUID' : col.includes('count') || col.includes('amount') ? 'NUMERIC/INT' : 'TEXT'}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        {idx === 0 ? (
-                          <span className="text-rose-400 font-bold">PRIMARY KEY</span>
-                        ) : col.includes('id') ? (
-                          <span className="text-indigo-400">FOREIGN KEY</span>
-                        ) : (
-                          <span className="text-slate-500">NOT NULL</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </Card>
 
           {/* Interactive SQL Query Simulator */}
-          <Card className="p-5 space-y-4 bg-slate-950 border border-slate-800">
+          <Card className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Terminal className="text-cyan-400" size={18} />
-                <h3 className="font-bold text-sm text-slate-100">SQL Query Console Simulator</h3>
+                <Terminal className="text-[#EC4899]" size={18} />
+                <h3 className="font-bold text-sm text-[#18181B]">SQL Query Console Simulator</h3>
               </div>
-              <Button variant="ghost" size="sm" leftIcon={<Play size={12} className="text-emerald-400" />}>
+              <Button variant="ghost" size="sm" leftIcon={<Play size={12} className="text-emerald-600" />}>
                 Execute Query
               </Button>
             </div>
@@ -147,7 +145,7 @@ CREATE TABLE public.profiles (
               value={activeQuery}
               onChange={(e) => setActiveQuery(e.target.value)}
               rows={3}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 font-mono text-xs text-cyan-300 focus:outline-none"
+              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 font-mono text-xs text-[#BE185D] focus:outline-none focus:border-[#EC4899] font-semibold"
             />
           </Card>
         </main>

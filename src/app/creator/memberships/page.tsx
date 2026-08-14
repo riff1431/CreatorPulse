@@ -67,30 +67,30 @@ export default function CreatorMembershipsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="text-amber-400" size={22} />
-            <h1 className="text-xl font-black text-white">Membership Plans</h1>
+            <Layers className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">Membership Plans</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Create and manage your membership tiers.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Create and manage your membership tiers.</p>
         </div>
         <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={() => setShowAdd(true)}>New Plan</Button>
       </div>
 
       {showAdd && (
-        <Card className="p-4 space-y-3">
-          <h3 className="text-sm font-bold text-slate-100">Create New Plan</h3>
+        <Card className="p-5 space-y-3.5">
+          <h3 className="text-sm font-bold text-[#18181B]">Create New Plan</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Plan Name</label>
+              <label className="block text-[#71717A] font-semibold mb-1">Plan Name</label>
               <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Gold Tier"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500/50" />
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium" />
             </div>
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Monthly Price ($)</label>
+              <label className="block text-[#71717A] font-semibold mb-1">Monthly Price ($)</label>
               <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="e.g. 10.00"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500/50" />
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium" />
             </div>
           </div>
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center gap-2 justify-end pt-1">
             <Button variant="ghost" size="sm" onClick={() => { setShowAdd(false); setNewName(''); setNewPrice(''); }}>Cancel</Button>
             <Button variant="primary" size="sm" onClick={handleAdd}>Create Plan</Button>
           </div>
@@ -99,35 +99,35 @@ export default function CreatorMembershipsPage() {
 
       <div className="space-y-4">
         {plans.map((plan) => (
-          <Card key={plan.id} className="p-5 space-y-3">
+          <Card key={plan.id} className="p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-100">{plan.name}</h3>
-                  {plan.popular && <Badge variant="indigo" size="sm">Popular</Badge>}
+                  <h3 className="text-base font-extrabold text-[#18181B]">{plan.name}</h3>
+                  {plan.popular && <Badge variant="pink" size="sm">Popular</Badge>}
                   <Badge variant={plan.status === 'active' ? 'emerald' : 'slate'} size="sm">{plan.status}</Badge>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{plan.description}</p>
+                <p className="text-xs text-[#71717A] mt-1 font-medium">{plan.description}</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-black text-white">{plan.price}</p>
-                <p className="text-[10px] text-slate-500 flex items-center gap-1 justify-end"><Users size={10} /> {plan.subscribers} subscribers</p>
+                <p className="text-xl font-black text-[#18181B]">{plan.price}</p>
+                <p className="text-[11px] text-[#A1A1AA] flex items-center gap-1 justify-end font-semibold"><Users size={11} /> {plan.subscribers} subscribers</p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
               {plan.benefits.map((b) => (
-                <span key={b} className="text-[10px] font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">{b}</span>
+                <span key={b} className="text-[11px] font-bold text-[#BE185D] bg-[#FCE7F3] px-2.5 py-1 rounded-full border border-[#FBCFE8]">{b}</span>
               ))}
             </div>
 
-            <div className="flex items-center gap-2 pt-1 border-t border-slate-800">
+            <div className="flex items-center gap-2 pt-2 border-t border-[#F3DCE8]">
               <Button variant="outline" size="sm" leftIcon={<Pencil size={12} />}>Edit</Button>
               <Button variant="ghost" size="sm" onClick={() => handleToggle(plan.id)}>
                 {plan.status === 'active' ? 'Deactivate' : 'Activate'}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => handleDelete(plan.id)}>
-                <Trash2 size={13} className="text-rose-400" />
+                <Trash2 size={13} className="text-[#F43F5E]" />
               </Button>
             </div>
           </Card>

@@ -3,7 +3,7 @@ import { CreatorSidebar } from '@/components/creator/CreatorSidebar';
 
 export default function CreatorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <CreatorHeader />
       <div className="flex flex-1 overflow-hidden">
         <CreatorSidebar />

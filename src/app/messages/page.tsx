@@ -57,7 +57,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -66,39 +66,39 @@ export default function MessagesPage() {
 
         <main className="flex-1 flex gap-4 max-w-4xl mx-auto lg:mx-0 w-full h-[calc(100vh-8rem)] pb-20 lg:pb-0">
           {/* Thread List Column */}
-          <div className="w-full sm:w-80 glass-card p-3 space-y-3 flex flex-col border border-slate-800 shrink-0">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="w-full sm:w-80 bg-white/95 backdrop-blur-md p-4 space-y-3 flex flex-col border border-[#F3DCE8] rounded-[24px] shrink-0 shadow-sm shadow-[#EC4899]/5">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-2">
               <div className="flex items-center gap-2">
-                <MessageSquare className="text-cyan-400" size={18} />
-                <h3 className="font-bold text-sm text-slate-100">Messages</h3>
+                <MessageSquare className="text-[#EC4899]" size={18} />
+                <h3 className="font-extrabold text-sm text-[#18181B]">Messages</h3>
               </div>
-              <Badge variant="cyan" size="sm">Direct Chat</Badge>
+              <Badge variant="pink" size="sm">Direct Chat</Badge>
             </div>
 
-            <div className="space-y-1 overflow-y-auto flex-1">
+            <div className="space-y-1.5 overflow-y-auto flex-1">
               {conversations.map((conv) => (
                 <button
                   key={conv.id}
                   onClick={() => setSelectedConvId(conv.id)}
-                  className={`w-full p-2.5 rounded-xl flex items-start gap-2.5 text-left transition-all ${
+                  className={`w-full p-3 rounded-2xl flex items-start gap-3 text-left transition-all cursor-pointer ${
                     selectedConvId === conv.id
-                      ? 'bg-slate-800/90 border border-slate-700'
-                      : 'hover:bg-slate-900/60'
+                      ? 'bg-[#FCE7F3] border border-[#FBCFE8] shadow-sm'
+                      : 'hover:bg-[#FFF1F7]'
                   }`}
                 >
                   <div className="relative">
                     <Avatar alt={conv.participantName} src={conv.participantAvatar} size="md" isVerified={conv.participantVerified} />
                     {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950"></span>
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200 truncate">{conv.participantName}</span>
-                      <span className="text-[10px] text-slate-500">{conv.lastMessageTime}</span>
+                      <span className="font-bold text-[#18181B] truncate">{conv.participantName}</span>
+                      <span className="text-[10px] text-[#A1A1AA] font-medium">{conv.lastMessageTime}</span>
                     </div>
-                    <p className="text-slate-400 truncate mt-0.5">{conv.lastMessage}</p>
+                    <p className="text-[#71717A] truncate mt-0.5 font-medium">{conv.lastMessage}</p>
                   </div>
                 </button>
               ))}
@@ -106,24 +106,24 @@ export default function MessagesPage() {
           </div>
 
           {/* Active Chat Thread */}
-          <div className="hidden sm:flex flex-1 glass-card p-4 flex-col justify-between border border-slate-800 relative">
+          <div className="hidden sm:flex flex-1 bg-white/95 backdrop-blur-md p-5 flex-col justify-between border border-[#F3DCE8] rounded-[24px] shadow-sm shadow-[#EC4899]/5 relative">
             {/* Thread Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
               <div className="flex items-center gap-3">
                 <Avatar alt={activeThread.participantName} src={activeThread.participantAvatar} size="md" isVerified />
                 <div>
-                  <h4 className="font-bold text-sm text-slate-100">{activeThread.participantName}</h4>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <span className="text-cyan-400">@{activeThread.participantUsername}</span>
+                  <h4 className="font-extrabold text-sm text-[#18181B]">{activeThread.participantName}</h4>
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#71717A] font-medium">
+                    <span className="text-[#BE185D] font-bold">@{activeThread.participantUsername}</span>
                     <span>•</span>
-                    <span className={activeThread.isOnline ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                    <span className={activeThread.isOnline ? 'text-emerald-600 font-bold' : 'text-[#A1A1AA]'}>
                       {activeThread.isOnline ? 'Online Now' : 'Offline'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <button className="text-slate-400 hover:text-white p-1 rounded-lg">
+              <button className="text-[#71717A] hover:text-[#18181B] p-1.5 rounded-xl hover:bg-[#FFF9FC] cursor-pointer transition-colors">
                 <MoreVertical size={18} />
               </button>
             </div>
@@ -141,19 +141,19 @@ export default function MessagesPage() {
                   >
                     <Avatar alt={msg.senderName} src={msg.senderAvatar} size="sm" />
                     <div
-                      className={`p-3 rounded-2xl text-xs space-y-2 ${
+                      className={`p-3.5 rounded-2xl text-xs space-y-2 font-medium ${
                         isMe
-                          ? 'gradient-btn text-white rounded-tr-none'
-                          : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+                          ? 'gradient-btn text-white rounded-tr-none shadow-md shadow-[#EC4899]/20'
+                          : 'bg-[#FFF9FC] border border-[#F3DCE8] text-[#18181B] rounded-tl-none'
                       }`}
                     >
-                      <p>{msg.content}</p>
+                      <p className="leading-relaxed">{msg.content}</p>
 
                       {/* Paywalled Attachment */}
                       {msg.isPaywalled && (
-                        <div className="mt-2 p-3 bg-slate-950/90 rounded-xl border border-indigo-500/30 space-y-2">
-                          <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
-                            <Lock size={14} />
+                        <div className="mt-2 p-3 bg-white rounded-xl border border-[#F3DCE8] space-y-2 shadow-sm">
+                          <div className="flex items-center gap-2 text-[#BE185D] font-bold text-xs">
+                            <Lock size={14} className="text-[#EC4899]" />
                             <span>VIP Masterclass Attachment</span>
                           </div>
 
@@ -161,7 +161,7 @@ export default function MessagesPage() {
                             <img src={msg.mediaUrl} alt="Unlocked file" className="rounded-lg max-h-40 w-full object-cover" />
                           ) : (
                             <div className="text-center py-2 space-y-2">
-                              <p className="text-[11px] text-slate-400">Unlock complete source code & Figma kit</p>
+                              <p className="text-[11px] text-[#71717A]">Unlock complete source code & Figma kit</p>
                               <Button
                                 variant="primary"
                                 size="sm"
@@ -175,7 +175,7 @@ export default function MessagesPage() {
                         </div>
                       )}
 
-                      <span className="text-[9px] text-slate-400 block text-right">
+                      <span className={`text-[9px] block text-right font-semibold ${isMe ? 'text-white/80' : 'text-[#A1A1AA]'}`}>
                         {msg.createdAt}
                       </span>
                     </div>
@@ -185,13 +185,13 @@ export default function MessagesPage() {
             </div>
 
             {/* Input Form */}
-            <form onSubmit={handleSendMessage} className="flex gap-2 pt-2 border-t border-slate-800">
+            <form onSubmit={handleSendMessage} className="flex gap-2 pt-2 border-t border-[#F3DCE8]">
               <input
                 type="text"
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 placeholder="Write a message to creator..."
-                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                className="flex-1 bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-4 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors"
               />
               <Button type="submit" variant="primary" size="sm" leftIcon={<Send size={14} />}>
                 Send

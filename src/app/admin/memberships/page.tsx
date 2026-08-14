@@ -22,35 +22,35 @@ export default function AdminMembershipsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <Star className="text-amber-400" size={22} />
-          <h1 className="text-xl font-black text-white">Membership Plans</h1>
+          <Star className="text-[#EC4899]" size={22} />
+          <h1 className="text-xl font-black text-[#18181B]">Membership Plans</h1>
         </div>
-        <p className="text-xs text-slate-400 mt-1">View all membership plans created by creators across the platform.</p>
+        <p className="text-xs text-[#71717A] mt-1 font-medium">View all membership plans created by creators across the platform.</p>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 font-semibold">Creator</th>
-              <th className="py-3 px-4 font-semibold">Plan Name</th>
-              <th className="py-3 px-4 font-semibold">Price</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Subscribers</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 font-bold">Creator</th>
+              <th className="py-3.5 px-4 font-bold">Plan Name</th>
+              <th className="py-3.5 px-4 font-bold">Price</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Subscribers</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {plans.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-900/50 transition-colors">
+              <tr key={p.id} className="hover:bg-[#FFF9FC] transition-colors">
                 <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Avatar src={p.avatar} alt={p.creator} size="sm" />
-                    <span className="font-semibold text-slate-200">{p.creator}</span>
+                    <span className="font-bold text-[#18181B]">{p.creator}</span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-slate-300 font-medium">{p.plan}</td>
-                <td className="py-3 px-4 text-emerald-400 font-bold">{p.price}</td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{p.subscribers}</td>
+                <td className="py-3 px-4 text-[#18181B] font-semibold">{p.plan}</td>
+                <td className="py-3 px-4 text-emerald-600 font-bold">{p.price}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden sm:table-cell font-medium">{p.subscribers}</td>
                 <td className="py-3 px-4">
                   <Badge variant={p.status === 'active' ? 'emerald' : 'slate'} size="sm">{p.status}</Badge>
                 </td>

@@ -14,19 +14,19 @@ export const Badge: React.FC<BadgeProps> = ({
   className = ''
 }) => {
   const variantClasses = {
-    pink: 'bg-pink-500/15 text-pink-300 border-pink-500/30 shadow-sm shadow-pink-500/10',
-    fuchsia: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30 shadow-sm shadow-fuchsia-500/10',
-    rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm shadow-rose-500/10',
-    indigo: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-    emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    cyan: 'bg-pink-500/15 text-pink-300 border-pink-500/30', // mapped to pink for theme uniformity
-    slate: 'bg-pink-950/40 text-pink-200/80 border-pink-500/20'
+    pink: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]',
+    fuchsia: 'bg-[#FDF4FF] text-[#A21CAF] border-[#F5D0FE]',
+    rose: 'bg-[#FFE4E6] text-[#BE123C] border-[#FECDD3]',
+    indigo: 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]',
+    emerald: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]',
+    amber: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]',
+    cyan: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]',
+    slate: 'bg-[#F4F4F5] text-[#52525B] border-[#E4E4E7]'
   };
 
   const sizeClasses = {
-    sm: 'px-2.5 py-0.5 text-xs',
-    md: 'px-3.5 py-1 text-sm'
+    sm: 'px-2.5 py-0.5 text-xs font-semibold',
+    md: 'px-3 py-1 text-sm font-semibold'
   };
 
   return (

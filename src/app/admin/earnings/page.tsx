@@ -4,7 +4,6 @@ import React from 'react';
 import { TrendingUp, DollarSign } from 'lucide-react';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 
 const earningsData = [
@@ -32,50 +31,50 @@ export default function AdminEarningsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <TrendingUp className="text-emerald-400" size={22} />
-          <h1 className="text-xl font-black text-white">Platform Earnings</h1>
+          <TrendingUp className="text-[#EC4899]" size={22} />
+          <h1 className="text-xl font-black text-[#18181B]">Platform Earnings</h1>
         </div>
-        <p className="text-xs text-slate-400 mt-1">Revenue overview, platform fees, and creator earnings breakdown.</p>
+        <p className="text-xs text-[#71717A] mt-1 font-medium">Revenue overview, platform fees, and creator earnings breakdown.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <AdminStatsCard label="Total Revenue" value="$241,500" icon={<DollarSign size={16} className="text-emerald-400" />} trend="+18.2% this month" trendColor="text-emerald-400" />
-        <AdminStatsCard label="Platform Fees" value="$12,075" icon={<DollarSign size={16} className="text-rose-400" />} trend="5% commission" trendColor="text-rose-400" />
-        <AdminStatsCard label="Creator Payouts" value="$198,425" icon={<DollarSign size={16} className="text-indigo-400" />} trend="82.1% of revenue" trendColor="text-indigo-400" />
-        <AdminStatsCard label="Net Platform Earnings" value="$31,000" icon={<TrendingUp size={16} className="text-amber-400" />} trend="After payouts + fees" trendColor="text-amber-400" />
+        <AdminStatsCard label="Total Revenue" value="$241,500" icon={<DollarSign size={16} className="text-emerald-600" />} trend="+18.2% this month" trendColor="text-emerald-600" />
+        <AdminStatsCard label="Platform Fees" value="$12,075" icon={<DollarSign size={16} className="text-[#EC4899]" />} trend="5% commission" trendColor="text-[#BE185D]" />
+        <AdminStatsCard label="Creator Payouts" value="$198,425" icon={<DollarSign size={16} className="text-[#EC4899]" />} trend="82.1% of revenue" trendColor="text-[#71717A]" />
+        <AdminStatsCard label="Net Platform Earnings" value="$31,000" icon={<TrendingUp size={16} className="text-amber-600" />} trend="After payouts + fees" trendColor="text-amber-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Trend Chart */}
-        <Card className="lg:col-span-2 p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Monthly Revenue Trend</h3>
-          <div className="flex items-end gap-3 h-44">
+        <Card className="lg:col-span-2 p-6 space-y-5">
+          <h3 className="text-sm font-bold text-[#18181B]">Monthly Revenue Trend</h3>
+          <div className="flex items-end gap-3.5 h-48 pt-4">
             {earningsData.map((d) => (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-slate-400 font-medium">${(d.revenue / 1000).toFixed(0)}k</span>
+              <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
+                <span className="text-[10px] text-[#71717A] font-bold">${(d.revenue / 1000).toFixed(0)}k</span>
                 <div className="w-full flex flex-col gap-0.5" style={{ height: `${(d.revenue / maxRevenue) * 100}%` }}>
-                  <div className="flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-lg" />
+                  <div className="flex-1 bg-gradient-to-t from-[#EC4899] to-[#F472B6] rounded-t-xl shadow-sm shadow-[#EC4899]/15" />
                 </div>
-                <span className="text-[10px] text-slate-500">{d.month}</span>
+                <span className="text-[11px] text-[#71717A] font-semibold">{d.month}</span>
               </div>
             ))}
           </div>
         </Card>
 
         {/* Top Earning Creators */}
-        <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Top Earning Creators</h3>
+        <Card className="p-6 space-y-4">
+          <h3 className="text-sm font-bold text-[#18181B]">Top Earning Creators</h3>
           <div className="space-y-3">
             {topCreators.map((c, i) => (
-              <div key={c.name} className="flex items-center justify-between text-xs">
+              <div key={c.name} className="flex items-center justify-between text-xs p-2 rounded-xl hover:bg-[#FFF9FC]">
                 <div className="flex items-center gap-3">
-                  <span className="text-slate-500 font-bold w-4">{i + 1}</span>
+                  <span className="text-[#A1A1AA] font-bold w-4">{i + 1}</span>
                   <Avatar src={c.avatar} alt={c.name} size="sm" />
-                  <span className="font-semibold text-slate-200">{c.name}</span>
+                  <span className="font-bold text-[#18181B]">{c.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-emerald-400">{c.earnings}</p>
-                  <p className="text-[10px] text-slate-500">{c.percentage}</p>
+                  <p className="font-bold text-emerald-600">{c.earnings}</p>
+                  <p className="text-[10px] text-[#71717A] font-medium">{c.percentage}</p>
                 </div>
               </div>
             ))}

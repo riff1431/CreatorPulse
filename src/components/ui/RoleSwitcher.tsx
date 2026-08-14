@@ -21,20 +21,20 @@ export const RoleSwitcher: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50">
-      <div className="flex items-center gap-2 text-slate-300">
-        <Sparkles size={14} className="text-cyan-400 animate-pulse" />
-        <span className="font-semibold text-slate-200">CreatorPulse Sandbox Mode:</span>
-        <span className="text-slate-400 hidden md:inline">Test all 3 platform roles & dashboards instantly</span>
+    <div className="bg-white/95 backdrop-blur-md border-b border-[#F3DCE8] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50 shadow-xs">
+      <div className="flex items-center gap-2 text-[#71717A]">
+        <Sparkles size={14} className="text-[#EC4899] animate-pulse" />
+        <span className="font-bold text-[#18181B]">CreatorPulse Sandbox:</span>
+        <span className="text-[#71717A] hidden md:inline font-medium">Switch between Member, Creator Studio & Admin Portal</span>
       </div>
 
-      <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+      <div className="flex items-center gap-1.5 bg-[#FFF9FC] p-1 rounded-2xl border border-[#F3DCE8]">
         <button
           onClick={() => handleRoleChange('member')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             activeRole === 'member'
-              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B]'
           }`}
         >
           <UserCheck size={13} />
@@ -43,10 +43,10 @@ export const RoleSwitcher: React.FC = () => {
 
         <button
           onClick={() => handleRoleChange('creator')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             activeRole === 'creator'
-              ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B]'
           }`}
         >
           <Eye size={13} />
@@ -55,10 +55,10 @@ export const RoleSwitcher: React.FC = () => {
 
         <button
           onClick={() => handleRoleChange('admin')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             activeRole === 'admin'
-              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B]'
           }`}
         >
           <Shield size={13} />

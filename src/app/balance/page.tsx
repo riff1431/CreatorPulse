@@ -81,7 +81,7 @@ export default function BalancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -90,13 +90,13 @@ export default function BalancePage() {
 
         <main className="flex-1 space-y-6 max-w-4xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3DCE8] pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Wallet className="text-cyan-400" size={24} />
-                <h1 className="text-2xl font-black text-white">Account Balance & Wallet</h1>
+                <Wallet className="text-[#EC4899]" size={24} />
+                <h1 className="text-2xl font-black text-[#18181B]">Account Balance & Wallet</h1>
               </div>
-              <p className="text-xs text-slate-400">Manage member funds, transaction ledger, and creator payout requests.</p>
+              <p className="text-xs text-[#71717A] font-medium">Manage member funds, transaction ledger, and creator payout requests.</p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -121,44 +121,44 @@ export default function BalancePage() {
 
           {/* Metric Overview Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4 space-y-2">
-              <span className="text-xs text-slate-400 block">Available Balance</span>
-              <div className="text-2xl font-black text-white">${balance.availableBalance.toFixed(2)}</div>
-              <span className="text-[10px] text-emerald-400 block">Ready for memberships & tips</span>
+            <Card className="p-5 space-y-2">
+              <span className="text-xs text-[#71717A] font-bold uppercase tracking-wider block">Available Balance</span>
+              <div className="text-2xl font-black text-[#18181B]">${balance.availableBalance.toFixed(2)}</div>
+              <span className="text-[10px] text-emerald-600 font-bold block">Ready for memberships & tips</span>
             </Card>
 
-            <Card className="p-4 space-y-2">
-              <span className="text-xs text-slate-400 block">Pending Balance</span>
-              <div className="text-2xl font-black text-white">${balance.pendingBalance.toFixed(2)}</div>
-              <span className="text-[10px] text-amber-400 block">Clears in 24-48 hours</span>
+            <Card className="p-5 space-y-2">
+              <span className="text-xs text-[#71717A] font-bold uppercase tracking-wider block">Pending Balance</span>
+              <div className="text-2xl font-black text-[#18181B]">${balance.pendingBalance.toFixed(2)}</div>
+              <span className="text-[10px] text-amber-600 font-bold block">Clears in 24-48 hours</span>
             </Card>
 
-            <Card className="p-4 space-y-2">
-              <span className="text-xs text-slate-400 block">Total Spent</span>
-              <div className="text-2xl font-black text-white">${balance.totalSpent.toFixed(2)}</div>
-              <span className="text-[10px] text-slate-400 block">Lifetime member spending</span>
+            <Card className="p-5 space-y-2">
+              <span className="text-xs text-[#71717A] font-bold uppercase tracking-wider block">Total Spent</span>
+              <div className="text-2xl font-black text-[#18181B]">${balance.totalSpent.toFixed(2)}</div>
+              <span className="text-[10px] text-[#71717A] font-medium block">Lifetime member spending</span>
             </Card>
 
-            <Card className="p-4 space-y-2">
-              <span className="text-xs text-slate-400 block">Creator Total Earnings</span>
-              <div className="text-2xl font-black text-cyan-400">${balance.creatorTotalEarnings.toFixed(2)}</div>
-              <span className="text-[10px] text-cyan-400 block">Eligible for Payout</span>
+            <Card className="p-5 space-y-2">
+              <span className="text-xs text-[#71717A] font-bold uppercase tracking-wider block">Creator Total Earnings</span>
+              <div className="text-2xl font-black text-[#BE185D]">${balance.creatorTotalEarnings.toFixed(2)}</div>
+              <span className="text-[10px] text-emerald-600 font-bold block">Eligible for Payout</span>
             </Card>
           </div>
 
           {/* Creator Payout Requests Status */}
           <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <h3 className="font-bold text-base text-slate-100">Payout Requests History</h3>
-              <Badge variant="indigo" size="sm">Admin Moderated</Badge>
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <h3 className="font-extrabold text-base text-[#18181B]">Payout Requests History</h3>
+              <Badge variant="pink" size="sm">Admin Moderated</Badge>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {payouts.map((pay) => (
-                <div key={pay.id} className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                <div key={pay.id} className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] flex items-center justify-between text-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-200">${pay.amount.toFixed(2)} ({pay.payoutMethod})</span>
+                      <span className="font-bold text-[#18181B]">${pay.amount.toFixed(2)} ({pay.payoutMethod})</span>
                       <Badge
                         variant={pay.status === 'Approved' ? 'emerald' : pay.status === 'Rejected' ? 'rose' : 'amber'}
                         size="sm"
@@ -166,76 +166,76 @@ export default function BalancePage() {
                         {pay.status.toUpperCase()}
                       </Badge>
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1 block">Account: {pay.accountDetails} • Requested {pay.requestedAt}</span>
+                    <span className="text-[10px] text-[#71717A] mt-1 block font-medium">Account: {pay.accountDetails} • Requested {pay.requestedAt}</span>
                   </div>
-                  <span className="text-cyan-400 font-bold">Net: ${pay.netPayout.toFixed(2)}</span>
+                  <span className="text-emerald-600 font-black">Net: ${pay.netPayout.toFixed(2)}</span>
                 </div>
               ))}
             </div>
           </Card>
 
           {/* Transaction History Ledger Table */}
-          <Card className="p-5 space-y-4">
-            <h3 className="font-bold text-base text-slate-100">Transaction History Ledger</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60">
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Type</th>
-                    <th className="py-2.5 px-3">Description / Recipient</th>
-                    <th className="py-2.5 px-3">Amount</th>
-                    <th className="py-2.5 px-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-slate-900/40">
-                      <td className="py-2.5 px-3 text-slate-400">{tx.date}</td>
-                      <td className="py-2.5 px-3">
-                        <Badge
-                          variant={tx.type === 'Top-Up' ? 'emerald' : tx.type === 'Tip Support' ? 'rose' : 'indigo'}
-                          size="sm"
-                        >
-                          {tx.type}
-                        </Badge>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <span className="font-semibold text-slate-200">{tx.description}</span>
-                        <span className="text-[10px] text-slate-400 block">{tx.recipientOrSender}</span>
-                      </td>
-                      <td className="py-2.5 px-3 font-bold text-slate-100">${tx.amount.toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-emerald-400 font-semibold">{tx.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <Card className="p-0 overflow-x-auto">
+            <div className="p-4 border-b border-[#F3DCE8]">
+              <h3 className="font-extrabold text-base text-[#18181B]">Transaction History Ledger</h3>
             </div>
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[#F3DCE8] text-[#71717A] bg-[#FFF9FC]">
+                  <th className="py-3 px-4 font-bold">Date</th>
+                  <th className="py-3 px-4 font-bold">Type</th>
+                  <th className="py-3 px-4 font-bold">Description / Recipient</th>
+                  <th className="py-3 px-4 font-bold">Amount</th>
+                  <th className="py-3 px-4 font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F3DCE8] text-[#18181B]">
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-[#FFF9FC]">
+                    <td className="py-3 px-4 text-[#71717A] font-medium">{tx.date}</td>
+                    <td className="py-3 px-4">
+                      <Badge
+                        variant={tx.type === 'Top-Up' ? 'emerald' : tx.type === 'Tip Support' ? 'pink' : 'slate'}
+                        size="sm"
+                      >
+                        {tx.type}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-bold text-[#18181B]">{tx.description}</span>
+                      <span className="text-[10px] text-[#71717A] block font-medium">{tx.recipientOrSender}</span>
+                    </td>
+                    <td className="py-3 px-4 font-black text-[#18181B]">${tx.amount.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-emerald-600 font-bold">{tx.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
         </main>
       </div>
 
       {/* Top Up Modal */}
       {showTopUpModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card max-w-md w-full p-6 space-y-4 relative">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-100">Top-Up Member Wallet</h3>
-              <button onClick={() => setShowTopUpModal(false)} className="text-slate-400 hover:text-white">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-6 space-y-4 relative border border-[#F3DCE8] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <h3 className="text-lg font-extrabold text-[#18181B]">Top-Up Member Wallet</h3>
+              <button onClick={() => setShowTopUpModal(false)} className="text-[#71717A] hover:text-[#18181B] cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleTopUp} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Amount to Deposit ($)</label>
+                <label className="block text-[#18181B] font-bold mb-1">Amount to Deposit ($)</label>
                 <input
                   type="number"
                   min="10"
                   step="5"
                   value={topUpAmount}
                   onChange={(e) => setTopUpAmount(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
                   required
                 />
               </div>
@@ -255,35 +255,35 @@ export default function BalancePage() {
 
       {/* Request Payout Modal */}
       {showPayoutModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card max-w-md w-full p-6 space-y-4 relative">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-100">Request Creator Payout</h3>
-              <button onClick={() => setShowPayoutModal(false)} className="text-slate-400 hover:text-white">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-6 space-y-4 relative border border-[#F3DCE8] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <h3 className="text-lg font-extrabold text-[#18181B]">Request Creator Payout</h3>
+              <button onClick={() => setShowPayoutModal(false)} className="text-[#71717A] hover:text-[#18181B] cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handlePayoutSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Payout Amount ($)</label>
+                <label className="block text-[#18181B] font-bold mb-1">Payout Amount ($)</label>
                 <input
                   type="number"
                   min="50"
                   max={balance.creatorTotalEarnings}
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Payout Method</label>
+                <label className="block text-[#18181B] font-bold mb-1">Payout Method</label>
                 <select
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none font-medium"
                 >
                   <option value="Bank Transfer">Bank Transfer (ACH / Wire)</option>
                   <option value="Stripe Direct">Stripe Direct Connect</option>
@@ -293,12 +293,12 @@ export default function BalancePage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Account / Routing Details</label>
+                <label className="block text-[#18181B] font-bold mb-1">Account / Routing Details</label>
                 <input
                   type="text"
                   value={accountDetails}
                   onChange={(e) => setAccountDetails(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
                   required
                 />
               </div>

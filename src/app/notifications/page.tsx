@@ -60,7 +60,7 @@ export default function NotificationsPage() {
   const filtered = notifications.filter((n) => (filter === 'unread' ? !n.isRead : true));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -69,13 +69,13 @@ export default function NotificationsPage() {
 
         <main className="flex-1 space-y-6 max-w-3xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Bell className="text-cyan-400" size={24} />
-                <h1 className="text-2xl font-black text-white">Notifications Center</h1>
+                <Bell className="text-[#EC4899]" size={24} />
+                <h1 className="text-2xl font-black text-[#18181B]">Notifications Center</h1>
               </div>
-              <p className="text-xs text-slate-400">Activity updates, new subscribers, tips, and system alerts.</p>
+              <p className="text-xs text-[#71717A] font-medium">Activity updates, new subscribers, tips, and system alerts.</p>
             </div>
 
             <Button variant="outline" size="sm" onClick={handleMarkAllRead} leftIcon={<Check size={14} />}>
@@ -84,23 +84,23 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-semibold">
+          <div className="flex items-center gap-2 border-b border-[#F3DCE8] pb-2 text-xs font-bold">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`px-4 py-2 rounded-2xl transition-all cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >
               All Notifications ({notifications.length})
             </button>
             <button
               onClick={() => setFilter('unread')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`px-4 py-2 rounded-2xl transition-all cursor-pointer ${
                 filter === 'unread'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
+                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
               }`}
             >
               Unread ({notifications.filter((n) => !n.isRead).length})
@@ -112,28 +112,28 @@ export default function NotificationsPage() {
             {filtered.map((item) => (
               <Card
                 key={item.id}
-                className={`p-4 flex items-start gap-3 transition-all ${
-                  !item.isRead ? 'bg-slate-900/90 border-cyan-500/30' : 'opacity-85'
+                className={`p-5 flex items-start gap-4 transition-all ${
+                  !item.isRead ? 'bg-white border-[#F472B6]/60 shadow-md shadow-[#EC4899]/5' : 'bg-white/80 opacity-90'
                 }`}
               >
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 shrink-0">
+                <div className="p-3 rounded-2xl bg-[#FFF1F7] border border-[#F3DCE8] shrink-0">
                   {item.type === 'subscriber' ? (
-                    <UserPlus size={18} className="text-indigo-400" />
+                    <UserPlus size={18} className="text-[#EC4899]" />
                   ) : item.type === 'tip' ? (
-                    <DollarSign size={18} className="text-emerald-400" />
+                    <DollarSign size={18} className="text-emerald-600" />
                   ) : item.type === 'like' ? (
-                    <Heart size={18} className="text-rose-400 fill-rose-400" />
+                    <Heart size={18} className="text-[#F43F5E] fill-[#F43F5E]" />
                   ) : (
-                    <Sparkles size={18} className="text-cyan-400" />
+                    <Sparkles size={18} className="text-[#EC4899]" />
                   )}
                 </div>
 
-                <div className="flex-1 text-xs space-y-1">
+                <div className="flex-1 text-xs space-y-1.5 font-medium">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-slate-100">{item.title}</h4>
-                    <span className="text-[10px] text-slate-400">{item.time}</span>
+                    <h4 className="font-extrabold text-[#18181B] text-sm">{item.title}</h4>
+                    <span className="text-[10px] text-[#A1A1AA]">{item.time}</span>
                   </div>
-                  <p className="text-slate-300">{item.message}</p>
+                  <p className="text-[#52525B] leading-relaxed font-normal">{item.message}</p>
                 </div>
               </Card>
             ))}

@@ -76,16 +76,16 @@ export const CreatorSidebar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-none">
+    <div className="flex flex-col h-full bg-white/70">
+      <div className="flex-1 overflow-y-auto py-5 px-3 space-y-5 scrollbar-none">
         {navGroups.map((group) => (
           <div key={group.title}>
             {!collapsed && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-pink-300/40 px-3 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] px-3 mb-2">
                 {group.title}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -96,21 +96,21 @@ export const CreatorSidebar: React.FC = () => {
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all group ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all group ${
                       isActive
-                        ? 'bg-pink-500/15 text-pink-300 border border-pink-500/30 shadow-sm shadow-pink-500/10 font-semibold'
-                        : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-950/40'
+                        ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/5'
+                        : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Icon
                         size={16}
-                        className={isActive ? 'text-pink-400' : 'text-pink-300/50 group-hover:text-pink-200'}
+                        className={isActive ? 'text-[#EC4899]' : 'text-[#71717A] group-hover:text-[#EC4899]'}
                       />
                       {!collapsed && <span>{item.label}</span>}
                     </div>
                     {!collapsed && item.badge && item.badge > 0 && (
-                      <span className="text-[10px] font-bold bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded-full leading-none border border-pink-500/30">
+                      <span className="text-[10px] font-bold bg-[#FFF1F7] text-[#BE185D] px-2 py-0.5 rounded-full leading-none border border-[#F3DCE8]">
                         {formatBadge(item.badge)}
                       </span>
                     )}
@@ -123,13 +123,13 @@ export const CreatorSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-pink-500/15 p-3">
+      <div className="hidden lg:block border-t border-[#F3DCE8] p-3 bg-white/50">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 text-xs text-pink-300/60 hover:text-pink-200 py-2 rounded-lg hover:bg-pink-500/10 transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-[#71717A] hover:text-[#18181B] py-2 rounded-xl hover:bg-[#FFF1F7] transition-colors cursor-pointer"
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>Collapse Sidebar</span>}
         </button>
       </div>
     </div>
@@ -140,7 +140,7 @@ export const CreatorSidebar: React.FC = () => {
       {/* Mobile Toggle */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full gradient-btn text-white shadow-xl shadow-pink-500/30 flex items-center justify-center cursor-pointer"
+        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full gradient-btn text-white shadow-xl shadow-[#EC4899]/30 flex items-center justify-center cursor-pointer"
       >
         <Menu size={20} />
       </button>
@@ -148,26 +148,26 @@ export const CreatorSidebar: React.FC = () => {
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-slate-950 border-r border-pink-500/20 z-50 transition-transform duration-300 w-64 ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-[#F3DCE8] z-50 transition-transform duration-300 w-64 shadow-2xl ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-14 flex items-center px-4 border-b border-pink-500/20">
-          <span className="text-sm font-bold text-pink-100">Creator Studio</span>
+        <div className="h-14 flex items-center px-4 border-b border-[#F3DCE8]">
+          <span className="text-sm font-bold text-[#18181B]">Creator Studio</span>
         </div>
         {sidebarContent}
       </aside>
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-pink-500/15 bg-slate-950/80 shrink-0 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/70 shrink-0 transition-all duration-300 ${
           collapsed ? 'w-16' : 'w-56'
         }`}
       >

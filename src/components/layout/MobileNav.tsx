@@ -25,11 +25,11 @@ export const MobileNav: React.FC = () => {
   }, []);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/92 backdrop-blur-xl border-t border-pink-500/20 px-3 py-2 flex items-center justify-around">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-[#F3DCE8] px-3 py-2 flex items-center justify-around shadow-lg shadow-[#EC4899]/5">
       <Link
         href="/feed"
-        className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-          pathname === '/feed' ? 'text-pink-400 font-bold' : 'text-pink-200/60'
+        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+          pathname === '/feed' ? 'text-[#EC4899]' : 'text-[#71717A]'
         }`}
       >
         <Home size={18} />
@@ -38,8 +38,8 @@ export const MobileNav: React.FC = () => {
 
       <Link
         href="/shorts"
-        className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-          pathname === '/shorts' ? 'text-pink-400 font-bold' : 'text-pink-200/60'
+        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+          pathname === '/shorts' ? 'text-[#EC4899]' : 'text-[#71717A]'
         }`}
       >
         <Film size={18} />
@@ -48,8 +48,8 @@ export const MobileNav: React.FC = () => {
 
       <Link
         href="/explore"
-        className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-          pathname === '/explore' ? 'text-pink-400 font-bold' : 'text-pink-200/60'
+        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+          pathname === '/explore' ? 'text-[#EC4899]' : 'text-[#71717A]'
         }`}
       >
         <Compass size={18} />
@@ -59,8 +59,8 @@ export const MobileNav: React.FC = () => {
       {activeRole === 'creator' ? (
         <Link
           href="/creator/dashboard"
-          className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-            pathname.startsWith('/creator') ? 'text-pink-400 font-bold' : 'text-pink-200/60'
+          className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            pathname.startsWith('/creator') ? 'text-[#EC4899]' : 'text-[#71717A]'
           }`}
         >
           <LayoutDashboard size={18} />
@@ -69,8 +69,8 @@ export const MobileNav: React.FC = () => {
       ) : activeRole === 'admin' ? (
         <Link
           href="/admin/dashboard"
-          className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-            pathname.startsWith('/admin') ? 'text-rose-400 font-bold' : 'text-pink-200/60'
+          className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            pathname.startsWith('/admin') ? 'text-[#F43F5E]' : 'text-[#71717A]'
           }`}
         >
           <Shield size={18} />
@@ -79,8 +79,8 @@ export const MobileNav: React.FC = () => {
       ) : (
         <Link
           href="/database"
-          className={`flex flex-col items-center gap-1 text-[11px] font-medium transition-colors ${
-            pathname === '/database' ? 'text-pink-400 font-bold' : 'text-pink-200/60'
+          className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            pathname === '/database' ? 'text-[#EC4899]' : 'text-[#71717A]'
           }`}
         >
           <Database size={18} />

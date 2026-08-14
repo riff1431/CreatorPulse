@@ -34,31 +34,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-cyan-500 selection:text-white relative">
-      <div className="absolute w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#FFF9FC] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777] relative">
+      <div className="absolute w-96 h-96 bg-[#FCE7F3]/60 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="max-w-md w-full space-y-6 relative z-10">
         {/* Brand */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-12 h-12 rounded-xl gradient-btn flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] flex items-center justify-center shadow-lg shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
               <Sparkles className="text-white" size={24} />
             </div>
           </Link>
-          <h1 className="text-2xl font-black text-white">Welcome Back</h1>
-          <p className="text-xs text-slate-400">Sign in to your CreatorPulse community account</p>
+          <h1 className="text-2xl font-black text-[#18181B]">Welcome Back</h1>
+          <p className="text-xs text-[#71717A] font-medium">Sign in to your CreatorPulse community account</p>
         </div>
 
         <Card className="p-6 space-y-5">
           {/* Role selector for easy demo testing */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300">Sign in as Role:</label>
-            <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+            <label className="block text-xs font-bold text-[#18181B]">Sign in as Demo Role:</label>
+            <div className="grid grid-cols-3 gap-1.5 bg-[#FFF9FC] p-1.5 rounded-2xl border border-[#F3DCE8] text-xs">
               <button
                 type="button"
                 onClick={() => { setSelectedRole('member'); setEmail('alex@community.io'); }}
-                className={`py-1.5 px-2 rounded-lg font-medium flex items-center justify-center gap-1 ${
-                  selectedRole === 'member' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400'
+                className={`py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  selectedRole === 'member' ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm' : 'text-[#71717A] hover:text-[#18181B]'
                 }`}
               >
                 <UserCheck size={13} /> Member
@@ -66,8 +66,8 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setSelectedRole('creator'); setEmail('sarah@designcode.com'); }}
-                className={`py-1.5 px-2 rounded-lg font-medium flex items-center justify-center gap-1 ${
-                  selectedRole === 'creator' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400'
+                className={`py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  selectedRole === 'creator' ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm' : 'text-[#71717A] hover:text-[#18181B]'
                 }`}
               >
                 <Eye size={13} /> Creator
@@ -75,8 +75,8 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setSelectedRole('admin'); setEmail('admin@creatorpulse.com'); }}
-                className={`py-1.5 px-2 rounded-lg font-medium flex items-center justify-center gap-1 ${
-                  selectedRole === 'admin' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-slate-400'
+                className={`py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  selectedRole === 'admin' ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-sm' : 'text-[#71717A] hover:text-[#18181B]'
                 }`}
               >
                 <Shield size={13} /> Admin
@@ -86,14 +86,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Email Address</label>
+              <label className="block text-[#18181B] font-bold mb-1">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
                   required
                 />
               </div>
@@ -101,16 +101,16 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-slate-300 font-medium">Password</label>
-                <Link href="/auth/verify" className="text-cyan-400 text-[11px] hover:underline">Forgot password?</Link>
+                <label className="text-[#18181B] font-bold">Password</label>
+                <Link href="/auth/forgot-password" className="text-[#BE185D] text-[11px] font-bold hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
                   required
                 />
               </div>
@@ -128,9 +128,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="text-center text-xs text-slate-400 border-t border-slate-800 pt-4">
+          <div className="text-center text-xs text-[#71717A] border-t border-[#F3DCE8] pt-4 font-medium">
             Don't have an account yet?{' '}
-            <Link href="/auth/signup" className="text-cyan-400 font-semibold hover:underline">
+            <Link href="/auth/signup" className="text-[#BE185D] font-extrabold hover:underline">
               Create an account
             </Link>
           </div>

@@ -19,45 +19,45 @@ export default function CreatorReelsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Film className="text-indigo-400" size={22} />
-            <h1 className="text-xl font-black text-white">My Reels</h1>
+            <Film className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">My Reels</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Manage your short vertical videos.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Manage your short vertical videos.</p>
         </div>
         <Button variant="primary" size="sm" leftIcon={<PlusSquare size={14} />}>Upload Reel</Button>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 font-semibold">Title</th>
-              <th className="py-3 px-4 font-semibold">Views</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Likes</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Comments</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Shares</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
-              <th className="py-3 px-4 font-semibold text-right">Actions</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 font-bold">Title</th>
+              <th className="py-3.5 px-4 font-bold">Views</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Likes</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Comments</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Shares</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
+              <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {reels.map((r) => (
-              <tr key={r.id} className="hover:bg-slate-900/50 transition-colors">
+              <tr key={r.id} className="hover:bg-[#FFF9FC] transition-colors">
                 <td className="py-3 px-4">
-                  <p className="font-bold text-slate-200 truncate max-w-[250px]">{r.title}</p>
-                  <p className="text-[10px] text-slate-500">{r.date}</p>
+                  <p className="font-bold text-[#18181B] truncate max-w-[280px]">{r.title}</p>
+                  <p className="text-[10px] text-[#A1A1AA]">{r.date}</p>
                 </td>
-                <td className="py-3 px-4 text-slate-300">{r.views.toLocaleString()}</td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{r.likes.toLocaleString()}</td>
-                <td className="py-3 px-4 text-slate-300 hidden md:table-cell">{r.comments}</td>
-                <td className="py-3 px-4 text-slate-300 hidden md:table-cell">{r.shares}</td>
+                <td className="py-3 px-4 text-[#18181B] font-bold">{r.views.toLocaleString()}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden sm:table-cell font-medium">{r.likes.toLocaleString()}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden md:table-cell font-medium">{r.comments}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden md:table-cell font-medium">{r.shares}</td>
                 <td className="py-3 px-4">
                   <Badge variant={r.status === 'published' ? 'emerald' : 'amber'} size="sm">{r.status}</Badge>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm"><Eye size={13} /></Button>
-                    <Button variant="ghost" size="sm"><Trash2 size={13} className="text-rose-400" /></Button>
+                    <Button variant="ghost" size="sm"><Trash2 size={13} className="text-[#F43F5E]" /></Button>
                   </div>
                 </td>
               </tr>

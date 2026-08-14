@@ -56,10 +56,10 @@ export default function AdminCategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="text-violet-400" size={22} />
-            <h1 className="text-xl font-black text-white">Categories</h1>
+            <Layers className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">Categories</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Manage creator and content categories.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Manage creator and content categories.</p>
         </div>
         <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={() => setShowAdd(true)}>
           Add Category
@@ -73,7 +73,7 @@ export default function AdminCategoriesPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Category name..."
-            className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-rose-500/50"
+            className="flex-1 bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
             autoFocus
           />
           <Button variant="primary" size="sm" onClick={handleAdd}>Save</Button>
@@ -81,36 +81,36 @@ export default function AdminCategoriesPage() {
         </Card>
       )}
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 w-8"></th>
-              <th className="py-3 px-4 font-semibold">Name</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Slug</th>
-              <th className="py-3 px-4 font-semibold">Creators</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">Posts</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
-              <th className="py-3 px-4 font-semibold text-right">Actions</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 w-8"></th>
+              <th className="py-3.5 px-4 font-bold">Name</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Slug</th>
+              <th className="py-3.5 px-4 font-bold">Creators</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">Posts</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
+              <th className="py-3.5 px-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {categories.map((c) => (
-              <tr key={c.id} className="hover:bg-slate-900/50 transition-colors">
-                <td className="py-3 px-4 text-slate-600 cursor-grab"><GripVertical size={14} /></td>
-                <td className="py-3 px-4 font-bold text-slate-200">{c.name}</td>
-                <td className="py-3 px-4 text-slate-500 font-mono hidden sm:table-cell">{c.slug}</td>
-                <td className="py-3 px-4 text-slate-300">{c.creators}</td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{c.posts}</td>
+              <tr key={c.id} className="hover:bg-[#FFF9FC] transition-colors">
+                <td className="py-3 px-4 text-[#A1A1AA] cursor-grab"><GripVertical size={14} /></td>
+                <td className="py-3 px-4 font-bold text-[#18181B]">{c.name}</td>
+                <td className="py-3 px-4 text-[#71717A] font-mono hidden sm:table-cell">{c.slug}</td>
+                <td className="py-3 px-4 text-[#18181B] font-semibold">{c.creators}</td>
+                <td className="py-3 px-4 text-[#71717A] hidden sm:table-cell font-medium">{c.posts}</td>
                 <td className="py-3 px-4">
-                  <button onClick={() => handleToggle(c.id)}>
+                  <button onClick={() => handleToggle(c.id)} className="cursor-pointer">
                     <Badge variant={c.status === 'active' ? 'emerald' : 'slate'} size="sm">{c.status}</Badge>
                   </button>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm"><Pencil size={13} /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}><Trash2 size={13} className="text-rose-400" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}><Trash2 size={13} className="text-[#F43F5E]" /></Button>
                   </div>
                 </td>
               </tr>

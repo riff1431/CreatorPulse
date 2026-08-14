@@ -17,7 +17,7 @@ export default function SavedPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -26,24 +26,24 @@ export default function SavedPage() {
 
         <main className="flex-1 space-y-6 max-w-2xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Bookmark className="text-cyan-400 fill-cyan-400" size={24} />
-                <h1 className="text-2xl font-black text-white">Saved Posts & Bookmarks</h1>
+                <Bookmark className="text-[#EC4899] fill-[#EC4899]" size={24} />
+                <h1 className="text-2xl font-black text-[#18181B]">Saved Posts & Bookmarks</h1>
               </div>
-              <p className="text-xs text-slate-400">Your collection of bookmarked creator posts and premium content.</p>
+              <p className="text-xs text-[#71717A] font-medium">Your collection of bookmarked creator posts and premium content.</p>
             </div>
 
-            <span className="text-xs text-slate-400 font-semibold">{savedPosts.length} saved</span>
+            <span className="text-xs text-[#BE185D] font-bold bg-[#FCE7F3] px-3 py-1 rounded-full border border-[#FBCFE8]">{savedPosts.length} saved</span>
           </div>
 
           <div className="space-y-4">
             {savedPosts.length === 0 ? (
-              <div className="text-center py-12 space-y-3 glass-card">
-                <Bookmark size={32} className="text-slate-500 mx-auto" />
-                <h3 className="font-bold text-slate-200">No Saved Posts Yet</h3>
-                <p className="text-xs text-slate-400">Click the bookmark icon on any post in your feed to save it here.</p>
+              <div className="text-center py-12 space-y-3 bg-white border border-[#F3DCE8] rounded-[24px] p-8">
+                <Bookmark size={32} className="text-[#A1A1AA] mx-auto" />
+                <h3 className="font-extrabold text-[#18181B]">No Saved Posts Yet</h3>
+                <p className="text-xs text-[#71717A]">Click the bookmark icon on any post in your feed to save it here.</p>
                 <Link href="/feed">
                   <Button variant="primary" size="sm">Explore Feed</Button>
                 </Link>

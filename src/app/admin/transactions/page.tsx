@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Receipt, Search, Filter, Download } from 'lucide-react';
+import { Receipt, Search, Download } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -31,22 +31,30 @@ export default function AdminTransactionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Receipt className="text-sky-400" size={22} />
-            <h1 className="text-xl font-black text-white">Transactions</h1>
+            <Receipt className="text-[#EC4899]" size={22} />
+            <h1 className="text-xl font-black text-[#18181B]">Transactions</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Full platform transaction ledger with fee transparency.</p>
+          <p className="text-xs text-[#71717A] mt-1 font-medium">Full platform transaction ledger with fee transparency.</p>
         </div>
         <Button variant="outline" size="sm" leftIcon={<Download size={14} />}>Export CSV</Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <input type="text" placeholder="Search by user..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-rose-500/50" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={14} />
+          <input
+            type="text"
+            placeholder="Search by user..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+          />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none">
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="bg-white border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] shadow-sm font-medium"
+        >
           <option value="all">All Types</option>
           <option value="Top-Up">Top-Up</option>
           <option value="Membership">Membership</option>
@@ -56,40 +64,40 @@ export default function AdminTransactionsPage() {
         </select>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 text-left">
-              <th className="py-3 px-4 font-semibold">ID</th>
-              <th className="py-3 px-4 font-semibold">Date</th>
-              <th className="py-3 px-4 font-semibold">Type</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">From</th>
-              <th className="py-3 px-4 font-semibold hidden sm:table-cell">To</th>
-              <th className="py-3 px-4 font-semibold">Amount</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Fee</th>
-              <th className="py-3 px-4 font-semibold hidden md:table-cell">Net</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
+            <tr className="border-b border-[#F3DCE8] bg-[#FFF9FC] text-[#71717A] text-left">
+              <th className="py-3.5 px-4 font-bold">ID</th>
+              <th className="py-3.5 px-4 font-bold">Date</th>
+              <th className="py-3.5 px-4 font-bold">Type</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">From</th>
+              <th className="py-3.5 px-4 font-bold hidden sm:table-cell">To</th>
+              <th className="py-3.5 px-4 font-bold">Amount</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Fee</th>
+              <th className="py-3.5 px-4 font-bold hidden md:table-cell">Net</th>
+              <th className="py-3.5 px-4 font-bold">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#F3DCE8]">
             {filtered.map((t) => (
-              <tr key={t.id} className="hover:bg-slate-900/50 transition-colors">
-                <td className="py-3 px-4 text-slate-500 font-mono">{t.id}</td>
-                <td className="py-3 px-4 text-slate-400">{t.date}</td>
+              <tr key={t.id} className="hover:bg-[#FFF9FC] transition-colors">
+                <td className="py-3 px-4 text-[#A1A1AA] font-mono font-medium">{t.id}</td>
+                <td className="py-3 px-4 text-[#71717A] font-medium">{t.date}</td>
                 <td className="py-3 px-4">
                   <Badge variant={
                     t.type === 'Top-Up' ? 'cyan' :
-                    t.type === 'Membership' ? 'indigo' :
+                    t.type === 'Membership' ? 'pink' :
                     t.type === 'Tip Support' ? 'amber' :
-                    t.type === 'Premium Unlock' ? 'slate' :
+                    t.type === 'Premium Unlock' ? 'fuchsia' :
                     'emerald'
                   } size="sm">{t.type}</Badge>
                 </td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{t.from}</td>
-                <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{t.to}</td>
-                <td className="py-3 px-4 text-white font-bold">{t.amount}</td>
-                <td className="py-3 px-4 text-rose-400 hidden md:table-cell">{t.fee}</td>
-                <td className="py-3 px-4 text-emerald-400 hidden md:table-cell">{t.net}</td>
+                <td className="py-3 px-4 text-[#52525B] hidden sm:table-cell font-medium">{t.from}</td>
+                <td className="py-3 px-4 text-[#52525B] hidden sm:table-cell font-medium">{t.to}</td>
+                <td className="py-3 px-4 text-[#18181B] font-bold">{t.amount}</td>
+                <td className="py-3 px-4 text-[#F43F5E] font-medium hidden md:table-cell">{t.fee}</td>
+                <td className="py-3 px-4 text-emerald-600 font-bold hidden md:table-cell">{t.net}</td>
                 <td className="py-3 px-4">
                   <Badge variant={t.status === 'Completed' ? 'emerald' : 'amber'} size="sm">{t.status}</Badge>
                 </td>

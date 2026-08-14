@@ -14,17 +14,17 @@ export const AdminStatsCard: React.FC<AdminStatsCardProps> = ({
   value,
   icon,
   trend,
-  trendColor = 'text-cyan-400',
+  trendColor = 'text-[#BE185D]',
 }) => {
   return (
-    <Card className="p-4 space-y-2">
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span className="font-semibold uppercase tracking-wider">{label}</span>
+    <Card className="p-5 space-y-2.5">
+      <div className="flex items-center justify-between text-xs text-[#71717A]">
+        <span className="font-bold uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <div className="text-2xl font-black text-white">{value}</div>
+      <div className="text-2xl sm:text-3xl font-extrabold text-[#18181B]">{value}</div>
       {trend && (
-        <div className={`text-[10px] ${trendColor} font-medium`}>{trend}</div>
+        <div className={`text-[11px] ${trendColor} font-bold`}>{trend}</div>
       )}
     </Card>
   );
