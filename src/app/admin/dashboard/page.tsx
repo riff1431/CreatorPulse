@@ -331,6 +331,36 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
+            <Link href="/admin/themes">
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold">
+                    <span className="text-sm">🎨</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#18181B]">Frontend Themes</p>
+                    <p className="text-[10px] text-[#71717A] font-medium">Blush Core active</p>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
+              </div>
+            </Link>
+
+            <Link href="/admin/plugins">
+              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold">
+                    <span className="text-sm">🔌</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#18181B]">Plugins & Add-ons</p>
+                    <p className="text-[10px] text-[#71717A] font-medium">5 modules installed</p>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
+              </div>
+            </Link>
+
             <Link href="/admin/reports">
               <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
