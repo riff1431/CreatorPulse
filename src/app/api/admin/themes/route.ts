@@ -3,11 +3,40 @@ import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
 import { ThemeManifest } from '@/lib/extensions/theme-types';
-import { DISCOVERED_THEMES } from '@/lib/loaders/registry';
+import { DISCOVERED_THEMES, DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
 import { generateRegistry } from '@/lib/loaders/registry-generator';
 import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
+import { PluginManifest } from '@/lib/extensions/plugin-types';
 
 const THEMES_DIR = path.join(process.cwd(), 'themes');
+const PLUGINS_DIR = path.join(process.cwd(), 'plugins');
+
+async function scanPluginsOnDisk(): Promise<PluginManifest[]> {
+  try {
+    if (!fs.existsSync(PLUGINS_DIR)) {
+      return DISCOVERED_PLUGIN_MANIFESTS;
+    }
+    const entries = await fs.promises.readdir(PLUGINS_DIR, { withFileTypes: true });
+    const pluginFolders = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    const loadedPlugins: PluginManifest[] = [];
+    for (const folder of pluginFolders) {
+      const manifestPath = path.join(PLUGINS_DIR, folder, 'manifest.json');
+      if (fs.existsSync(manifestPath)) {
+        try {
+          const raw = await fs.promises.readFile(manifestPath, 'utf-8');
+          const manifest = JSON.parse(raw);
+          loadedPlugins.push(manifest);
+        } catch {}
+      }
+    }
+    const pluginMap = new Map<string, PluginManifest>();
+    DISCOVERED_PLUGIN_MANIFESTS.forEach((p) => pluginMap.set(p.id, p));
+    loadedPlugins.forEach((p) => pluginMap.set(p.id, { ...pluginMap.get(p.id), ...p }));
+    return Array.from(pluginMap.values());
+  } catch {
+    return DISCOVERED_PLUGIN_MANIFESTS;
+  }
+}
 
 /**
  * Helper to locate theme directory on disk
@@ -255,12 +284,14 @@ export async function POST(request: Request) {
       }
 
       const existingThemes = await scanThemesOnDisk();
+      const existingPlugins = await scanPluginsOnDisk();
 
       // Run compatibility diagnostics
       const compatibilityReport = CompatibilityChecker.checkTheme(
         parsedManifest,
         folderNames,
-        existingThemes
+        existingThemes,
+        existingPlugins
       );
 
       if (!compatibilityReport.isValid) {
@@ -340,12 +371,14 @@ export async function POST(request: Request) {
       const targetDir = path.join(THEMES_DIR, slug);
 
       const existingThemes = await scanThemesOnDisk();
+      const existingPlugins = await scanPluginsOnDisk();
 
       // Run compatibility diagnostics
       const compatibilityReport = CompatibilityChecker.checkTheme(
         manifest,
         [],
-        existingThemes
+        existingThemes,
+        existingPlugins
       );
 
       if (!compatibilityReport.isValid) {

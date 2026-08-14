@@ -36,7 +36,8 @@ export class CompatibilityChecker {
   public static checkTheme(
     manifest: Partial<ThemeManifest>,
     folderNames: string[],
-    existingThemes: ThemeManifest[] = []
+    existingThemes: ThemeManifest[] = [],
+    existingPlugins: PluginManifest[] = []
   ): DiagnosticReport {
     const report: DiagnosticReport = {
       isValid: true,
@@ -118,10 +119,25 @@ export class CompatibilityChecker {
     }
 
     // 6. Dependencies check
-    if (rawThemeAny.dependencies && typeof rawThemeAny.dependencies === 'object') {
-      const deps = rawThemeAny.dependencies as Record<string, unknown>;
+    if (manifest.dependencies && typeof manifest.dependencies === 'object') {
+      const deps = manifest.dependencies as Record<string, unknown>;
       if (deps.plugins && typeof deps.plugins === 'object') {
-        // Can declare custom dependencies rules here
+        for (const [depId, minVer] of Object.entries(deps.plugins)) {
+          const installed = existingPlugins.find(p => p.id === depId || p.slug === depId);
+          if (!installed) {
+            addIssue('error', 'dependencies', `Missing required dependency: Plugin "${depId}" is not installed.`, `Install "${depId}" version >= ${minVer} first.`);
+          } else {
+            if (installed.version && minVer) {
+              const hasCompatibleVersion = this.compareVersions(installed.version, minVer as string);
+              if (!hasCompatibleVersion) {
+                addIssue('error', 'dependencies', `Incompatible dependency: "${depId}" version is v${installed.version}, but this theme requires version v${minVer} or higher.`, `Upgrade "${depId}" to version ${minVer} or higher.`);
+              }
+            }
+            if (!installed.isEnabled) {
+              addIssue('error', 'dependencies', `Dependency disabled: Required plugin "${depId}" is installed but disabled.`, `Enable required plugin "${depId}".`);
+            }
+          }
+        }
       }
     }
 
@@ -235,10 +251,15 @@ export class CompatibilityChecker {
           const installed = existingPlugins.find(p => p.id === depId || p.slug === depId);
           if (!installed) {
             addIssue('error', 'dependencies', `Missing required dependency: Plugin "${depId}" is not installed.`, `Install "${depId}" version >= ${minVer} first.`);
-          } else if (installed.version && minVer) {
-            const hasCompatibleVersion = this.compareVersions(installed.version, minVer as string);
-            if (!hasCompatibleVersion) {
-              addIssue('error', 'dependencies', `Incompatible dependency: "${depId}" version is v${installed.version}, but this package requires version v${minVer} or higher.`, `Upgrade "${depId}" to version ${minVer} or higher.`);
+          } else {
+            if (installed.version && minVer) {
+              const hasCompatibleVersion = this.compareVersions(installed.version, minVer as string);
+              if (!hasCompatibleVersion) {
+                addIssue('error', 'dependencies', `Incompatible dependency: "${depId}" version is v${installed.version}, but this package requires version v${minVer} or higher.`, `Upgrade "${depId}" to version ${minVer} or higher.`);
+              }
+            }
+            if (!installed.isEnabled) {
+              addIssue('error', 'dependencies', `Dependency disabled: Required plugin "${depId}" is installed but disabled.`, `Enable required plugin "${depId}".`);
             }
           }
         }
@@ -252,7 +273,7 @@ export class CompatibilityChecker {
    * Version comparison helper (semver-like)
    * Returns true if v1 >= v2
    */
-  private static compareVersions(v1: string, v2: string): boolean {
+  public static compareVersions(v1: string, v2: string): boolean {
     try {
       const p1 = v1.split('.').map(Number);
       const p2 = v2.split('.').map(Number);

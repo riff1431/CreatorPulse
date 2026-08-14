@@ -137,4 +137,13 @@ export class ThemeLoader {
       root.classList.remove('dark');
     }
   }
+
+  /**
+   * Validate theme overrides against Theme SDK standards
+   */
+  public static validateOverrides(manifest: ThemeManifest) {
+    const { themeRegistry } = require('@/lib/extensions/theme-registry');
+    return themeRegistry.validateThemeOverrides(manifest);
+  }
 }
+

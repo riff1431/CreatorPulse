@@ -6,6 +6,7 @@ import blushCore from '@themes/blush-core/theme.config';
 import cyberGlow from '@themes/cyber-glow/theme.config';
 import defaultTheme from '@themes/default-theme/theme.config';
 import frostedGlass from '@themes/frosted-glass/theme.config';
+import midnightDark from '@themes/midnight-dark/theme.config';
 import roseFlow from '@themes/rose-flow/theme.config';
 import starterTheme from '@themes/starter-theme/theme.config';
 
@@ -24,6 +25,7 @@ export const DISCOVERED_THEMES: ThemeManifest[] = [
   cyberGlow,
   defaultTheme,
   frostedGlass,
+  midnightDark,
   roseFlow,
   starterTheme,
 ];

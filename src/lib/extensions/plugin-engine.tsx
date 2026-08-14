@@ -171,11 +171,106 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
         return;
       }
+
+      // Dependencies Check:
+      if (target.dependencies && typeof target.dependencies === 'object') {
+        const deps = target.dependencies as Record<string, unknown>;
+        if (deps.plugins && typeof deps.plugins === 'object') {
+          const pluginsToEnable: string[] = [];
+          for (const [depId, minVer] of Object.entries(deps.plugins)) {
+            const dep = plugins.find(p => p.id === depId || p.slug === depId);
+            if (!dep) {
+              alert(`Cannot activate "${target.name}": Required dependency plugin "${depId}" (v${minVer}+) is not installed.`);
+              return;
+            }
+            if (dep.version && minVer) {
+              const hasCompatibleVersion = CompatibilityChecker.compareVersions(dep.version, minVer as string);
+              if (!hasCompatibleVersion) {
+                alert(`Cannot activate "${target.name}": Dependency "${dep.name}" version is v${dep.version}, but v${minVer} or higher is required.`);
+                return;
+              }
+            }
+            if (!dep.isEnabled) {
+              pluginsToEnable.push(dep.id);
+            }
+          }
+
+          if (pluginsToEnable.length > 0) {
+            const depNames = pluginsToEnable.map(id => plugins.find(p => p.id === id)?.name || id).join(', ');
+            if (window.confirm(`"${target.name}" requires the following dependency plugin(s) to be enabled: ${depNames}. Enable them automatically now?`)) {
+              // Enable dependencies first
+              let updatedPlugins = [...plugins];
+              pluginsToEnable.forEach(depId => {
+                updatedPlugins = updatedPlugins.map(p => p.id === depId ? { ...p, isEnabled: true, updatedAt: new Date().toISOString().split('T')[0] } : p);
+                PluginLoader.executeLifecycle(depId, 'onActivate');
+              });
+              // Enable target plugin
+              updatedPlugins = updatedPlugins.map(p => p.id === pluginId ? { ...p, isEnabled: true, updatedAt: new Date().toISOString().split('T')[0] } : p);
+              setPlugins(updatedPlugins);
+              localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updatedPlugins));
+              
+              // Run lifecycle on target
+              PluginLoader.executeLifecycle(pluginId, 'onActivate');
+
+              logAuditEvent({
+                action: 'PLUGIN_ACTIVATED',
+                entityType: 'plugin',
+                entityName: target.name,
+                details: `Activated plugin and its dependencies (${depNames})`,
+                severity: 'success'
+              });
+              return;
+            } else {
+              // Abort activation
+              return;
+            }
+          }
+        }
+      }
     } else {
       // Deactivation Guard: Prevent deactivating the active default payment gateway
       if (target.hooks.includes('payment_gateway_methods') && target.settingsValues.isDefault === true) {
         alert(`Security Guard: Cannot disable "${target.name}" because it is the active default Payment Gateway. Please configure another gateway as default first.`);
         return;
+      }
+
+      // Dependents check: find other active plugins that depend on this plugin
+      const activeDependents = plugins.filter(p => {
+        if (!p.isEnabled || p.id === pluginId) return false;
+        if (p.dependencies && typeof p.dependencies === 'object') {
+          const deps = p.dependencies as Record<string, unknown>;
+          if (deps.plugins && typeof deps.plugins === 'object') {
+            return Object.keys(deps.plugins).some(depId => depId === target.id || depId === target.slug);
+          }
+        }
+        return false;
+      });
+
+      if (activeDependents.length > 0) {
+        const depNames = activeDependents.map(d => d.name).join(', ');
+        if (window.confirm(`Warning: The following active plugin(s) depend on "${target.name}": ${depNames}. Disabling it will break them. Disable "${target.name}" and all dependent plugins together?`)) {
+          // Disable dependents and target plugin
+          const idsToDisable = [pluginId, ...activeDependents.map(d => d.id)];
+          let updatedPlugins = [...plugins];
+          idsToDisable.forEach(id => {
+            updatedPlugins = updatedPlugins.map(p => p.id === id ? { ...p, isEnabled: false, updatedAt: new Date().toISOString().split('T')[0] } : p);
+            PluginLoader.executeLifecycle(id, 'onDeactivate');
+          });
+          setPlugins(updatedPlugins);
+          localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updatedPlugins));
+
+          logAuditEvent({
+            action: 'PLUGIN_DEACTIVATED',
+            entityType: 'plugin',
+            entityName: target.name,
+            details: `Deactivated plugin and its dependent plugins (${depNames})`,
+            severity: 'info'
+          });
+          return;
+        } else {
+          // Abort deactivation
+          return;
+        }
       }
     }
 
@@ -680,7 +775,7 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
           if (name === 'post_card_footer') {
             if (plugin.id === 'plugin-drm-watermark') {
               const watermarkText = String(plugin.settingsValues.watermarkText || '© CreatorPulse Protected');
-              const postAuthor = String((context as any)?.post?.authorUsername || 'public');
+              const postAuthor = String(((context as Record<string, unknown>)?.post as Record<string, unknown>)?.authorUsername || 'public');
               return (
                 <div key={plugin.id} className="pt-2 border-t border-[#F3DCE8]/60 flex items-center justify-between text-[10px] text-[#A1A1AA] select-none">
                   <span className="flex items-center gap-1 font-semibold">

@@ -10,6 +10,7 @@ import {
   Key, ShieldAlert, CheckCircle, ArrowRight, ArrowUpDown, Smartphone, Tablet as TabletIcon, Monitor, Compass
 } from 'lucide-react';
 import { useTheme, CURRENT_APP_VERSION } from '@/lib/extensions/theme-engine';
+import { usePlugins } from '@/lib/extensions/plugin-engine';
 import { CompatibilityChecker, type DiagnosticReport, type DiagnosticIssue } from '@/lib/loaders/compatibility-checker';
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from '@/lib/extensions/theme-types';
 import { validateThemePackage, logAuditEvent } from '@/lib/extensions/package-installer';
@@ -38,6 +39,8 @@ export default function AdminThemesPage() {
     customizeTheme,
     rollbackTheme,
     exportTheme,
+    validateThemeOverrides,
+    getThemeOverrideReport,
     checkForUpdates,
     isCheckingUpdates,
     lastUpdateCheck,
@@ -47,6 +50,7 @@ export default function AdminThemesPage() {
     deleteBackup
   } = useTheme();
 
+  const { plugins } = usePlugins();
   const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
 
   // Navigation Tabs: 'installed' | 'activation' | 'updates' | 'library'
@@ -280,7 +284,8 @@ export default function AdminThemesPage() {
       const compatibilityReport = CompatibilityChecker.checkTheme(
         licenseTargetTheme,
         [],
-        themes
+        themes,
+        plugins
       );
 
       if (!compatibilityReport.isValid) {
@@ -2986,6 +2991,94 @@ export default function AdminThemesPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Theme Override & Fallback Matrix */}
+              {(() => {
+                const overrideReport = getThemeOverrideReport(inspectingTheme.id);
+                return (
+                  <div className="p-4 bg-slate-900 text-white rounded-2xl border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-pink-400 flex items-center gap-1.5">
+                        <Sparkles size={15} />
+                        Overrides & Safe Fallback Architecture
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          {overrideReport.summary.totalOverridden} Overrides
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          {overrideReport.summary.totalFallback} Fallbacks
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      Custom themes only need to supply files they wish to customize. Any missing page, layout, or component automatically falls back to <strong>default-theme</strong> with zero downtime.
+                    </p>
+
+                    <div className="space-y-2 pt-1">
+                      {/* Overridden Pages */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Pages Resolution</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {overrideReport.overrides.pages.map((p) => (
+                            <span
+                              key={p.name}
+                              className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border ${
+                                p.status === 'overridden'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
+                                  : 'bg-slate-800 text-slate-400 border-slate-700'
+                              }`}
+                              title={p.status === 'overridden' ? 'Overridden by theme' : 'Safely falls back to default-theme'}
+                            >
+                              {p.name}: {p.status === 'overridden' ? '⚡ Custom' : '🛡️ Fallback'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Overridden Layouts & Components */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Layouts</span>
+                          <div className="flex flex-wrap gap-1">
+                            {overrideReport.overrides.layouts.map((l) => (
+                              <span
+                                key={l.name}
+                                className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                                  l.status === 'overridden'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                }`}
+                              >
+                                {l.name}: {l.status === 'overridden' ? 'Custom' : 'Fallback'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Key Components</span>
+                          <div className="flex flex-wrap gap-1">
+                            {overrideReport.overrides.components.slice(0, 8).map((c) => (
+                              <span
+                                key={c.name}
+                                className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                                  c.status === 'overridden'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                }`}
+                              >
+                                {c.name}: {c.status === 'overridden' ? 'Custom' : 'Fallback'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* CSS Overrides Live Preview */}
               <div>

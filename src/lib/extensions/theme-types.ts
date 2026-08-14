@@ -41,6 +41,78 @@ export interface ThemeAssets {
   cssOverrides?: string;
 }
 
+export type ThemePageName =
+  | 'LandingPage'
+  | 'LoginPage'
+  | 'SignupPage'
+  | 'FeedPage'
+  | 'CreatorDashboardPage'
+  | 'CreatorProfilePage'
+  | 'SinglePostPage'
+  | 'MessagesPage'
+  | 'NotificationsPage'
+  | 'ShortsPage'
+  | 'ExplorePage'
+  | 'SavedPage'
+  | 'BalancePage';
+
+export type ThemeLayoutName =
+  | 'MainLayout'
+  | 'CreatorLayout'
+  | 'AuthLayout'
+  | 'MinimalLayout';
+
+export type ThemeComponentName =
+  | 'Navbar'
+  | 'Sidebar'
+  | 'Footer'
+  | 'MobileNav'
+  | 'PostCard'
+  | 'StoryBar'
+  | 'CreatorHeader'
+  | 'CreatorSidebar'
+  | 'Button'
+  | 'Card'
+  | 'Avatar'
+  | 'Badge'
+  | 'Modal'
+  | 'Toast'
+  | 'Sparkline'
+  | 'RoleSwitcher';
+
+export interface ThemeOverridesManifest {
+  pages?: ThemePageName[];
+  layouts?: ThemeLayoutName[];
+  components?: ThemeComponentName[];
+}
+
+export interface ThemeOverrideItemReport<T extends string = string> {
+  name: T;
+  status: 'overridden' | 'fallback_default';
+  isCustom?: boolean;
+  hasError?: boolean;
+  errorMessage?: string;
+}
+
+export interface ThemeOverrideValidationResult {
+  isValid: boolean;
+  themeId: string;
+  themeSlug: string;
+  themeName: string;
+  overrides: {
+    pages: ThemeOverrideItemReport<ThemePageName>[];
+    layouts: ThemeOverrideItemReport<ThemeLayoutName>[];
+    components: ThemeOverrideItemReport<ThemeComponentName>[];
+  };
+  summary: {
+    totalOverridden: number;
+    totalFallback: number;
+    hasErrors: boolean;
+  };
+  errors: string[];
+  warnings: string[];
+}
+
 export interface ThemeManifest {
   id: string;
   name: string;
@@ -56,8 +128,9 @@ export interface ThemeManifest {
   tokens: ThemeTokens;
   settings: ThemeVisualSettings;
   assets?: ThemeAssets;
+  overrides?: ThemeOverridesManifest;
   changelog: ThemeChangelog[];
-  isDefault?: boolean;     // True for "Blush Core" (permanently protected)
+  isDefault?: boolean;     // True for "Default Theme" / "Blush Core" (permanently protected)
   isCustom?: boolean;
   isActive?: boolean;
   hasUpdate?: boolean;
@@ -65,6 +138,7 @@ export interface ThemeManifest {
   isLibraryItem?: boolean;
   requiresLicense?: boolean;
   licenseKey?: string;
+  dependencies?: { plugins?: Record<string, string> };
   licenseStatus?: 'licensed' | 'unlicensed' | 'exempt';
   installedAt: string;
   updatedAt: string;

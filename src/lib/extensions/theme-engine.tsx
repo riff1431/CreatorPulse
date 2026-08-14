@@ -2,12 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { ThemeManifest, ThemeTokens, ThemeVisualSettings, ThemeBackup } from './theme-types';
+import { ThemeManifest, ThemeTokens, ThemeVisualSettings, ThemeBackup, ThemeOverrideValidationResult } from './theme-types';
 import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG, THEME_UPDATE_REGISTRY } from './default-extensions';
 import { logAuditEvent, validateThemePackage } from './package-installer';
-import { DISCOVERED_THEMES } from '@/lib/loaders/registry';
+import { DISCOVERED_THEMES, DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
 import { ThemeLoader } from '@/lib/loaders/theme-loader';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
+import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
+import { themeRegistry } from './theme-registry';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
@@ -26,6 +28,10 @@ interface ThemeContextType {
   exportTheme: (themeId: string) => string;
   previewTheme: ThemeManifest | null;
   setPreviewTheme: (theme: ThemeManifest | null) => void;
+
+  // Theme Override & Fallback System
+  validateThemeOverrides: (themeId: string) => ThemeOverrideValidationResult;
+  getThemeOverrideReport: (themeId: string) => ThemeOverrideValidationResult;
 
   // Theme Update System Addition
   checkForUpdates: () => Promise<{ foundCount: number }>;
@@ -335,6 +341,81 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     }
 
+    // Dependencies Check:
+    let pluginsList: any[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const rawPlugins = localStorage.getItem('creatorpulse_plugins');
+        if (rawPlugins) {
+          pluginsList = JSON.parse(rawPlugins);
+        }
+      } catch (err) {
+        console.error('Failed reading plugins for theme validation:', err);
+      }
+    }
+    if (pluginsList.length === 0) {
+      pluginsList = DISCOVERED_PLUGIN_MANIFESTS;
+    }
+
+    if (target.dependencies && typeof target.dependencies === 'object') {
+      const deps = target.dependencies as Record<string, unknown>;
+      if (deps.plugins && typeof deps.plugins === 'object') {
+        const pluginsToEnable: string[] = [];
+        for (const [depId, minVer] of Object.entries(deps.plugins)) {
+          const dep = pluginsList.find(p => p.id === depId || p.slug === depId);
+          if (!dep) {
+            return {
+              success: false,
+              error: `Cannot activate theme "${target.name}". Required dependency plugin "${depId}" (v${minVer}+) is not installed.`
+            };
+          }
+          if (dep.version && minVer) {
+            const hasCompatibleVersion = CompatibilityChecker.compareVersions(dep.version, minVer as string);
+            if (!hasCompatibleVersion) {
+              return {
+                success: false,
+                error: `Cannot activate theme "${target.name}". Dependency plugin "${dep.name}" version is v${dep.version}, but v${minVer} or higher is required.`
+              };
+            }
+          }
+          if (!dep.isEnabled) {
+            pluginsToEnable.push(dep.id);
+          }
+        }
+
+        if (pluginsToEnable.length > 0) {
+          const depNames = pluginsToEnable.map(id => pluginsList.find(p => p.id === id)?.name || id).join(', ');
+          if (window.confirm(`Theme "${target.name}" requires the following dependency plugin(s) to be enabled: ${depNames}. Enable them automatically now?`)) {
+            // Enable dependencies first
+            const updatedPlugins = pluginsList.map(p => pluginsToEnable.includes(p.id) ? { ...p, isEnabled: true, updatedAt: new Date().toISOString().split('T')[0] } : p);
+            localStorage.setItem('creatorpulse_plugins', JSON.stringify(updatedPlugins));
+            // Trigger server toggle sync for plugins
+            pluginsToEnable.forEach(id => {
+              fetch('/api/admin/plugins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'toggle', pluginId: id, isEnabled: true })
+              }).catch(() => {});
+            });
+          } else {
+            return {
+              success: false,
+              error: `Cannot activate theme "${target.name}" because dependency plugin(s) (${depNames}) are disabled.`
+            };
+          }
+        }
+      }
+    }
+
+    // Pre-activation Override & Fallback validation check
+    const overrideValidation = themeRegistry.validateThemeOverrides(target);
+    if (!overrideValidation.isValid) {
+      return {
+        success: false,
+        error: `Cannot activate theme "${target.name}". Override validation failed: ${overrideValidation.errors.join('; ')}`
+      };
+    }
+
     setActiveThemeId(themeId);
     localStorage.setItem(STORAGE_ACTIVE_THEME_ID, themeId);
 
@@ -358,10 +439,31 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_ACTIVATED',
       entityType: 'theme',
       entityName: target.name,
-      details: `Activated frontend theme v${target.version} (${target.category})`,
+      details: `Activated frontend theme v${target.version} (${target.category}). Overrides: ${overrideValidation.summary.totalOverridden} custom items, ${overrideValidation.summary.totalFallback} default fallbacks.`,
       severity: 'success'
     });
     return { success: true };
+  };
+
+  const validateThemeOverrides = (themeId: string): ThemeOverrideValidationResult => {
+    const target = themes.find((t) => t.id === themeId);
+    if (!target) {
+      return {
+        isValid: false,
+        themeId,
+        themeSlug: themeId,
+        themeName: 'Unknown Theme',
+        overrides: { pages: [], layouts: [], components: [] },
+        summary: { totalOverridden: 0, totalFallback: 0, hasErrors: true },
+        errors: ['Theme not found in registry'],
+        warnings: [],
+      };
+    }
+    return themeRegistry.validateThemeOverrides(target);
+  };
+
+  const getThemeOverrideReport = (themeId: string): ThemeOverrideValidationResult => {
+    return validateThemeOverrides(themeId);
   };
 
   const deactivateTheme = (themeId: string) => {
@@ -823,6 +925,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         exportTheme,
         previewTheme,
         setPreviewTheme,
+        validateThemeOverrides,
+        getThemeOverrideReport,
         checkForUpdates,
         isCheckingUpdates,
         lastUpdateCheck,
