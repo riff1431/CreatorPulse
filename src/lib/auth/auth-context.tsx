@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const COOKIE_ROLE_KEY = 'creatorpulse_role';
 const COOKIE_SESSION_KEY = 'creatorpulse_session';
+const COOKIE_PROFILE_KEY = 'creatorpulse_user_profile';
 const STORAGE_USER_KEY = 'creatorpulse_auth_user';
 const STORAGE_ROLE_KEY = 'creatorpulse_active_role';
 
@@ -48,17 +49,36 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure`;
 }
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{
+  children: ReactNode;
+  initialUser?: UserProfile | null;
+  initialRole?: UserRole;
+}> = ({
+  children,
+  initialUser = null,
+  initialRole = 'guest'
+}) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [role, setRole] = useState<UserRole>('member');
+  const [user, setUser] = useState<UserProfile | null>(initialUser);
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(initialUser === null && initialRole === 'guest' ? false : !initialUser);
+
+  const syncCookiesAndStorage = (userProfile: UserProfile, rememberMe = true) => {
+    const days = rememberMe ? 30 : undefined;
+    setCookie(COOKIE_ROLE_KEY, userProfile.role, days);
+    setCookie(COOKIE_SESSION_KEY, userProfile.id, days);
+    setCookie(COOKIE_PROFILE_KEY, encodeURIComponent(JSON.stringify(userProfile)), days);
+    deleteCookie('creatorpulse_logged_out');
+    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userProfile));
+    localStorage.setItem(STORAGE_ROLE_KEY, userProfile.role);
+  };
 
   const clearLocalSession = () => {
     deleteCookie(COOKIE_ROLE_KEY);
     deleteCookie(COOKIE_SESSION_KEY);
+    deleteCookie(COOKIE_PROFILE_KEY);
     localStorage.removeItem(STORAGE_USER_KEY);
     localStorage.removeItem(STORAGE_ROLE_KEY);
   };
@@ -87,8 +107,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(async (event, session) => {
-        setIsLoading(true);
         if (session?.user) {
+          // If we already have the matching user hydrated from SSR, skip re-fetching
+          if (user && user.id === session.user.id) {
+            setIsLoading(false);
+            return;
+          }
+
+          setIsLoading(true);
           try {
             const { data: profile, error } = await supabase
               .from('profiles')
@@ -129,15 +155,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
               setUser(userProfile);
               setRole(userProfile.role);
-              localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userProfile));
-              localStorage.setItem(STORAGE_ROLE_KEY, userProfile.role);
-              setCookie(COOKIE_ROLE_KEY, userProfile.role, 30); // Default cookie refresh
-              setCookie(COOKIE_SESSION_KEY, userProfile.id, 30);
+              syncCookiesAndStorage(userProfile, true);
             }
           } catch (e) {
             console.error('Auth sync exception', e);
           }
         } else {
+          // Check if a mock session is currently active
+          const sessionCookieVal = document.cookie.split('; ').find(row => row.trim().startsWith('creatorpulse_session='))?.split('=')[1];
+          const storedUser = localStorage.getItem(STORAGE_USER_KEY);
+
+          if (sessionCookieVal && sessionCookieVal.startsWith('user-') && storedUser) {
+            try {
+              const parsed = JSON.parse(storedUser) as UserProfile;
+              setUser(parsed);
+              setRole(parsed.role || 'member');
+              setIsLoading(false);
+              return;
+            } catch (e) {}
+          }
+
           setUser(null);
           setRole('guest');
           clearLocalSession();
@@ -166,8 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             setUser(parsed);
             setRole(parsed.role || storedRole || 'member');
-            setCookie(COOKIE_ROLE_KEY, parsed.role || storedRole || 'member');
-            setCookie(COOKIE_SESSION_KEY, parsed.id);
+            syncCookiesAndStorage(parsed, true);
           }
         } else if (storedRole) {
           const fallback = storedRole === 'admin'
@@ -187,18 +223,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             setUser(fallback);
             setRole(storedRole);
-            setCookie(COOKIE_ROLE_KEY, storedRole);
-            setCookie(COOKIE_SESSION_KEY, fallback.id);
+            syncCookiesAndStorage(fallback, true);
           }
         } else {
-          // Default setup for sandbox exploration
-          const defaultMember = MOCK_USERS['user-member'];
-          setUser(defaultMember);
-          setRole('member');
-          setCookie(COOKIE_ROLE_KEY, 'member');
-          setCookie(COOKIE_SESSION_KEY, defaultMember.id);
-          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(defaultMember));
-          localStorage.setItem(STORAGE_ROLE_KEY, 'member');
+          // If we explicitly logged out, remain guest. Otherwise auto-login as member for sandbox.
+          const loggedOut = document.cookie.split('; ').find(row => row.trim().startsWith('creatorpulse_logged_out='))?.split('=')[1];
+          if (loggedOut === 'true') {
+            setUser(null);
+            setRole('guest');
+          } else {
+            const defaultMember = MOCK_USERS['user-member'];
+            setUser(defaultMember);
+            setRole('member');
+            syncCookiesAndStorage(defaultMember, true);
+          }
         }
       } catch (e) {
         console.error('Failed to parse local auth state', e);
@@ -222,10 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             : MOCK_USERS['user-member'];
 
           setUser(fallbackUser);
-          setCookie(COOKIE_ROLE_KEY, newRole);
-          setCookie(COOKIE_SESSION_KEY, fallbackUser.id);
-          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(fallbackUser));
-          localStorage.setItem(STORAGE_ROLE_KEY, newRole);
+          syncCookiesAndStorage(fallbackUser, true);
         }
       };
 
@@ -238,7 +273,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string, rememberMe = true): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
     setIsLoading(true);
-    const cookieDays = rememberMe ? 30 : undefined; // undefined results in browser session-scoped cookie
+    const cookieDays = rememberMe ? 30 : undefined;
 
     if (isSupabaseConfigured()) {
       const supabase = createClient();
@@ -253,10 +288,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (authedUser && !localErr) {
             setUser(authedUser);
             setRole(authedUser.role);
-            localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(authedUser));
-            localStorage.setItem(STORAGE_ROLE_KEY, authedUser.role);
-            setCookie(COOKIE_ROLE_KEY, authedUser.role, cookieDays);
-            setCookie(COOKIE_SESSION_KEY, authedUser.id, cookieDays);
+            syncCookiesAndStorage(authedUser, rememberMe);
             setIsLoading(false);
             return { success: true, user: authedUser };
           }
@@ -301,10 +333,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setUser(userProfile);
         setRole(userProfile.role);
-        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userProfile));
-        localStorage.setItem(STORAGE_ROLE_KEY, userProfile.role);
-        setCookie(COOKIE_ROLE_KEY, userProfile.role, cookieDays);
-        setCookie(COOKIE_SESSION_KEY, userProfile.id, cookieDays);
+        syncCookiesAndStorage(userProfile, rememberMe);
 
         setIsLoading(false);
         return { success: true, user: userProfile };
@@ -325,10 +354,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setUser(authedUser);
         setRole(authedUser.role);
-        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(authedUser));
-        localStorage.setItem(STORAGE_ROLE_KEY, authedUser.role);
-        setCookie(COOKIE_ROLE_KEY, authedUser.role, cookieDays);
-        setCookie(COOKIE_SESSION_KEY, authedUser.id, cookieDays);
+        syncCookiesAndStorage(authedUser, rememberMe);
 
         window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: authedUser.role }));
         setIsLoading(false);
@@ -355,7 +381,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!supabase) return { success: false, error: 'Supabase client failed to load.' };
 
       try {
-        // Enforce signup role restrictions on client level (only creator and member registers allowed)
         const allowedSignupRole = userRole === 'creator' ? 'creator' : 'member';
 
         const { data, error } = await supabase.auth.signUp({
@@ -377,12 +402,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (!data.session) {
-          // Email confirmation is enabled in Supabase, user needs to verify first
           setIsLoading(false);
-          return { success: true, error: 'Check email' }; // Special signal that registration succeeded but requires verification
+          return { success: true, error: 'Check email' };
         }
 
-        // If directly logged in
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -406,10 +429,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           setUser(userProfile);
           setRole(userProfile.role);
-          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userProfile));
-          localStorage.setItem(STORAGE_ROLE_KEY, userProfile.role);
-          setCookie(COOKIE_ROLE_KEY, userProfile.role, 30);
-          setCookie(COOKIE_SESSION_KEY, userProfile.id, 30);
+          syncCookiesAndStorage(userProfile, true);
           setIsLoading(false);
           return { success: true, user: userProfile };
         }
@@ -421,17 +441,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: false, error: err instanceof Error ? err.message : 'Registration error.' };
       }
     } else {
-      // Local fallback signup
       try {
         await new Promise((res) => setTimeout(res, 500));
         const registered = registerAccount(fullName, username, email, password, userRole, category);
 
         setUser(registered);
         setRole(registered.role);
-        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(registered));
-        localStorage.setItem(STORAGE_ROLE_KEY, registered.role);
-        setCookie(COOKIE_ROLE_KEY, registered.role, 30);
-        setCookie(COOKIE_SESSION_KEY, registered.id, 30);
+        syncCookiesAndStorage(registered, true);
 
         window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: registered.role }));
         setIsLoading(false);
@@ -453,6 +469,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     clearLocalSession();
+    setCookie('creatorpulse_logged_out', 'true', 30);
     setUser(null);
     setRole('guest');
 
@@ -482,10 +499,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setUser(roleUser);
     setRole(newRole);
-    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(roleUser));
-    localStorage.setItem(STORAGE_ROLE_KEY, newRole);
-    setCookie(COOKIE_ROLE_KEY, newRole);
-    setCookie(COOKIE_SESSION_KEY, roleUser.id);
+    syncCookiesAndStorage(roleUser, true);
     window.dispatchEvent(new CustomEvent('creatorpulse_role_changed', { detail: newRole }));
   };
 

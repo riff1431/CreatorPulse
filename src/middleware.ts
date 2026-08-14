@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { AUTH_ACCOUNTS } from "./lib/auth/users";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -35,6 +36,10 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  const sessionCookie = request.cookies.get('creatorpulse_session')?.value;
+  const roleCookie = request.cookies.get('creatorpulse_role')?.value;
+  const isMockSession = Boolean(sessionCookie && sessionCookie.startsWith('user-'));
+
   if (isSupabaseConfigured()) {
     // ==========================================
     // LIVE SUPABASE AUTH GUARD
@@ -62,33 +67,47 @@ export async function middleware(request: NextRequest) {
 
     // Retrieve authenticated user
     const { data: { user } } = await supabase.auth.getUser();
-
-    // Check if they are logged in via local mock fallback (e.g. for test credentials)
-    const sessionCookie = request.cookies.get('creatorpulse_session')?.value;
-    const roleCookie = request.cookies.get('creatorpulse_role')?.value;
-    const isMockSession = sessionCookie && ['user-admin', 'user-superadmin', 'user-moderator', 'user-creator-1', 'user-creator-2', 'user-member', 'user-suspended'].includes(sessionCookie);
+    const isAuthenticated = Boolean(user || isMockSession);
 
     // Guard login/signup from authenticated users
-    if ((user || isMockSession) && isAuthRoute) {
-      const activeRole = roleCookie || 'member';
+    if (isAuthenticated && isAuthRoute) {
+      let userRole = 'member';
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        userRole = profile?.role || 'member';
+      } else {
+        const profileCookieVal = request.cookies.get('creatorpulse_user_profile')?.value;
+        let mockProfile = null;
+        if (profileCookieVal) {
+          try {
+            mockProfile = JSON.parse(decodeURIComponent(profileCookieVal));
+          } catch (e) {}
+        }
+        userRole = mockProfile?.role || roleCookie || 'member';
+      }
+
       let dest = '/feed';
-      if (activeRole === 'admin' || activeRole === 'super_admin') {
+      if (userRole === 'admin' || userRole === 'super_admin') {
         dest = '/admin/dashboard';
-      } else if (activeRole === 'creator') {
+      } else if (userRole === 'creator') {
         dest = '/creator/dashboard';
       }
       return NextResponse.redirect(new URL(dest, request.url));
     }
 
     // Guard protected app views from guest users
-    if (!user && !isMockSession && !isAuthRoute && !isLandingPage) {
+    if (!isAuthenticated && !isAuthRoute && !isLandingPage) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     // Perform role-based check for active users
-    if ((user || isMockSession) && !isLandingPage && !isAuthRoute) {
+    if (isAuthenticated && !isLandingPage && !isAuthRoute) {
       let userRole = 'member';
       let userStatus = 'active';
 
@@ -101,9 +120,26 @@ export async function middleware(request: NextRequest) {
         userRole = profile?.role || 'member';
         userStatus = profile?.status || 'active';
       } else {
-        userRole = roleCookie || 'member';
-        if (sessionCookie === 'user-suspended') {
-          userStatus = 'suspended';
+        // Read role from user profile cookie or AUTH_ACCOUNTS to prevent role spoofing
+        const profileCookieVal = request.cookies.get('creatorpulse_user_profile')?.value;
+        let mockProfile = null;
+        if (profileCookieVal) {
+          try {
+            mockProfile = JSON.parse(decodeURIComponent(profileCookieVal));
+          } catch (e) {}
+        }
+
+        if (mockProfile && mockProfile.id === sessionCookie) {
+          userRole = mockProfile.role || 'member';
+          userStatus = mockProfile.status || 'active';
+        } else {
+          const matchedAccount = Object.values(AUTH_ACCOUNTS).find(u => u.id === sessionCookie);
+          if (matchedAccount) {
+            userRole = matchedAccount.role || 'member';
+            userStatus = matchedAccount.status || 'active';
+          } else {
+            userRole = roleCookie || 'member';
+          }
         }
       }
 
@@ -117,6 +153,7 @@ export async function middleware(request: NextRequest) {
         const blockResponse = NextResponse.redirect(loginUrl);
         blockResponse.cookies.delete('creatorpulse_role');
         blockResponse.cookies.delete('creatorpulse_session');
+        blockResponse.cookies.delete('creatorpulse_user_profile');
         return blockResponse;
       }
 
@@ -138,49 +175,83 @@ export async function middleware(request: NextRequest) {
     // ==========================================
     // MOCK REACTIVE AUTH ENGINE GUARD (SANDBOX)
     // ==========================================
-    const sessionCookie = request.cookies.get('creatorpulse_session')?.value;
-    const roleCookie = request.cookies.get('creatorpulse_role')?.value || 'guest';
+    const isAuthenticated = isMockSession;
 
     // Guard login/signup from authenticated users
-    if (sessionCookie && isAuthRoute) {
+    if (isAuthenticated && isAuthRoute) {
+      const profileCookieVal = request.cookies.get('creatorpulse_user_profile')?.value;
+      let mockProfile = null;
+      if (profileCookieVal) {
+        try {
+          mockProfile = JSON.parse(decodeURIComponent(profileCookieVal));
+        } catch (e) {}
+      }
+      const userRole = mockProfile?.role || roleCookie || 'member';
+
       let dest = '/feed';
-      if (roleCookie === 'admin' || roleCookie === 'super_admin') {
+      if (userRole === 'admin' || userRole === 'super_admin') {
         dest = '/admin/dashboard';
-      } else if (roleCookie === 'creator') {
+      } else if (userRole === 'creator') {
         dest = '/creator/dashboard';
       }
       return NextResponse.redirect(new URL(dest, request.url));
     }
 
     // Guard protected app views from guest users
-    if (!sessionCookie && !isAuthRoute && !isLandingPage) {
+    if (!isAuthenticated && !isAuthRoute && !isLandingPage) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     // Role restrictions for mock session
-    if (sessionCookie && !isLandingPage && !isAuthRoute) {
-      // Mock account status check (e.g. check ID of the suspended mock user)
-      if (sessionCookie === 'user-suspended') {
+    if (isAuthenticated && !isLandingPage && !isAuthRoute) {
+      let userRole = 'member';
+      let userStatus = 'active';
+
+      // Read role from user profile cookie or AUTH_ACCOUNTS to prevent role spoofing
+      const profileCookieVal = request.cookies.get('creatorpulse_user_profile')?.value;
+      let mockProfile = null;
+      if (profileCookieVal) {
+        try {
+          mockProfile = JSON.parse(decodeURIComponent(profileCookieVal));
+        } catch (e) {}
+      }
+
+      if (mockProfile && mockProfile.id === sessionCookie) {
+        userRole = mockProfile.role || 'member';
+        userStatus = mockProfile.status || 'active';
+      } else {
+        const matchedAccount = Object.values(AUTH_ACCOUNTS).find(u => u.id === sessionCookie);
+        if (matchedAccount) {
+          userRole = matchedAccount.role || 'member';
+          userStatus = matchedAccount.status || 'active';
+        } else {
+          userRole = roleCookie || 'member';
+        }
+      }
+
+      // Mock account status check
+      if (userStatus === 'suspended' || userStatus === 'banned') {
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('reason', 'blocked');
         const blockResponse = NextResponse.redirect(loginUrl);
         blockResponse.cookies.delete('creatorpulse_role');
         blockResponse.cookies.delete('creatorpulse_session');
+        blockResponse.cookies.delete('creatorpulse_user_profile');
         return blockResponse;
       }
 
       // Restrict Admin portal
       if (pathname.startsWith('/admin')) {
-        if (roleCookie !== 'admin' && roleCookie !== 'super_admin') {
+        if (userRole !== 'admin' && userRole !== 'super_admin') {
           return NextResponse.redirect(new URL('/feed?reason=unauthorized', request.url));
         }
       }
 
       // Restrict Creator portal
       if (pathname.startsWith('/creator')) {
-        if (roleCookie !== 'creator' && roleCookie !== 'admin' && roleCookie !== 'super_admin') {
+        if (userRole !== 'creator' && userRole !== 'admin' && userRole !== 'super_admin') {
           return NextResponse.redirect(new URL('/feed?reason=unauthorized', request.url));
         }
       }

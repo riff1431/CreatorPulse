@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { GuestGuard } from '@/components/auth/RouteGuards';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Sparkles, Mail, Lock, ArrowRight, ShieldCheck, UserCheck, 
@@ -301,15 +302,17 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-[#FFF9FC] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777] relative">
-      <div className="absolute w-96 h-96 bg-[#FCE7F3]/60 rounded-full blur-[140px] pointer-events-none"></div>
-      <Suspense fallback={
-        <div className="p-8 text-center text-xs text-[#71717A] font-bold">
-          Loading login portal...
-        </div>
-      }>
-        <LoginFormContent />
-      </Suspense>
-    </div>
+    <GuestGuard>
+      <div className="min-h-screen bg-[#FFF9FC] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777] relative">
+        <div className="absolute w-96 h-96 bg-[#FCE7F3]/60 rounded-full blur-[140px] pointer-events-none"></div>
+        <Suspense fallback={
+          <div className="p-8 text-center text-xs text-[#71717A] font-bold">
+            Loading login portal...
+          </div>
+        }>
+          <LoginFormContent />
+        </Suspense>
+      </div>
+    </GuestGuard>
   );
 }

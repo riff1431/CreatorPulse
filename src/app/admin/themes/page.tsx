@@ -6,7 +6,8 @@ import {
   Palette, Upload, Check, Download, RotateCcw, Trash2, Sliders,
   ExternalLink, ShieldCheck, Info, X, CheckCircle2, AlertTriangle,
   Layers, Eye, Copy, RefreshCw, Lock, Heart, MessageSquare, Star,
-  BookOpen, Terminal, Plus, Search, Sparkles, SlidersHorizontal, Image as ImageIcon
+  BookOpen, Terminal, Plus, Search, Sparkles, SlidersHorizontal, Image as ImageIcon,
+  Key, ShieldAlert, CheckCircle, ArrowRight, ArrowUpDown
 } from 'lucide-react';
 import { useTheme } from '@/lib/extensions/theme-engine';
 import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from '@/lib/extensions/theme-types';
@@ -21,6 +22,7 @@ export default function AdminThemesPage() {
     activeTheme,
     libraryThemes,
     activateTheme,
+    activateThemeWithLicense,
     deactivateTheme,
     updateThemeVersion,
     installTheme,
@@ -32,17 +34,31 @@ export default function AdminThemesPage() {
     exportTheme
   } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'installed' | 'active' | 'inactive' | 'updates' | 'library'>('installed');
+  // Navigation Tabs: 'installed' | 'activation' | 'updates' | 'library'
+  const [activeTab, setActiveTab] = useState<'installed' | 'activation' | 'updates' | 'library'>('installed');
+  
+  // Search, Filter & Sort
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'newest' | 'category'>('name_asc');
 
-  // Modals
+  // Modals & Drawers
   const [selectedThemeForDetails, setSelectedThemeForDetails] = useState<ThemeManifest | null>(null);
   const [customizerTheme, setCustomizerTheme] = useState<ThemeManifest | null>(null);
   const [livePreviewTheme, setLivePreviewTheme] = useState<ThemeManifest | null>(null);
   const [previewTab, setPreviewTab] = useState<'feed' | 'profile' | 'landing'>('feed');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+
+  // License & Activation Modal
+  const [licenseTargetTheme, setLicenseTargetTheme] = useState<ThemeManifest | null>(null);
+  const [licenseInputKey, setLicenseInputKey] = useState('');
+  const [activationError, setActivationError] = useState('');
+  const [activationSuccess, setActivationSuccess] = useState(false);
+
+  // Delete Confirmation Modal
+  const [themeToDelete, setThemeToDelete] = useState<ThemeManifest | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   // Upload state
   const [uploadText, setUploadText] = useState('');
@@ -115,6 +131,46 @@ export default function AdminThemesPage() {
     }
   };
 
+  const handleOpenActivation = (theme: ThemeManifest) => {
+    setLicenseTargetTheme(theme);
+    setLicenseInputKey(theme.licenseKey || '');
+    setActivationError('');
+    setActivationSuccess(false);
+  };
+
+  const handleConfirmActivation = () => {
+    if (!licenseTargetTheme) return;
+    setActivationError('');
+    setActivationSuccess(false);
+
+    const result = activateThemeWithLicense(licenseTargetTheme.id, licenseInputKey);
+    if (!result.success) {
+      setActivationError(result.error || 'Failed to activate theme.');
+      return;
+    }
+
+    setActivationSuccess(true);
+    triggerNotice(`Activated theme "${licenseTargetTheme.name}" successfully!`);
+    setTimeout(() => {
+      setLicenseTargetTheme(null);
+      setActivationSuccess(false);
+    }, 1200);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!themeToDelete) return;
+    setDeleteErrorMessage('');
+
+    const res = deleteTheme(themeToDelete.id);
+    if (!res.success) {
+      setDeleteErrorMessage(res.error || 'Failed to delete theme.');
+      return;
+    }
+
+    triggerNotice(`Theme "${themeToDelete.name}" deleted successfully.`);
+    setThemeToDelete(null);
+  };
+
   const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
     setUploadSuccess(false);
@@ -140,10 +196,11 @@ export default function AdminThemesPage() {
 
         installTheme(result.theme);
         setUploadSuccess(true);
-        triggerNotice(`Installed theme "${result.theme.name}"!`);
+        triggerNotice(`Installed theme "${result.theme.name}"! Opening Activation view...`);
         setTimeout(() => {
           setIsUploadOpen(false);
           setUploadSuccess(false);
+          setActiveTab('activation');
         }, 1200);
       } catch (err: any) {
         setUploadError('Invalid file format. Please upload a valid JSON theme manifest or ZIP package.');
@@ -170,11 +227,12 @@ export default function AdminThemesPage() {
 
       installTheme(result.theme);
       setUploadSuccess(true);
-      triggerNotice(`Installed theme "${result.theme.name}"!`);
+      triggerNotice(`Installed theme "${result.theme.name}"! Opening Activation view...`);
       setTimeout(() => {
         setIsUploadOpen(false);
         setUploadSuccess(false);
         setUploadText('');
+        setActiveTab('activation');
       }, 1200);
     } catch (e: any) {
       setUploadError('JSON syntax error: ' + e.message);
@@ -206,6 +264,8 @@ export default function AdminThemesPage() {
       category: 'Modern Light',
       tags: ['Starter', 'SDK v1.0', 'Template'],
       minAppVersion: '1.0.0',
+      requiresLicense: true,
+      licenseKey: 'CP-THEME-DEMO-2026-OK',
       tokens: {
         primary: '#EC4899',
         primaryHover: '#DB2777',
@@ -248,34 +308,47 @@ export default function AdminThemesPage() {
     triggerNotice('Downloaded CreatorPulse Theme SDK v1.0 Starter Template!');
   };
 
+  // Sort helper
+  const sortThemes = (list: ThemeManifest[]) => {
+    return [...list].sort((a, b) => {
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+      if (sortBy === 'newest') return (b.installedAt || '').localeCompare(a.installedAt || '');
+      if (sortBy === 'category') return a.category.localeCompare(b.category);
+      return 0;
+    });
+  };
+
   // Filter themes based on tab, search, and category
-  const filteredInstalledThemes = themes.filter((t) => {
-    if (activeTab === 'active' && t.id !== activeTheme.id) return false;
-    if (activeTab === 'inactive' && t.id === activeTheme.id) return false;
-    if (activeTab === 'updates' && !t.hasUpdate) return false;
+  const filteredInstalledThemes = sortThemes(
+    themes.filter((t) => {
+      if (activeTab === 'updates' && !t.hasUpdate) return false;
 
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch =
+        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    })
+  );
 
-  const filteredLibraryThemes = libraryThemes.filter((t) => {
-    const isAlreadyInstalled = themes.some((installed) => installed.id === t.id);
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredLibraryThemes = sortThemes(
+    libraryThemes.filter((t) => {
+      const isAlreadyInstalled = themes.some((installed) => installed.id === t.id);
+      const matchesSearch =
+        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
 
-    return !isAlreadyInstalled && matchesSearch && matchesCategory;
-  });
+      return !isAlreadyInstalled && matchesSearch && matchesCategory;
+    })
+  );
 
   const updateCount = themes.filter((t) => t.hasUpdate).length;
 
@@ -289,7 +362,7 @@ export default function AdminThemesPage() {
             <h1 className="text-2xl font-black text-[#18181B]">Theme Management</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Manage public and member visual styles. Built-in default: <strong className="text-[#BE185D]">Blush Core</strong>. Standard Theme SDK v1.0.
+            Manage frontend themes and visual styles. Active Theme: <strong className="text-[#BE185D]">{activeTheme.name}</strong>. Built-in default: <strong className="text-[#BE185D]">Blush Core</strong>.
           </p>
         </div>
 
@@ -334,27 +407,27 @@ export default function AdminThemesPage() {
           </div>
           <div>
             <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
-              <span>Admin Panel Isolation Guarantee</span>
+              <span>Frontend-Only Isolation Architecture</span>
               <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
                 Permanently Independent
               </span>
             </h4>
             <p className="text-[11px] text-[#71717A] mt-0.5">
-              Frontend themes exclusively control public website views, feeds, creator profiles, and member portals. The Admin Panel is permanently locked to standard administrative tokens.
+              Active themes exclusively style the public website, user feeds, creator profiles, and member portals. The Admin Panel is sandboxed to dedicated administrative tokens.
             </p>
           </div>
         </div>
 
         <Link href="/feed" target="_blank" className="shrink-0">
           <Button variant="outline" size="sm" leftIcon={<ExternalLink size={13} />}>
-            Open Public Website
+            View Live Public Site
           </Button>
         </Link>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* 4 Main Standard Navigation Sections */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#F3DCE8] pb-3">
-        <div className="flex items-center gap-2 text-xs font-bold">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
           <button
             onClick={() => setActiveTab('installed')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
@@ -363,38 +436,24 @@ export default function AdminThemesPage() {
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
-            <span>All Installed</span>
+            <span>Installed Themes</span>
             <span className="text-[10px] bg-white text-[#BE185D] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
               {themes.length}
             </span>
           </button>
 
           <button
-            onClick={() => setActiveTab('active')}
+            onClick={() => setActiveTab('activation')}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'active'
+              activeTab === 'activation'
                 ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Active</span>
+            <Key size={13} className="text-[#EC4899]" />
+            <span>Theme Activation</span>
             <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full border border-emerald-200">
               1 Active
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('inactive')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'inactive'
-                ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                : 'text-[#71717A] hover:text-[#18181B]'
-            }`}
-          >
-            <span>Inactive</span>
-            <span className="text-[10px] bg-[#FFF9FC] text-[#71717A] px-1.5 py-0.5 rounded-full border border-[#F3DCE8]">
-              {themes.length - 1}
             </span>
           </button>
 
@@ -425,14 +484,14 @@ export default function AdminThemesPage() {
             <Sparkles size={13} className="text-[#EC4899]" />
             <span>Theme Library</span>
             <span className="text-[10px] bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white px-1.5 py-0.5 rounded-full">
-              New
+              Discover
             </span>
           </button>
         </div>
 
-        {/* Search & Category Filter Bar */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-60">
+        {/* Search, Filter & Sort Bar */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-52">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
             <input
               type="text"
@@ -446,7 +505,7 @@ export default function AdminThemesPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
           >
             <option value="all">All Categories</option>
             <option value="Modern Light">Modern Light</option>
@@ -455,12 +514,22 @@ export default function AdminThemesPage() {
             <option value="Warm Vibrant">Warm Vibrant</option>
             <option value="Luxury Dark">Luxury Dark</option>
           </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-2.5 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+          >
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+            <option value="newest">Newest First</option>
+            <option value="category">By Category</option>
+          </select>
         </div>
       </div>
 
-      {/* Main Themes Content Area */}
-      {activeTab !== 'library' ? (
-        /* Installed Themes Grid */
+      {/* SECTION 1: INSTALLED THEMES & UPDATES */}
+      {(activeTab === 'installed' || activeTab === 'updates') && (
         <div className="space-y-4">
           {filteredInstalledThemes.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-[#F3DCE8] p-8 space-y-3">
@@ -469,7 +538,7 @@ export default function AdminThemesPage() {
               </div>
               <h3 className="font-bold text-sm text-[#18181B]">No Themes Found</h3>
               <p className="text-xs text-[#71717A] max-w-sm mx-auto">
-                No themes match the selected tab and filter criteria. You can browse the Theme Library to discover new aesthetics.
+                No installed themes match your search or filter. You can browse the Theme Library to discover and install new aesthetics.
               </p>
               <Button variant="primary" size="sm" onClick={() => setActiveTab('library')}>
                 Browse Theme Library
@@ -482,148 +551,136 @@ export default function AdminThemesPage() {
                 return (
                   <Card
                     key={theme.id}
-                    className={`p-0 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-[#EC4899]/10 ${
+                    className={`p-0 overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-xl ${
                       isActive ? 'border-2 border-[#EC4899] ring-2 ring-[#EC4899]/20' : 'hover:border-[#F472B6]/50'
                     }`}
                   >
-                    {/* Thumbnail Header */}
-                    <div className="relative h-40 w-full overflow-hidden bg-slate-900 group">
-                      <img
-                        src={theme.previewImageUrl}
-                        alt={theme.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div>
+                      {/* Card Thumbnail */}
+                      <div className="relative h-40 w-full overflow-hidden bg-slate-900 group">
+                        <img
+                          src={theme.previewImageUrl}
+                          alt={theme.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
-                      <div className="absolute top-3 left-3 flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
-                          {theme.category}
-                        </span>
-                        {theme.isDefault && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
-                            <Lock size={9} /> Built-in Default
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                            {theme.category}
                           </span>
+                          {theme.isDefault && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
+                              <Lock size={9} /> Default
+                            </span>
+                          )}
+                          {theme.isCustom && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
+                              Custom
+                            </span>
+                          )}
+                        </div>
+
+                        {isActive && (
+                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
+                            <Check size={12} strokeWidth={3} /> Active
+                          </div>
                         )}
-                        {theme.isCustom && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
-                            Custom
-                          </span>
-                        )}
+
+                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+                          <div>
+                            <h4 className="font-extrabold text-sm text-white drop-shadow-sm">{theme.name}</h4>
+                            <p className="text-[10px] text-white/80 font-medium">By {theme.author}</p>
+                          </div>
+                          <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">v{theme.version}</span>
+                        </div>
                       </div>
 
-                      {isActive && (
-                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
-                          <Check size={12} strokeWidth={3} /> Active Theme
-                        </div>
-                      )}
+                      {/* Details & Token Preview */}
+                      <div className="p-4 space-y-3">
+                        <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
 
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-                        <div>
-                          <h4 className="font-extrabold text-sm text-white drop-shadow-sm">{theme.name}</h4>
-                          <p className="text-[10px] text-white/80 font-medium">By {theme.author}</p>
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <div className="h-3.5 flex-1 rounded" style={{ backgroundColor: theme.tokens.primary }} title={`Primary: ${theme.tokens.primary}`} />
+                          <div className="h-3.5 flex-1 rounded" style={{ backgroundColor: theme.tokens.accent }} title={`Accent: ${theme.tokens.accent}`} />
+                          <div className="h-3.5 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} title={`Background: ${theme.tokens.background}`} />
+                          <div className="h-3.5 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} title={`Surface: ${theme.tokens.surface}`} />
+                          <span className="text-[10px] text-[#A1A1AA] font-mono ml-1">{theme.tokens.isDark ? '🌙 Dark' : '☀️ Light'}</span>
                         </div>
-                        <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">v{theme.version}</span>
                       </div>
                     </div>
 
-                    {/* Body Details */}
-                    <div className="p-4 space-y-4 flex-1 flex flex-col justify-between">
-                      <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
-
-                      {/* Token Color Bar Preview */}
-                      <div className="flex items-center gap-1.5 pt-1">
-                        <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.primary }} title={`Primary: ${theme.tokens.primary}`} />
-                        <div className="h-4 flex-1 rounded-md" style={{ backgroundColor: theme.tokens.accent }} title={`Accent: ${theme.tokens.accent}`} />
-                        <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} title={`Background: ${theme.tokens.background}`} />
-                        <div className="h-4 flex-1 rounded-md border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} title={`Surface: ${theme.tokens.surface}`} />
-                        <span className="text-[10px] text-[#A1A1AA] font-mono ml-1">{theme.tokens.isDark ? '🌙 Dark' : '☀️ Light'}</span>
-                      </div>
-
-                      {/* Action Controls */}
+                    {/* Actions Footer */}
+                    <div className="p-4 pt-0">
                       <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#F3DCE8]">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setLivePreviewTheme(theme)}
-                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
                             title="Live Preview"
                           >
                             <Eye size={15} />
                           </button>
                           <button
                             onClick={() => openCustomizer(theme)}
-                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                            title="Configure & Customize Tokens"
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Configure & Customize"
                           >
                             <Sliders size={15} />
                           </button>
                           <button
                             onClick={() => handleDuplicate(theme)}
-                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
                             title="Duplicate Theme"
                           >
                             <Copy size={15} />
                           </button>
                           <button
                             onClick={() => handleExportTheme(theme)}
-                            className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                            title="Export JSON Manifest"
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            title="Export JSON"
                           >
                             <Download size={15} />
                           </button>
                           <button
                             onClick={() => setSelectedThemeForDetails(theme)}
-                            className="p-2 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
                             title="Specs & Changelog"
                           >
                             <Info size={15} />
                           </button>
-                          {!theme.isDefault && (
-                            <button
-                              onClick={() => deleteTheme(theme.id)}
-                              className="p-2 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
-                              title="Delete Custom Theme"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              setDeleteErrorMessage('');
+                              setThemeToDelete(theme);
+                            }}
+                            className="p-1.5 rounded-xl text-[#71717A] hover:text-[#F43F5E] hover:bg-[#FFE4E6] transition-colors cursor-pointer"
+                            title="Delete Theme"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
 
                         {!isActive ? (
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => {
-                              activateTheme(theme.id);
-                              triggerNotice(`Activated theme "${theme.name}"!`);
-                            }}
+                            onClick={() => handleOpenActivation(theme)}
                           >
                             Activate
                           </Button>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                deactivateTheme(theme.id);
-                                triggerNotice(`Deactivated "${theme.name}", reverted to Blush Core default.`);
-                              }}
-                              disabled={theme.id === 'theme-blush-core'}
-                            >
-                              Deactivate
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                rollbackTheme(theme.id);
-                                triggerNotice(`Reset ${theme.name} to default tokens.`);
-                              }}
-                              leftIcon={<RotateCcw size={12} />}
-                            >
-                              Reset
-                            </Button>
-                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              deactivateTheme(theme.id);
+                              triggerNotice(`Deactivated "${theme.name}", rolled back to Blush Core.`);
+                            }}
+                            disabled={theme.id === 'theme-blush-core'}
+                          >
+                            Deactivate
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -633,8 +690,107 @@ export default function AdminThemesPage() {
             </div>
           )}
         </div>
-      ) : (
-        /* Theme Library / Discovery Marketplace */
+      )}
+
+      {/* SECTION 2: DEDICATED THEME ACTIVATION VIEW */}
+      {activeTab === 'activation' && (
+        <div className="space-y-6">
+          <div className="p-5 bg-white border border-[#F3DCE8] rounded-3xl shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#18181B]">Dedicated Theme Activation & Licensing Center</h3>
+                  <p className="text-xs text-[#71717A]">
+                    Activate installed frontend themes with license key validation. Only 1 theme can be active at a time.
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                <CheckCircle size={14} /> Currently Active: {activeTheme.name}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {themes.map((theme) => {
+                const isActive = theme.id === activeTheme.id;
+                return (
+                  <div
+                    key={theme.id}
+                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                      isActive
+                        ? 'bg-[#FFF1F7] border-[#EC4899] shadow-sm'
+                        : 'bg-[#FFF9FC] border-[#F3DCE8] hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={theme.previewImageUrl}
+                        alt={theme.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-[#F3DCE8]"
+                      />
+                      <div>
+                        <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-1.5">
+                          <span>{theme.name}</span>
+                          {isActive && (
+                            <span className="text-[9px] font-extrabold text-[#EC4899] bg-white px-1.5 py-0.5 rounded border border-[#FBCFE8]">
+                              ACTIVE
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-[11px] text-[#71717A]">v{theme.version} • {theme.category}</p>
+                        {theme.licenseKey && (
+                          <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
+                            License: ••••••••{theme.licenseKey.slice(-4)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setLivePreviewTheme(theme)}
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-white transition-colors cursor-pointer text-xs font-bold flex items-center gap-1"
+                      >
+                        <Eye size={14} />
+                      </button>
+
+                      {isActive ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={theme.id === 'theme-blush-core'}
+                          onClick={() => {
+                            deactivateTheme(theme.id);
+                            triggerNotice(`Reverted to Blush Core default theme.`);
+                          }}
+                        >
+                          Deactivate
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleOpenActivation(theme)}
+                          leftIcon={<Key size={13} />}
+                        >
+                          Activate
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 4: THEME LIBRARY / DISCOVERY HUB */}
+      {activeTab === 'library' && (
         <div className="space-y-4">
           <div className="p-4 bg-gradient-to-r from-[#FFF1F7] to-white border border-[#FBCFE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
@@ -642,9 +798,9 @@ export default function AdminThemesPage() {
                 <Sparkles size={20} />
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[#18181B]">Official Theme Library & Discovery Hub</h4>
+                <h4 className="font-bold text-xs text-[#18181B]">CreatorPulse Official Theme Library & Marketplace</h4>
                 <p className="text-[11px] text-[#71717A] mt-0.5">
-                  Browse and install verified creator-platform themes with 1-click. All themes are 100% manifest-compliant with Theme SDK v1.0.
+                  Browse and install verified creator-platform themes with 1-click. Installing routes newly added themes directly to Activation.
                 </p>
               </div>
             </div>
@@ -708,7 +864,8 @@ export default function AdminThemesPage() {
                     size="sm"
                     onClick={() => {
                       installFromLibrary(theme.id);
-                      triggerNotice(`Installed theme "${theme.name}"! You can now activate and configure it.`);
+                      triggerNotice(`Installed theme "${theme.name}"! Opening Activation...`);
+                      setActiveTab('activation');
                     }}
                     leftIcon={<Plus size={13} />}
                   >
@@ -721,7 +878,130 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Live Frontend Viewport Preview Modal */}
+      {/* MODAL 1: LICENSE ACTIVATION MODAL */}
+      {licenseTargetTheme && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">Activate {licenseTargetTheme.name}</h3>
+                  <p className="text-xs text-[#71717A]">Theme License & Version Verification</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLicenseTargetTheme(null)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {activationSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2 font-bold">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>Theme successfully verified and activated as active frontend theme!</span>
+              </div>
+            )}
+
+            {activationError && (
+              <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-2xl text-xs text-[#BE123C] flex items-center gap-2 font-medium">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{activationError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center gap-3 p-3 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8]">
+                <img
+                  src={licenseTargetTheme.previewImageUrl}
+                  alt={licenseTargetTheme.name}
+                  className="w-12 h-12 rounded-xl object-cover border border-[#F3DCE8]"
+                />
+                <div>
+                  <h4 className="font-bold text-xs text-[#18181B]">{licenseTargetTheme.name} v{licenseTargetTheme.version}</h4>
+                  <p className="text-[11px] text-[#71717A]">Category: {licenseTargetTheme.category}</p>
+                  <p className="text-[11px] text-[#71717A]">By: {licenseTargetTheme.author}</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-bold text-[#18181B]">License Key / Purchase Code</label>
+                <input
+                  type="text"
+                  placeholder="e.g. CP-THEME-7X89-KL22-901B"
+                  value={licenseInputKey}
+                  onChange={(e) => setLicenseInputKey(e.target.value)}
+                  className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899]"
+                />
+                <p className="text-[10px] text-[#A1A1AA]">
+                  Required for premium and custom third-party themes. Enter any valid license code to activate.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8]">
+              <Button variant="ghost" size="sm" onClick={() => setLicenseTargetTheme(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleConfirmActivation} leftIcon={<Check size={14} />}>
+                Verify & Activate Theme
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: DELETE CONFIRMATION POPUP */}
+      {themeToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-[#FECDD3] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 border-b border-[#F3DCE8] pb-3 text-[#F43F5E]">
+              <div className="w-10 h-10 rounded-2xl bg-[#FFE4E6] flex items-center justify-center font-bold">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#18181B]">Delete Theme Confirmation</h3>
+                <p className="text-xs text-[#71717A]">Permanently uninstall theme package</p>
+              </div>
+            </div>
+
+            {deleteErrorMessage && (
+              <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-2xl text-xs text-[#BE123C] flex items-center gap-2 font-bold">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{deleteErrorMessage}</span>
+              </div>
+            )}
+
+            <div className="space-y-2 text-xs text-[#71717A] leading-relaxed">
+              <p>
+                Are you sure you want to permanently delete <strong className="text-[#18181B]">{themeToDelete.name}</strong> (v{themeToDelete.version})?
+              </p>
+              <div className="p-3 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] text-[11px] space-y-1">
+                <p className="font-bold text-[#18181B]">Safety Constraints:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Built-in default theme (Blush Core) is protected and cannot be deleted.</li>
+                  <li>Currently active theme cannot be deleted until another theme is activated.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8]">
+              <Button variant="ghost" size="sm" onClick={() => setThemeToDelete(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" size="sm" onClick={handleConfirmDelete} leftIcon={<Trash2 size={13} />}>
+                Confirm Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: LIVE FRONTEND VIEWPORT PREVIEW */}
       {livePreviewTheme && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-4xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
@@ -740,14 +1020,12 @@ export default function AdminThemesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setLivePreviewTheme(null)}
-                  className="p-1.5 rounded-xl text-[#71717A] hover:text-[#18181B] cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <button
+                onClick={() => setLivePreviewTheme(null)}
+                className="p-1.5 rounded-xl text-[#71717A] hover:text-[#18181B] cursor-pointer"
+              >
+                <X size={18} />
+              </button>
             </div>
 
             {/* Viewport View Switcher Tabs */}
@@ -790,9 +1068,8 @@ export default function AdminThemesPage() {
                   variant="primary"
                   size="sm"
                   onClick={() => {
-                    activateTheme(livePreviewTheme.id);
+                    handleOpenActivation(livePreviewTheme);
                     setLivePreviewTheme(null);
-                    triggerNotice(`Activated theme "${livePreviewTheme.name}"!`);
                   }}
                   leftIcon={<Check size={14} />}
                 >
@@ -812,7 +1089,6 @@ export default function AdminThemesPage() {
             >
               {previewTab === 'feed' && (
                 <div className="max-w-lg mx-auto space-y-4">
-                  {/* Simulated Post Card */}
                   <div
                     className="p-5 border shadow-sm space-y-4"
                     style={{
@@ -894,7 +1170,6 @@ export default function AdminThemesPage() {
 
               {previewTab === 'profile' && (
                 <div className="max-w-xl mx-auto space-y-4">
-                  {/* Creator Cover & Profile Card */}
                   <div
                     className="p-6 border shadow-sm space-y-4 text-center relative overflow-hidden"
                     style={{
@@ -1015,7 +1290,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Theme Customizer Modal */}
+      {/* MODAL 4: THEME CUSTOMIZER MODAL */}
       {customizerTheme && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
@@ -1036,7 +1311,6 @@ export default function AdminThemesPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              {/* Branding Section */}
               <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-3">
                 <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
                   <ImageIcon size={14} className="text-[#EC4899]" />
@@ -1056,7 +1330,6 @@ export default function AdminThemesPage() {
                 </div>
               </div>
 
-              {/* Color Tokens */}
               <div className="space-y-3">
                 <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
                   <Palette size={14} className="text-[#EC4899]" />
@@ -1140,7 +1413,6 @@ export default function AdminThemesPage() {
                 </div>
               </div>
 
-              {/* Layout & Geometry */}
               <div className="space-y-3">
                 <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
                   <SlidersHorizontal size={14} className="text-[#EC4899]" />
@@ -1204,29 +1476,6 @@ export default function AdminThemesPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Real-time Preview Mock Card */}
-              <div
-                className="p-4 border transition-all space-y-2"
-                style={{
-                  backgroundColor: customSurface,
-                  borderColor: customPrimary,
-                  borderRadius: customCardRadius
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs" style={{ color: customPrimary }}>Live Token Preview</span>
-                  <span
-                    className="text-[10px] px-2.5 py-0.5 rounded-full text-white font-bold"
-                    style={{ backgroundColor: customAccent, borderRadius: customButtonRadius }}
-                  >
-                    Accent Badge
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#71717A]">
-                  This preview renders in real time using the updated CSS color, border, and geometry tokens.
-                </p>
-              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8]">
@@ -1241,7 +1490,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Manifest & Changelog Specs Modal */}
+      {/* MODAL 5: SPECS & CHANGELOG MODAL */}
       {selectedThemeForDetails && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -1312,7 +1561,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Upload Theme Package Modal */}
+      {/* MODAL 6: UPLOAD THEME PACKAGE (.ZIP / JSON) */}
       {isUploadOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4">
@@ -1335,7 +1584,7 @@ export default function AdminThemesPage() {
             {uploadSuccess && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Frontend theme package verified and installed successfully!</span>
+                <span>Frontend theme package verified! Sending to Activation...</span>
               </div>
             )}
 
@@ -1390,7 +1639,7 @@ export default function AdminThemesPage() {
         </div>
       )}
 
-      {/* Developer SDK Docs Modal */}
+      {/* MODAL 7: DEVELOPER SDK DOCS */}
       {isDocsOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
@@ -1427,6 +1676,7 @@ export default function AdminThemesPage() {
                 <p className="pl-3">{`"name": "Custom Glow",`}</p>
                 <p className="pl-3">{`"version": "1.0.0",`}</p>
                 <p className="pl-3">{`"minAppVersion": "1.0.0",`}</p>
+                <p className="pl-3">{`"requiresLicense": true,`}</p>
                 <p className="pl-3">{`"tokens": {`}</p>
                 <p className="pl-6">{`"primary": "#EC4899",`}</p>
                 <p className="pl-6">{`"background": "#FFF9FC",`}</p>

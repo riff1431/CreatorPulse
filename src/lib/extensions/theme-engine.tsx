@@ -11,12 +11,13 @@ interface ThemeContextType {
   activeTheme: ThemeManifest;
   libraryThemes: ThemeManifest[];
   activateTheme: (themeId: string) => boolean;
+  activateThemeWithLicense: (themeId: string, licenseKey?: string) => { success: boolean; error?: string };
   deactivateTheme: (themeId: string) => void;
   updateThemeVersion: (themeId: string) => void;
   installTheme: (manifest: ThemeManifest) => boolean;
   installFromLibrary: (themeId: string) => boolean;
   duplicateTheme: (themeId: string) => ThemeManifest | null;
-  deleteTheme: (themeId: string) => boolean;
+  deleteTheme: (themeId: string) => { success: boolean; error?: string };
   customizeTheme: (themeId: string, updatedTokens: Partial<ThemeTokens>, updatedSettings?: Partial<ThemeVisualSettings>) => void;
   rollbackTheme: (themeId: string) => void;
   exportTheme: (themeId: string) => string;
@@ -154,13 +155,33 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [effectiveTheme, pathname]);
 
   const activateTheme = (themeId: string): boolean => {
+    const res = activateThemeWithLicense(themeId);
+    return res.success;
+  };
+
+  const activateThemeWithLicense = (themeId: string, licenseKey?: string): { success: boolean; error?: string } => {
     const target = themes.find((t) => t.id === themeId);
-    if (!target) return false;
+    if (!target) return { success: false, error: 'Theme not found in installed registry.' };
 
     // Version compatibility check
     if (target.minAppVersion && target.minAppVersion > CURRENT_APP_VERSION) {
-      alert(`Cannot activate theme "${target.name}". It requires CreatorPulse v${target.minAppVersion} or higher.`);
-      return false;
+      return { 
+        success: false, 
+        error: `Cannot activate theme "${target.name}". It requires CreatorPulse v${target.minAppVersion} or higher (current: v${CURRENT_APP_VERSION}).` 
+      };
+    }
+
+    // License check for custom/premium themes
+    if (target.requiresLicense && !target.isDefault) {
+      const keyToTest = (licenseKey || target.licenseKey || '').trim();
+      // Valid license format: e.g. CP-THEME-XXXX-XXXX-XXXX or at least 12 alphanumeric characters
+      const isValidKey = /^[A-Z0-9]{2,8}-[A-Z0-9]{4,8}-[A-Z0-9]{4,8}-[A-Z0-9]{4,8}$/i.test(keyToTest) || keyToTest.length >= 10;
+      if (!isValidKey) {
+        return {
+          success: false,
+          error: 'Invalid license key format. Please enter a valid CreatorPulse Theme License (e.g. CP-THEME-7X89-KL22-901B).'
+        };
+      }
     }
 
     setActiveThemeId(themeId);
@@ -168,7 +189,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const updated = themes.map((t) => ({
       ...t,
-      isActive: t.id === themeId
+      isActive: t.id === themeId,
+      licenseKey: t.id === themeId && licenseKey ? licenseKey : t.licenseKey,
+      licenseStatus: t.id === themeId && target.requiresLicense ? ('licensed' as const) : t.licenseStatus
     }));
     setThemes(updated);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
@@ -180,7 +203,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       details: `Activated frontend theme v${target.version} (${target.category})`,
       severity: 'success'
     });
-    return true;
+    return { success: true };
   };
 
   const deactivateTheme = (themeId: string) => {
@@ -302,23 +325,29 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return installTheme(manifest);
   };
 
-  const deleteTheme = (themeId: string): boolean => {
+  const deleteTheme = (themeId: string): { success: boolean; error?: string } => {
     const target = themes.find((t) => t.id === themeId);
-    if (!target) return false;
+    if (!target) return { success: false, error: 'Theme not found.' };
 
     // Prevent deletion of Blush Core default theme
     if (target.isDefault || target.id === 'theme-blush-core') {
-      alert('The built-in default "Blush Core" theme is permanent and protected from deletion.');
-      return false;
+      return { 
+        success: false, 
+        error: 'The built-in default "Blush Core" theme is permanent and protected from deletion.' 
+      };
+    }
+
+    // Prevent deletion of currently active theme
+    if (activeThemeId === themeId) {
+      return { 
+        success: false, 
+        error: `Cannot delete "${target.name}" because it is currently the active theme. Please activate another theme (such as Blush Core) first.` 
+      };
     }
 
     const filtered = themes.filter((t) => t.id !== themeId);
     setThemes(filtered);
     localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(filtered));
-
-    if (activeThemeId === themeId) {
-      activateTheme('theme-blush-core');
-    }
 
     logAuditEvent({
       action: 'THEME_DELETED',
@@ -327,7 +356,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       details: `Deleted custom frontend theme ${target.name}`,
       severity: 'warning'
     });
-    return true;
+    return { success: true };
   };
 
   const customizeTheme = (
@@ -393,6 +422,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         activeTheme,
         libraryThemes: THEME_LIBRARY_CATALOG,
         activateTheme,
+        activateThemeWithLicense,
         deactivateTheme,
         updateThemeVersion,
         installTheme,

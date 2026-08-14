@@ -60,6 +60,9 @@ export interface ThemeManifest {
   hasUpdate?: boolean;
   latestVersion?: string;
   isLibraryItem?: boolean;
+  requiresLicense?: boolean;
+  licenseKey?: string;
+  licenseStatus?: 'licensed' | 'unlicensed' | 'exempt';
   installedAt: string;
   updatedAt: string;
 }

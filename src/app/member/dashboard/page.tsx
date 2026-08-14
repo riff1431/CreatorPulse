@@ -16,12 +16,14 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/lib/auth/auth-context';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
+import { MemberGuard } from '@/components/auth/RouteGuards';
 
 export default function FanDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
+    <MemberGuard>
+      <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
       <RoleSwitcher />
       <Navbar />
 
@@ -135,5 +137,6 @@ export default function FanDashboard() {
 
       <MobileNav />
     </div>
+    </MemberGuard>
   );
 }
