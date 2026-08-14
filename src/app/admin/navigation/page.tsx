@@ -9,10 +9,11 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { useNavigation, NavItemDef } from '@/lib/navigation/navigation-context';
 import { useToast } from '@/components/ui/Toast';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 
 const AVAILABLE_ICONS = [
   'Home', 'Compass', 'Film', 'MessageSquare', 'Sparkles', 'Search', 
-  'Bookmark', 'Wallet', 'Radio', 'Shield', 'Star', 'User', 'Settings', 'Layers', 'HelpCircle'
+  'Bookmark', 'Wallet', 'Radio', 'Star', 'User', 'Settings', 'Layers', 'HelpCircle'
 ];
 
 const AVAILABLE_ROLES = [
@@ -26,6 +27,7 @@ const AVAILABLE_ROLES = [
 export default function AdminNavigationPage() {
   const { items, addItem, updateItem, deleteItem, reorderItems, resetToDefaults } = useNavigation();
   const { addToast } = useToast();
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
   const [activeLocation, setActiveLocation] = useState<'header' | 'footer' | 'sidebar'>('header');
   const [editingItem, setEditingItem] = useState<Partial<NavItemDef> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,6 +113,36 @@ export default function AdminNavigationPage() {
     setEditingItem({ ...editingItem, allowedRoles: updated });
   };
 
+  const handleResetDefaults = async () => {
+    startProgress({
+      title: "Resetting Navigation Menu to Defaults",
+      steps: [
+        "Purging custom navigation configurations...",
+        "Restoring standard platform routes...",
+        "Syncing Header, Footer, and Sidebar layouts..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Purging custom navigation configurations...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 45, "Custom navigation cleared.");
+
+      updateProgress(1, 'running', 60, "Restoring standard platform routes...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 80, "Platform routes restored.");
+
+      updateProgress(2, 'running', 90, "Syncing Header, Footer, and Sidebar layouts...");
+      await resetToDefaults();
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("Navigation menu defaults restored!");
+      addToast({ title: 'Reset Completed', message: 'Navigation menu configurations restored to defaults.', type: 'success' });
+    } catch (e) {
+      errorProgress(1, "Failed to restore navigation defaults.");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -124,7 +156,7 @@ export default function AdminNavigationPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults} leftIcon={<RefreshCw size={14} />}>
+          <Button variant="outline" size="sm" onClick={handleResetDefaults} leftIcon={<RefreshCw size={14} />}>
             Reset Defaults
           </Button>
           <Button variant="primary" size="sm" onClick={handleOpenAdd} leftIcon={<Plus size={14} />}>

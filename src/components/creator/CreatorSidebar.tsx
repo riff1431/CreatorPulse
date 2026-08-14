@@ -70,15 +70,27 @@ const formatBadge = (n: number): string => {
   return String(n);
 };
 
+import { usePlugins } from '@/lib/extensions/plugin-engine';
+
 export const CreatorSidebar: React.FC = () => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { activePlugins } = usePlugins();
+  const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories');
+
+  const filteredGroups = navGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      if (item.href === '/creator/stories' && !hasStoriesPlugin) return false;
+      return true;
+    })
+  })).filter((group) => group.items.length > 0);
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white/40 backdrop-blur-md">
       <div className="flex-1 overflow-y-auto py-5 px-3.5 space-y-5 scrollbar-thin scrollbar-thumb-pink-200">
-        {navGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1.5">
             {!collapsed && (
               <p className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA] px-3 mb-1">

@@ -7,6 +7,7 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVerified?: boolean;
   hasStory?: boolean;
+  storySeen?: boolean;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   isVerified = false,
   hasStory = false,
+  storySeen = false,
   className = ''
 }) => {
   const sizeClasses = {
@@ -32,10 +34,17 @@ export const Avatar: React.FC<AvatarProps> = ({
     .substring(0, 2)
     .toUpperCase();
 
+  const getStoryRingClass = () => {
+    if (!hasStory) return '';
+    return storySeen ? 'story-ring-seen' : 'story-ring';
+  };
+
   return (
     <div className={`relative inline-block select-none ${className}`}>
       <div
-        className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-bold text-slate-700 bg-slate-100 border border-slate-200/80 shadow-xs`}
+        className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-bold text-slate-700 bg-slate-100 border border-slate-200/80 shadow-xs ${
+          getStoryRingClass()
+        }`}
       >
         {src ? (
           <img src={src} alt={alt} className="w-full h-full object-cover" />

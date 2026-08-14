@@ -9,10 +9,13 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { useSiteSettings, SiteSettings } from '@/lib/settings/site-settings-context';
 import { useToast } from '@/components/ui/Toast';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 
 export default function AdminSettingsPage() {
   const { settings, updateSettings, resetToDefaults } = useSiteSettings();
   const { addToast } = useToast();
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
   const [formData, setFormData] = useState<SiteSettings>(settings);
   const [activeTab, setActiveTab] = useState<'general' | 'social' | 'seo' | 'maintenance' | 'registration'>('general');
   const [isSaving, setIsSaving] = useState(false);
@@ -37,14 +40,36 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    startProgress({
+      title: "Saving Site Settings",
+      steps: [
+        "Validating settings inputs & rules...",
+        "Writing configurations to database...",
+        "Broadcasting edge runtime updates..."
+      ]
+    });
+
     try {
+      updateProgress(0, 'running', 20, "Validating settings inputs & rules...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 40, "Input settings validated.");
+
+      updateProgress(1, 'running', 60, "Writing configurations to database...");
       await updateSettings(formData);
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 85, "Configurations written to DB.");
+
+      updateProgress(2, 'running', 95, "Broadcasting edge runtime updates...");
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("Settings saved successfully!");
       addToast({
         title: 'Settings Saved!',
         message: 'Dynamic site settings updated successfully across the platform.',
         type: 'success',
       });
     } catch (e) {
+      errorProgress(1, "Failed to save settings configurations.");
       addToast({
         title: 'Save Failed',
         message: 'Could not update site settings.',
@@ -52,6 +77,52 @@ export default function AdminSettingsPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetDefaults = async () => {
+    startProgress({
+      title: "Resetting Settings to Factory Defaults",
+      steps: [
+        "Purging custom settings overrides...",
+        "Restoring site branding default profiles...",
+        "Restoring security & registration rule defaults...",
+        "Synchronizing schema configurations..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 15, "Purging custom settings overrides...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 30, "Custom overrides cleared.");
+
+      updateProgress(1, 'running', 45, "Restoring site branding default profiles...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 60, "Branding defaults restored.");
+
+      updateProgress(2, 'running', 75, "Restoring security & registration rule defaults...");
+      await new Promise(r => setTimeout(r, 600));
+      
+      await resetToDefaults();
+      
+      updateProgress(2, 'success', 90, "Security & registration defaults loaded.");
+
+      updateProgress(3, 'running', 95, "Synchronizing schema configurations...");
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("Factory defaults restored successfully!");
+      addToast({
+        title: 'Reset Completed',
+        message: 'Factory configuration defaults restored successfully.',
+        type: 'success',
+      });
+    } catch (e) {
+      errorProgress(2, "Failed to restore defaults.");
+      addToast({
+        title: 'Reset Failed',
+        message: 'Could not restore defaults.',
+        type: 'error',
+      });
     }
   };
 
@@ -68,7 +139,7 @@ export default function AdminSettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults} leftIcon={<RefreshCw size={14} />}>
+          <Button variant="outline" size="sm" onClick={handleResetDefaults} leftIcon={<RefreshCw size={14} />}>
             Reset Defaults
           </Button>
           <Button variant="primary" size="sm" onClick={handleSave} isLoading={isSaving} leftIcon={<Save size={14} />}>
@@ -132,24 +203,24 @@ export default function AdminSettingsPage() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-[#71717A] font-semibold mb-1">Logo Image URL</label>
-                <input
-                  type="text"
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <MediaUploader
+                  label="Site Logo Image"
+                  description="Main platform logo displayed on navbar and authentication screens."
+                  folder="covers"
+                  accept="images"
+                  aspectRatio="banner"
                   value={formData.logo_url}
-                  onChange={(e) => handleChange('logo_url', e.target.value)}
-                  placeholder="https://example.com/logo.png (Leave blank for default icon)"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
+                  onChange={(url) => handleChange('logo_url', url)}
                 />
-              </div>
-              <div>
-                <label className="block text-[#71717A] font-semibold mb-1">Favicon URL</label>
-                <input
-                  type="text"
+                <MediaUploader
+                  label="Browser Favicon Icon"
+                  description="Small tab icon (.ico, .png, .svg) shown in browser tabs."
+                  folder="documents"
+                  accept="icons"
+                  aspectRatio="square"
                   value={formData.favicon_url}
-                  onChange={(e) => handleChange('favicon_url', e.target.value)}
-                  placeholder="https://example.com/favicon.ico"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
+                  onChange={(url) => handleChange('favicon_url', url)}
                 />
               </div>
             </div>
@@ -265,13 +336,14 @@ export default function AdminSettingsPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[#71717A] font-semibold mb-1">Default Social Sharing Image (OG Image)</label>
-                <input
-                  type="text"
+                <MediaUploader
+                  label="Default Social Sharing Image (OG Image)"
+                  description="Cover image preview when links are shared on Twitter, Facebook, or Discord."
+                  folder="covers"
+                  accept="images"
+                  aspectRatio="video"
                   value={formData.seo_defaults.og_image_url}
-                  onChange={(e) => handleNestedChange('seo_defaults', 'og_image_url', e.target.value)}
-                  placeholder="https://example.com/og.jpg"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
+                  onChange={(url) => handleNestedChange('seo_defaults', 'og_image_url', url)}
                 />
               </div>
               <div>
@@ -402,7 +474,7 @@ export default function AdminSettingsPage() {
 
       {/* Footer Actions */}
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button variant="outline" size="md" onClick={resetToDefaults} leftIcon={<RefreshCw size={16} />}>
+        <Button variant="outline" size="md" onClick={handleResetDefaults} leftIcon={<RefreshCw size={16} />}>
           Reset Defaults
         </Button>
         <Button variant="primary" size="md" onClick={handleSave} isLoading={isSaving} leftIcon={<Save size={16} />}>

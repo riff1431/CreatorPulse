@@ -22,7 +22,7 @@ export interface PluginSettingField {
   id: string;
   label: string;
   description?: string;
-  type: 'text' | 'password' | 'number' | 'boolean' | 'select' | 'textarea';
+  type: 'text' | 'password' | 'number' | 'boolean' | 'select' | 'textarea' | 'media';
   defaultValue: unknown;
   options?: { label: string; value: string }[];
   placeholder?: string;

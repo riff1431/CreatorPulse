@@ -16,40 +16,66 @@ import { Button } from '@/components/ui/Button';
 import { NotificationItem } from '@/lib/supabase/store';
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'n-1',
-      title: 'New VIP Subscriber',
-      message: 'Jordan Lee subscribed to your Pro Designer Tier ($15.00/mo).',
-      time: '10 minutes ago',
-      isRead: false,
-      type: 'subscriber'
-    },
-    {
-      id: 'n-2',
-      title: 'Creator Tip Support Received',
-      message: 'Alex Vance sent you a $25.00 support tip: "Great design masterclass!"',
-      time: '1 hour ago',
-      isRead: false,
-      type: 'tip'
-    },
-    {
-      id: 'n-3',
-      title: 'Post Liked',
-      message: 'Marcus Vance liked your post "Modern Micro-Interactions in Web Apps".',
-      time: '3 hours ago',
-      isRead: true,
-      type: 'like'
-    },
-    {
-      id: 'n-4',
-      title: 'Creator Verification Approved',
-      message: 'Your Creator Application has been approved by the Admin team! You can now set membership pricing.',
-      time: '1 day ago',
-      isRead: true,
-      type: 'payout'
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('creatorpulse_user_notifications');
+      if (stored) {
+        setNotifications(JSON.parse(stored));
+      } else {
+        const initial: NotificationItem[] = [
+          {
+            id: 'n-1',
+            title: 'New VIP Subscriber',
+            message: 'Jordan Lee subscribed to your Pro Designer Tier ($15.00/mo).',
+            time: '10 minutes ago',
+            isRead: false,
+            type: 'subscriber'
+          },
+          {
+            id: 'n-2',
+            title: 'Creator Tip Support Received',
+            message: 'Alex Vance sent you a $25.00 support tip: "Great design masterclass!"',
+            time: '1 hour ago',
+            isRead: false,
+            type: 'tip'
+          },
+          {
+            id: 'n-3',
+            title: 'Post Liked',
+            message: 'Marcus Vance liked your post "Modern Micro-Interactions in Web Apps".',
+            time: '3 hours ago',
+            isRead: true,
+            type: 'like'
+          },
+          {
+            id: 'n-4',
+            title: 'Creator Verification Approved',
+            message: 'Your Creator Application has been approved by the Admin team! You can now set membership pricing.',
+            time: '1 day ago',
+            isRead: true,
+            type: 'payout'
+          }
+        ];
+        setNotifications(initial);
+        localStorage.setItem('creatorpulse_user_notifications', JSON.stringify(initial));
+      }
     }
-  ]);
+  }, []);
+
+  // Listen to live notification updates (e.g. from StoriesService)
+  useEffect(() => {
+    const handleUpdate = () => {
+      const stored = localStorage.getItem('creatorpulse_user_notifications');
+      if (stored) {
+        setNotifications(JSON.parse(stored));
+      }
+    };
+    window.addEventListener('creatorpulse_notifications_updated', handleUpdate);
+    return () => window.removeEventListener('creatorpulse_notifications_updated', handleUpdate);
+  }, []);
 
   const [filter, setFilter] = useState<'all' | 'unread' | 'subscriber' | 'tip' | 'like'>('all');
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
@@ -69,7 +95,11 @@ export default function NotificationsPage() {
   }, [filter]);
 
   const handleMarkAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+    const updated = notifications.map((n) => ({ ...n, isRead: true }));
+    setNotifications(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('creatorpulse_user_notifications', JSON.stringify(updated));
+    }
   };
 
   const filtered = notifications.filter((n) => {

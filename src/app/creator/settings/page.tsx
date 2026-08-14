@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, Save, User, CreditCard, Lock } from 'lucide-react';
+import { Settings, Save, User, CreditCard, Lock, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
-import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 
 export default function CreatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'payouts' | 'privacy'>('profile');
@@ -23,16 +23,16 @@ export default function CreatorSettingsPage() {
   const [whoCanFollow, setWhoCanFollow] = useState('everyone');
   const [isSaving, setIsSaving] = useState(false);
   
-  // Media picker states
+  // Media states
   const [avatarUrl, setAvatarUrl] = useState('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150');
-  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
+  const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200');
 
   const handleSave = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
       showToast('Creator Studio settings updated successfully!', 'success');
-    }, 8000); // 800ms simulation
+    }, 800);
   };
 
   return (
@@ -85,30 +85,30 @@ export default function CreatorSettingsPage() {
             <h3 className="text-xs font-black uppercase tracking-wider text-[#18181B]">Creator Profile Identity</h3>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Avatar src={avatarUrl} alt="Sarah Jenkins" size="lg" isVerified={true} />
-            <div className="space-y-1 text-xs">
-              <Button variant="outline" size="sm" onClick={() => setIsAvatarPickerOpen(true)}>Change Avatar</Button>
-              <p className="text-[10px] text-[#A1A1AA] font-bold">JPG, PNG or WebP. Max size limit 2MB.</p>
-            </div>
+          {/* Visual Identity Uploaders */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MediaUploader
+              label="Profile Avatar Picture"
+              description="Upload your square profile avatar."
+              folder="avatars"
+              accept="images"
+              aspectRatio="square"
+              value={avatarUrl}
+              onChange={(url) => setAvatarUrl(url)}
+            />
+
+            <MediaUploader
+              label="Studio Cover Banner"
+              description="Header banner on your public creator profile."
+              folder="covers"
+              accept="images"
+              aspectRatio="banner"
+              value={coverUrl}
+              onChange={(url) => setCoverUrl(url)}
+            />
           </div>
 
-          <MediaLibraryModal
-            isOpen={isAvatarPickerOpen}
-            onClose={() => setIsAvatarPickerOpen(false)}
-            allowedTypes={['image/*']}
-            maxFiles={1}
-            initialFolder="avatars"
-            onSelect={(selected) => {
-              const file = selected[0];
-              if (file) {
-                setAvatarUrl(file.url);
-                showToast('Avatar selected from media library!', 'success');
-              }
-            }}
-          />
-
-          <div className="space-y-4 text-xs font-semibold">
+          <div className="space-y-4 text-xs font-semibold pt-2 border-t border-[#F3DCE8]/60">
             <div>
               <label className="block text-[#71717A] mb-1 font-bold">Display Name</label>
               <input
@@ -141,51 +141,80 @@ export default function CreatorSettingsPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none font-medium"
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
               >
-                <option>Art & Design</option>
-                <option>Education & Tech</option>
-                <option>Music & Sound</option>
-                <option>Fitness & Wellness</option>
-                <option>Food & Cooking</option>
-                <option>Business & Finance</option>
-                <option>Gaming</option>
+                <option value="Art & Design">Art & Design</option>
+                <option value="Education & Tech">Education & Tech</option>
+                <option value="Music & Audio">Music & Audio</option>
+                <option value="Gaming & Esports">Gaming & Esports</option>
+                <option value="Fitness & Health">Fitness & Health</option>
               </select>
             </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#F3DCE8]/80 flex justify-end">
+            <Button variant="primary" size="md" onClick={handleSave} isLoading={isSaving} leftIcon={<Save size={15} />}>
+              Save Profile Details
+            </Button>
           </div>
         </Card>
       )}
 
-      {/* Payout Tab */}
+      {/* Payouts Tab */}
       {activeTab === 'payouts' && (
         <Card className="p-6 space-y-5 transition-all duration-300 animate-scale-up">
           <div className="flex items-center gap-2 pb-2 border-b border-[#F3DCE8]/80">
-            <CreditCard size={16} className="text-emerald-600" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#18181B]">Disbursement Accounts</h3>
+            <CreditCard size={16} className="text-[#EC4899]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#18181B]">Withdrawal & Payment Settings</h3>
           </div>
 
           <div className="space-y-4 text-xs font-semibold">
             <div>
-              <label className="block text-[#71717A] mb-1 font-bold">Preferred Payout Method</label>
-              <select
-                value={payoutMethod}
-                onChange={(e) => setPayoutMethod(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none font-medium"
-              >
-                <option value="bank">Direct Bank Wire (ACH/SWIFT)</option>
-                <option value="stripe">Stripe Connect Account</option>
-                <option value="paypal">PayPal Merchant Account</option>
-              </select>
+              <label className="block text-[#71717A] mb-1 font-bold">Preferred Payout Channel</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPayoutMethod('bank')}
+                  className={`p-3.5 rounded-2xl border text-left font-bold transition-all cursor-pointer ${
+                    payoutMethod === 'bank'
+                      ? 'border-[#EC4899] bg-[#FFF1F7] text-[#BE185D]'
+                      : 'border-[#F3DCE8] text-[#71717A] hover:border-[#EC4899]/50'
+                  }`}
+                >
+                  <p className="text-xs font-black">Direct Bank Wire / ACH</p>
+                  <p className="text-[10px] font-medium text-[#A1A1AA] mt-0.5">2-3 business days</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayoutMethod('paypal')}
+                  className={`p-3.5 rounded-2xl border text-left font-bold transition-all cursor-pointer ${
+                    payoutMethod === 'paypal'
+                      ? 'border-[#EC4899] bg-[#FFF1F7] text-[#BE185D]'
+                      : 'border-[#F3DCE8] text-[#71717A] hover:border-[#EC4899]/50'
+                  }`}
+                >
+                  <p className="text-xs font-black">PayPal Direct</p>
+                  <p className="text-[10px] font-medium text-[#A1A1AA] mt-0.5">Instant transfer</p>
+                </button>
+              </div>
             </div>
+
             <div>
-              <label className="block text-[#71717A] mb-1 font-bold">Routing/Account Details</label>
+              <label className="block text-[#71717A] mb-1 font-bold">Destination Account Details</label>
               <input
                 type="text"
                 value={accountDetails}
                 onChange={(e) => setAccountDetails(e.target.value)}
+                placeholder="Account number or PayPal email address"
                 className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
               />
             </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#F3DCE8]/80 flex justify-end">
+            <Button variant="primary" size="md" onClick={handleSave} isLoading={isSaving} leftIcon={<Save size={15} />}>
+              Save Payout Settings
+            </Button>
           </div>
         </Card>
       )}
@@ -194,51 +223,44 @@ export default function CreatorSettingsPage() {
       {activeTab === 'privacy' && (
         <Card className="p-6 space-y-5 transition-all duration-300 animate-scale-up">
           <div className="flex items-center gap-2 pb-2 border-b border-[#F3DCE8]/80">
-            <Lock size={16} className="text-amber-500" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#18181B]">Security & Permissions</h3>
+            <Lock size={16} className="text-[#EC4899]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#18181B]">Audience & Privacy Rules</h3>
           </div>
 
           <div className="space-y-4 text-xs font-semibold">
             <div>
-              <label className="block text-[#71717A] mb-1 font-bold">Who can send you messages?</label>
+              <label className="block text-[#71717A] mb-1 font-bold">Who can send you direct messages?</label>
               <select
                 value={whoCanMessage}
                 onChange={(e) => setWhoCanMessage(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none font-medium"
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
               >
-                <option value="everyone">Everyone (Open DMs)</option>
-                <option value="followers">Followers Only</option>
-                <option value="subscribers">Subscribers Only</option>
-                <option value="nobody">Disable Messaging</option>
+                <option value="everyone">Everyone (Public Fan Inquiries)</option>
+                <option value="subscribers">Subscribers & VIP Patrons Only</option>
+                <option value="nobody">Direct Messages Disabled</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-[#71717A] mb-1 font-bold">Profile Subscription Access</label>
+              <label className="block text-[#71717A] mb-1 font-bold">Who can follow your public updates?</label>
               <select
                 value={whoCanFollow}
                 onChange={(e) => setWhoCanFollow(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2.5 text-[#18181B] focus:outline-none font-medium"
+                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
               >
-                <option value="everyone">Everyone can follow</option>
-                <option value="approved">Approved members only (Private Profile)</option>
+                <option value="everyone">Everyone</option>
+                <option value="approved">Require Follow Approval</option>
               </select>
             </div>
           </div>
+
+          <div className="pt-3 border-t border-[#F3DCE8]/80 flex justify-end">
+            <Button variant="primary" size="md" onClick={handleSave} isLoading={isSaving} leftIcon={<Save size={15} />}>
+              Save Privacy Settings
+            </Button>
+          </div>
         </Card>
       )}
-
-      {/* Save Settings footer */}
-      <div className="flex justify-end pt-2">
-        <Button
-          variant="primary"
-          size="md"
-          isLoading={isSaving}
-          leftIcon={<Save size={15} />}
-          onClick={handleSave}
-        >
-          Publish Changes
-        </Button>
-      </div>
     </div>
   );
 }

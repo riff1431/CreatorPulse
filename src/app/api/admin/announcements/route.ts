@@ -27,6 +27,7 @@ export async function GET() {
       expiresAt: a.expires_at,
       ctaText: a.cta_text,
       ctaLink: a.cta_link,
+      mediaUrl: a.media_url,
       isDismissible: a.is_dismissible,
       createdAt: a.created_at,
     })) : INITIAL_ANNOUNCEMENTS;
@@ -69,6 +70,7 @@ export async function PUT(req: Request) {
           expires_at: a.expiresAt,
           cta_text: a.ctaText,
           cta_link: a.ctaLink,
+          media_url: a.mediaUrl,
           is_dismissible: a.isDismissible,
         })).filter((r) => r.id);
 

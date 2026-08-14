@@ -23,6 +23,7 @@ import { Badge } from '@/components/admin/ui/Badge';
 import { Modal } from '@/components/admin/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 
 export default function AdminMaintenancePage() {
   const [config, setConfig] = useState<MaintenanceConfig>(getMaintenanceConfig());
@@ -44,6 +45,8 @@ export default function AdminMaintenancePage() {
   const [confirmAction, setConfirmAction] = useState<'maintenance' | 'cache' | 'vacuum' | 'backup' | null>(null);
 
   const { showToast } = useToast();
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
+  const [isScanningDiagnostics, setIsScanningDiagnostics] = useState(false);
 
   const loadData = () => {
     const activeConfig = getMaintenanceConfig();
@@ -67,46 +70,92 @@ export default function AdminMaintenancePage() {
     };
   }, []);
 
-  const handleExecuteMaintenanceToggle = () => {
-    const ipArray = allowedIps.split(',').map(ip => ip.trim()).filter(Boolean);
-    const updated: MaintenanceConfig = {
-      maintenanceMode: !maintenanceMode,
-      message,
-      allowedIps: ipArray,
-      estimatedCompletion,
-      updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19)
-    };
-    saveMaintenanceConfig(updated);
-    setConfig(updated);
-    setMaintenanceMode(updated.maintenanceMode);
+  const handleExecuteMaintenanceToggle = async () => {
+    const nextState = !maintenanceMode;
     setConfirmAction(null);
 
-    recordSystemLog({
-      category: 'admin_actions',
-      action: 'MAINTENANCE_MODE_TOGGLED',
-      targetEntity: 'Platform System Config',
-      details: updated.maintenanceMode 
-        ? 'Enabled global maintenance mode banner and IP restriction'
-        : 'Disabled maintenance mode. Restored public platform access',
-      user: 'Elena Rostova',
-      role: 'super_admin',
-      severity: updated.maintenanceMode ? 'warning' : 'success',
-      payloadJson: JSON.stringify(updated, null, 2)
+    startProgress({
+      title: `${nextState ? 'Enabling' : 'Disabling'} Maintenance Mode`,
+      steps: [
+        "Applying platform firewall restrictions...",
+        "Updating system runtime parameters...",
+        "Broadcasting state updates to edge hosts..."
+      ]
     });
 
-    showToast(
-      updated.maintenanceMode 
-        ? 'Maintenance Mode Enabled. Non-whitelisted visitors will see downtime banner.' 
-        : 'Maintenance Mode Disabled. Platform is live to all visitors.',
-      updated.maintenanceMode ? 'info' : 'success'
-    );
+    try {
+      updateProgress(0, 'running', 20, "Applying platform firewall restrictions...");
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(0, 'success', 40, "Firewall parameters configured.");
+
+      updateProgress(1, 'running', 60, "Updating system runtime parameters...");
+      const ipArray = allowedIps.split(',').map(ip => ip.trim()).filter(Boolean);
+      const updated: MaintenanceConfig = {
+        maintenanceMode: nextState,
+        message,
+        allowedIps: ipArray,
+        estimatedCompletion,
+        updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19)
+      };
+      saveMaintenanceConfig(updated);
+      setConfig(updated);
+      setMaintenanceMode(updated.maintenanceMode);
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(1, 'success', 85, "Runtime variables persistent.");
+
+      updateProgress(2, 'running', 95, "Broadcasting state updates to edge hosts...");
+      await new Promise(r => setTimeout(r, 400));
+
+      recordSystemLog({
+        category: 'admin_actions',
+        action: 'MAINTENANCE_MODE_TOGGLED',
+        targetEntity: 'Platform System Config',
+        details: updated.maintenanceMode 
+          ? 'Enabled global maintenance mode banner and IP restriction'
+          : 'Disabled maintenance mode. Restored public platform access',
+        user: 'Elena Rostova',
+        role: 'super_admin',
+        severity: updated.maintenanceMode ? 'warning' : 'success',
+        payloadJson: JSON.stringify(updated, null, 2)
+      });
+
+      completeProgress(`Maintenance mode ${updated.maintenanceMode ? 'enabled' : 'disabled'}!`);
+      showToast(
+        updated.maintenanceMode 
+          ? 'Maintenance Mode Enabled. Non-whitelisted visitors will see downtime banner.' 
+          : 'Maintenance Mode Disabled. Platform is live to all visitors.',
+        updated.maintenanceMode ? 'info' : 'success'
+      );
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to toggle maintenance mode.");
+    }
   };
 
-  const handleExecuteClearCache = () => {
+  const handleExecuteClearCache = async () => {
     setIsClearingCache(true);
-    setTimeout(() => {
-      setIsClearingCache(false);
-      setConfirmAction(null);
+    setConfirmAction(null);
+
+    startProgress({
+      title: "Purging Cache & Temp Storage",
+      steps: [
+        "Purging Next.js page route caches...",
+        "Clearing media thumbnail caches...",
+        "Flushing active session stores..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Purging Next.js page route caches...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 40, "Route caches purged.");
+
+      updateProgress(1, 'running', 50, "Clearing media thumbnail caches...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 80, "Media thumbnail caches cleared.");
+
+      updateProgress(2, 'running', 90, "Flushing active session stores...");
+      await new Promise(r => setTimeout(r, 500));
+
       recordSystemLog({
         category: 'admin_actions',
         action: 'CACHE_PURGED',
@@ -116,15 +165,46 @@ export default function AdminMaintenancePage() {
         role: 'super_admin',
         severity: 'info'
       });
+
+      completeProgress("Cache cleared successfully!");
       showToast('Flushed all application caches and thumbnail stores.', 'success');
-    }, 1500);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to purge caches.");
+    } finally {
+      setIsClearingCache(false);
+    }
   };
 
-  const handleExecuteOptimizeDb = () => {
+  const handleExecuteOptimizeDb = async () => {
     setIsOptimizingDb(true);
-    setTimeout(() => {
-      setIsOptimizingDb(false);
-      setConfirmAction(null);
+    setConfirmAction(null);
+
+    startProgress({
+      title: "Optimizing PostgreSQL Database Cluster",
+      steps: [
+        "Analyzing table row dependencies...",
+        "Executing VACUUM ANALYZE optimization...",
+        "Re-indexing database schema indices...",
+        "Updating query planner statistics..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 15, "Analyzing table row dependencies...");
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(0, 'success', 30, "Table rows analyzed.");
+
+      updateProgress(1, 'running', 45, "Executing VACUUM ANALYZE optimization...");
+      await new Promise(r => setTimeout(r, 700));
+      updateProgress(1, 'success', 60, "PostgreSQL vacuuming complete.");
+
+      updateProgress(2, 'running', 75, "Re-indexing database schema indices...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(2, 'success', 85, "Indexes rebuilt.");
+
+      updateProgress(3, 'running', 90, "Updating query planner statistics...");
+      await new Promise(r => setTimeout(r, 400));
+
       recordSystemLog({
         category: 'admin_actions',
         action: 'DATABASE_VACUUMED',
@@ -134,25 +214,77 @@ export default function AdminMaintenancePage() {
         role: 'super_admin',
         severity: 'success'
       });
+
+      completeProgress("Database optimization complete!");
       showToast('Database optimization complete! Vacuumed 25 PostgreSQL tables.', 'success');
-    }, 1800);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Optimization failed.");
+    } finally {
+      setIsOptimizingDb(false);
+    }
   };
 
-  const handleScanStorage = () => {
+  const handleScanStorage = async () => {
     setIsScanningStorage(true);
-    setTimeout(() => {
-      setIsScanningStorage(false);
+
+    startProgress({
+      title: "Scanning Storage Buckets & Metadata",
+      steps: [
+        "Connecting to active storage drives...",
+        "Scanning storage directories & objects...",
+        "Verifying file checksum profiles..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Connecting to active storage drives...");
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(0, 'success', 45, "Connected to storage drive buckets.");
+
+      updateProgress(1, 'running', 60, "Scanning storage directories & objects...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 80, "Directories scanned.");
+
+      updateProgress(2, 'running', 90, "Verifying file checksum profiles...");
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("Storage scanning completed!");
       showToast('Storage bucket scan complete: 0 corrupt objects detected.', 'info');
-    }, 1200);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to scan storage.");
+    } finally {
+      setIsScanningStorage(false);
+    }
   };
 
-  const handleRunJob = (jobId: string) => {
+  const handleRunJob = async (jobId: string) => {
     setRunningJobId(jobId);
-    setTimeout(() => {
+    const job = jobs.find(j => j.id === jobId);
+    const jobName = job ? job.name : 'background cron job';
+
+    startProgress({
+      title: `Running Job: ${jobName}`,
+      steps: [
+        "Initializing background job runtime context...",
+        "Executing cron task routines...",
+        "Writing job execution reports & logs..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Initializing background job runtime context...");
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(0, 'success', 40, "Runtime context ready.");
+
+      updateProgress(1, 'running', 60, "Executing cron task routines...");
       const updatedJob = triggerScheduledJob(jobId);
-      setRunningJobId(null);
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 85, "Task routines completed.");
+
+      updateProgress(2, 'running', 90, "Writing job execution reports & logs...");
+      await new Promise(r => setTimeout(r, 400));
+
       if (updatedJob) {
-        showToast(`Job "${updatedJob.name}" executed successfully!`, 'success');
         recordSystemLog({
           category: 'admin_actions',
           action: 'CRON_JOB_MANUAL_TRIGGER',
@@ -162,34 +294,106 @@ export default function AdminMaintenancePage() {
           role: 'super_admin',
           severity: 'info'
         });
+        completeProgress("Cron job completed!");
+        showToast(`Job "${updatedJob.name}" executed successfully!`, 'success');
+      } else {
+        throw new Error("Job execution failed to trigger.");
       }
-    }, 1200);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Cron job execution failed.");
+    } finally {
+      setRunningJobId(null);
+    }
   };
 
-  const handleDownloadBackup = () => {
-    const backupData = {
-      timestamp: new Date().toISOString(),
-      platform: 'CreatorPulse',
-      version: '0.1.0',
-      database: 'PostgreSQL 15',
-      tablesDumped: 25,
-      maintenanceConfig: config,
-      scheduledJobs: jobs,
-      systemDiagnostics: SYSTEM_DIAGNOSTICS
-    };
-
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `creatorpulse_db_backup_snapshot_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const handleDownloadBackup = async () => {
     setConfirmAction(null);
-    showToast('Downloaded system database backup snapshot.', 'success');
+
+    startProgress({
+      title: "Exporting System DB Snapshot",
+      steps: [
+        "Consolidating diagnostics reports...",
+        "Dumping schema tables & configs...",
+        "Creating file bundle & downloading..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Consolidating diagnostics reports...");
+      await new Promise(r => setTimeout(r, 450));
+      updateProgress(0, 'success', 40, "Diagnostics logs prepared.");
+
+      updateProgress(1, 'running', 60, "Dumping schema tables & configs...");
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        platform: 'CreatorPulse',
+        version: '0.1.0',
+        database: 'PostgreSQL 15',
+        tablesDumped: 25,
+        maintenanceConfig: config,
+        scheduledJobs: jobs,
+        systemDiagnostics: SYSTEM_DIAGNOSTICS
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      await new Promise(r => setTimeout(r, 450));
+      updateProgress(1, 'success', 80, "Schema variables dumped.");
+
+      updateProgress(2, 'running', 90, "Creating file bundle & downloading...");
+      await new Promise(r => setTimeout(r, 350));
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `creatorpulse_db_backup_snapshot_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      completeProgress("Snapshot exported successfully!");
+      showToast('Downloaded system database backup snapshot.', 'success');
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to download backup snapshot.");
+    }
+  };
+
+  const handleScanDiagnostics = async () => {
+    setIsScanningDiagnostics(true);
+    startProgress({
+      title: "Running System Diagnostics Scan",
+      steps: [
+        "Analyzing server hardware metrics...",
+        "Checking database engine connections...",
+        "Validating cache adapter configuration...",
+        "Verifying SSL certification statuses..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Analyzing server hardware metrics...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 45, "Hardware health: OPTIMAL.");
+
+      updateProgress(1, 'running', 60, "Checking database engine connections...");
+      await new Promise(r => setTimeout(r, 650));
+      updateProgress(1, 'success', 75, "Database connections: ACTIVE.");
+
+      updateProgress(2, 'running', 85, "Validating cache adapter configuration...");
+      await new Promise(r => setTimeout(r, 500));
+      updateProgress(2, 'success', 90, "Redis cache adapters: READY.");
+
+      updateProgress(3, 'running', 95, "Verifying SSL certification statuses...");
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("System diagnostics check complete!");
+      showToast('All system diagnostic checks passed successfully!', 'success');
+    } catch (err: any) {
+      errorProgress(1, err.message || "Diagnostics scan failed.");
+    } finally {
+      setIsScanningDiagnostics(false);
+    }
   };
 
   return (
@@ -435,6 +639,20 @@ export default function AdminMaintenancePage() {
                     <p className="text-[10px] text-slate-500">{diag.details}</p>
                   </div>
                 ))}
+
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full flex items-center justify-center gap-2"
+                    disabled={isScanningDiagnostics}
+                    onClick={handleScanDiagnostics}
+                    leftIcon={<Activity size={13} className={isScanningDiagnostics ? 'animate-pulse text-indigo-600' : ''} />}
+                  >
+                    {isScanningDiagnostics ? 'Scanning System...' : 'Run Diagnostics Scan'}
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>

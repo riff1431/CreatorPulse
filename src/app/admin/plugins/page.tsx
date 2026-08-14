@@ -16,6 +16,7 @@ import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
 import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 import { Image as ImageIcon } from 'lucide-react';
 
 // Helper to extract plugin.json from binary ZIP archive using DecompressionStream
@@ -1059,6 +1060,15 @@ export default function AdminPluginsPage() {
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
+                    />
+                  )}
+
+                  {field.type === 'media' && (
+                    <MediaUploader
+                      folder="plugins"
+                      accept="all"
+                      value={String(configDraft[field.id] ?? '')}
+                      onChange={(url) => setConfigDraft({ ...configDraft, [field.id]: url })}
                     />
                   )}
 

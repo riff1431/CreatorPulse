@@ -9,6 +9,7 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { useFeatureModules, FeatureModule, FeatureModuleId } from '@/lib/modules/feature-module-context';
 import { useToast } from '@/components/ui/Toast';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
   Clock,
@@ -23,6 +24,7 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
 export default function AdminModulesPage() {
   const { modules, toggleModule, updateModuleSettings, resetToDefaults } = useFeatureModules();
   const { addToast } = useToast();
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
   const [selectedModule, setSelectedModule] = useState<FeatureModule | null>(null);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [tempSettings, setTempSettings] = useState<Record<string, any>>({});
@@ -61,6 +63,36 @@ export default function AdminModulesPage() {
     setSettingsModalOpen(false);
   };
 
+  const handleResetDefaults = async () => {
+    startProgress({
+      title: "Resetting Dynamic Feature Modules",
+      steps: [
+        "Resolving feature module dependencies...",
+        "Updating database module activation flags...",
+        "Broadcasting modules status updates..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Resolving feature module dependencies...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 40, "Dependencies checked.");
+
+      updateProgress(1, 'running', 60, "Updating database module activation flags...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 80, "Activation flags updated.");
+
+      updateProgress(2, 'running', 90, "Broadcasting modules status updates...");
+      await resetToDefaults();
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("Feature modules restored successfully!");
+      addToast({ title: 'Reset Completed', message: 'All feature modules reset to platform defaults.', type: 'success' });
+    } catch (e) {
+      errorProgress(1, "Failed to reset modules.");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -74,7 +106,7 @@ export default function AdminModulesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults} leftIcon={<RefreshCw size={14} />}>
+          <Button variant="outline" size="sm" onClick={handleResetDefaults} leftIcon={<RefreshCw size={14} />}>
             Reset Defaults
           </Button>
         </div>

@@ -11,6 +11,7 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { useCMS, CMSPage, CMSSection, SectionType } from '@/lib/cms/cms-context';
 import { useToast } from '@/components/ui/Toast';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 
 export default function CMSEditorPage({ params }: { params?: Promise<{ id: string }> }) {
   const resolvedParams = params ? use(params) : undefined;
@@ -341,12 +342,14 @@ export default function CMSEditorPage({ params }: { params?: Promise<{ id: strin
 
                   {(sec.type === 'hero' || sec.type === 'media') && (
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Media / Image URL</label>
-                      <input
-                        type="text"
+                      <MediaUploader
+                        label="Section Media / Image"
+                        description={sec.type === 'hero' ? 'Background banner image for hero section.' : 'Media embed file (image, video, etc.).'}
+                        folder="posts"
+                        accept={sec.type === 'hero' ? 'images' : 'all'}
+                        aspectRatio={sec.type === 'hero' ? 'banner' : 'video'}
                         value={sec.mediaUrl || ''}
-                        onChange={(e) => handleUpdateSection(sec.id, { mediaUrl: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                        onChange={(url) => handleUpdateSection(sec.id, { mediaUrl: url })}
                       />
                     </div>
                   )}
@@ -392,13 +395,14 @@ export default function CMSEditorPage({ params }: { params?: Promise<{ id: strin
               />
             </div>
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Social Sharing Image (OG Image)</label>
-              <input
-                type="text"
+              <MediaUploader
+                label="Social Sharing Image (OG Image)"
+                description="Preview thumbnail image shown when this page link is shared on social media."
+                folder="covers"
+                accept="images"
+                aspectRatio="video"
                 value={ogImage}
-                onChange={(e) => setOgImage(e.target.value)}
-                placeholder="https://..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                onChange={setOgImage}
               />
             </div>
           </div>

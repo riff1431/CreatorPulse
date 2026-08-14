@@ -51,6 +51,7 @@ export default function AdminUsersPage() {
   // Individual role edit state
   const [editUserRoleId, setEditUserRoleId] = useState('');
   const [isIndividualRoleConfirmOpen, setIsIndividualRoleConfirmOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { showToast } = useToast();
 
@@ -67,9 +68,12 @@ export default function AdminUsersPage() {
     };
   }, []);
 
-  const handleUpdateSingleStatus = (id: string, nextStatus: 'active' | 'suspended' | 'banned') => {
+  const handleUpdateSingleStatus = async (id: string, nextStatus: 'active' | 'suspended' | 'banned') => {
     if (!actor) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 600));
     const res = updateUserStatusBulk([id], nextStatus, { fullName: actor.fullName, role: actorRole });
+    setIsProcessing(false);
     if (res.success) {
       showToast(`User status marked as ${nextStatus.toUpperCase()}.`, 'info');
       loadData();
@@ -81,7 +85,9 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleToggleVerified = (id: string) => {
+  const handleToggleVerified = async (id: string) => {
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 500));
     const updated = users.map((u) => {
       if (u.id === id) {
         const nextVerified = !u.verified;
@@ -95,6 +101,7 @@ export default function AdminUsersPage() {
     if (selectedUser && selectedUser.id === id) {
       setSelectedUser({ ...selectedUser, verified: !selectedUser.verified });
     }
+    setIsProcessing(false);
   };
 
   const handleToggleSelectUser = (id: string) => {
@@ -120,8 +127,10 @@ export default function AdminUsersPage() {
     setIsIndividualRoleConfirmOpen(true);
   };
 
-  const executeIndividualRoleChange = () => {
+  const executeIndividualRoleChange = async () => {
     if (!selectedUser || !actor) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 700));
     
     const res = assignRoleToUsers([selectedUser.id], editUserRoleId, {
       id: actor.id,
@@ -129,6 +138,7 @@ export default function AdminUsersPage() {
       role: actorRole
     });
 
+    setIsProcessing(false);
     if (res.success) {
       showToast(`User role updated to ${editUserRoleId.toUpperCase()}.`, 'success');
       setIsIndividualRoleConfirmOpen(false);
@@ -142,14 +152,17 @@ export default function AdminUsersPage() {
     }
   };
 
-  const executeBulkRoleChange = () => {
+  const executeBulkRoleChange = async () => {
     if (!actor) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 800));
     const res = assignRoleToUsers(selectedUserIds, bulkTargetRoleId, {
       id: actor.id,
       fullName: actor.fullName,
       role: actorRole
     });
 
+    setIsProcessing(false);
     if (res.success) {
       showToast(`Successfully assigned role to ${selectedUserIds.length} users!`, 'success');
       setSelectedUserIds([]);
@@ -162,9 +175,12 @@ export default function AdminUsersPage() {
     }
   };
 
-  const executeBulkStatusChange = (nextStatus: 'active' | 'suspended' | 'banned') => {
+  const executeBulkStatusChange = async (nextStatus: 'active' | 'suspended' | 'banned') => {
     if (!actor) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 600));
     const res = updateUserStatusBulk(selectedUserIds, nextStatus, { fullName: actor.fullName, role: actorRole });
+    setIsProcessing(false);
     if (res.success) {
       showToast(`Bulk updated status to ${nextStatus.toUpperCase()} for ${selectedUserIds.length} users.`, 'info');
       setSelectedUserIds([]);
@@ -174,9 +190,12 @@ export default function AdminUsersPage() {
     }
   };
 
-  const executeBulkDelete = () => {
+  const executeBulkDelete = async () => {
     if (!actor) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 800));
     const res = deleteUsersBulk(selectedUserIds, { fullName: actor.fullName, role: actorRole });
+    setIsProcessing(false);
     if (res.success) {
       showToast(`Successfully deleted ${selectedUserIds.length} user profiles.`, 'success');
       setSelectedUserIds([]);
@@ -298,8 +317,9 @@ export default function AdminUsersPage() {
                   type="button" 
                   variant="primary" 
                   size="sm" 
-                  disabled={!bulkTargetRoleId}
+                  disabled={!bulkTargetRoleId || isProcessing}
                   onClick={() => setIsBulkRoleConfirmOpen(true)}
+                  isLoading={isProcessing}
                   className="py-1 text-[10px] bg-gradient-to-r from-blue-600 to-indigo-600"
                 >
                   Apply Role
@@ -313,6 +333,7 @@ export default function AdminUsersPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => executeBulkStatusChange('active')}
+                isLoading={isProcessing}
                 className="py-1 text-[10px] text-emerald-400 border-emerald-900/50 hover:bg-emerald-950"
               >
                 Activate
@@ -323,6 +344,7 @@ export default function AdminUsersPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => executeBulkStatusChange('suspended')}
+                isLoading={isProcessing}
                 className="py-1 text-[10px] text-amber-400 border-amber-900/50 hover:bg-amber-950"
               >
                 Suspend
@@ -333,6 +355,7 @@ export default function AdminUsersPage() {
                 variant="danger"
                 size="sm"
                 onClick={() => setIsBulkDeleteConfirmOpen(true)}
+                isLoading={isProcessing}
                 className="py-1 text-[10px]"
               >
                 Delete Selected
@@ -554,6 +577,7 @@ export default function AdminUsersPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleVerified(selectedUser.id)}
+                        isLoading={isProcessing}
                       >
                         {selectedUser.verified ? 'Remove Verification Badge' : 'Grant Verified Creator Badge'}
                       </Button>
@@ -565,6 +589,7 @@ export default function AdminUsersPage() {
                             size="sm"
                             className="text-amber-600 border-amber-200 hover:bg-amber-50"
                             onClick={() => handleUpdateSingleStatus(selectedUser.id, 'suspended')}
+                            isLoading={isProcessing}
                           >
                             Suspend Account
                           </Button>
@@ -572,6 +597,7 @@ export default function AdminUsersPage() {
                             variant="danger"
                             size="sm"
                             onClick={() => handleUpdateSingleStatus(selectedUser.id, 'banned')}
+                            isLoading={isProcessing}
                           >
                             Ban User Account
                           </Button>
@@ -581,6 +607,7 @@ export default function AdminUsersPage() {
                           variant="primary"
                           size="sm"
                           onClick={() => handleUpdateSingleStatus(selectedUser.id, 'active')}
+                          isLoading={isProcessing}
                         >
                           Restore Active Account
                         </Button>
@@ -669,10 +696,10 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
-              <Button variant="outline" size="sm" onClick={() => setIsBulkRoleConfirmOpen(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsBulkRoleConfirmOpen(false)} disabled={isProcessing}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" onClick={executeBulkRoleChange}>
+              <Button variant="primary" size="sm" onClick={executeBulkRoleChange} isLoading={isProcessing}>
                 Confirm Bulk Re-Scope
               </Button>
             </div>
@@ -697,10 +724,10 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
-              <Button variant="outline" size="sm" onClick={() => setIsBulkDeleteConfirmOpen(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsBulkDeleteConfirmOpen(false)} disabled={isProcessing}>
                 Cancel
               </Button>
-              <Button variant="danger" size="sm" onClick={executeBulkDelete}>
+              <Button variant="danger" size="sm" onClick={executeBulkDelete} isLoading={isProcessing}>
                 Delete User Profiles
               </Button>
             </div>
@@ -725,10 +752,10 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
-              <Button variant="outline" size="sm" onClick={() => setIsIndividualRoleConfirmOpen(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsIndividualRoleConfirmOpen(false)} disabled={isProcessing}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" onClick={executeIndividualRoleChange}>
+              <Button variant="primary" size="sm" onClick={executeIndividualRoleChange} isLoading={isProcessing}>
                 Confirm Role Change
               </Button>
             </div>

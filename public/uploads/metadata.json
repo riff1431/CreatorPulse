@@ -1,1 +1,162 @@
-[]
+[
+  {
+    "id": "file_1786738134685_kkzsmk",
+    "name": "documents_1786738134685_cat__1_.png",
+    "originalName": "cat (1).png",
+    "folder": "documents",
+    "driver": "local",
+    "path": "documents/documents_1786738134685_cat__1_.png",
+    "url": "/uploads/documents/documents_1786738134685_cat__1_.png",
+    "sizeBytes": 27032,
+    "mimeType": "image/png",
+    "createdAt": "2026-08-14T20:08:54.685Z",
+    "updatedAt": "2026-08-14T20:08:54.685Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786738129850_cw8ij8",
+    "name": "covers_1786738129850_cat__1_.png",
+    "originalName": "cat (1).png",
+    "folder": "covers",
+    "driver": "local",
+    "path": "covers/covers_1786738129850_cat__1_.png",
+    "url": "/uploads/covers/covers_1786738129850_cat__1_.png",
+    "sizeBytes": 27032,
+    "mimeType": "image/png",
+    "createdAt": "2026-08-14T20:08:49.853Z",
+    "updatedAt": "2026-08-14T20:08:49.853Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737658845_oxb5ub",
+    "name": "posts_1786737658845_pexels-luri-36839862.jpg",
+    "originalName": "pexels-luri-36839862.jpg",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737658845_pexels-luri-36839862.jpg",
+    "url": "/uploads/posts/posts_1786737658845_pexels-luri-36839862.jpg",
+    "sizeBytes": 526636,
+    "mimeType": "image/jpeg",
+    "createdAt": "2026-08-14T20:00:58.847Z",
+    "updatedAt": "2026-08-14T20:00:58.847Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737658793_bhlb25",
+    "name": "posts_1786737658793_pexels-diyadin-fahri-2163178883-38771893.jpg",
+    "originalName": "pexels-diyadin-fahri-2163178883-38771893.jpg",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737658793_pexels-diyadin-fahri-2163178883-38771893.jpg",
+    "url": "/uploads/posts/posts_1786737658793_pexels-diyadin-fahri-2163178883-38771893.jpg",
+    "sizeBytes": 101281,
+    "mimeType": "image/jpeg",
+    "createdAt": "2026-08-14T20:00:58.796Z",
+    "updatedAt": "2026-08-14T20:00:58.796Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737658752_yydcf1",
+    "name": "posts_1786737658752_pexels-brunxs-13884124.jpg",
+    "originalName": "pexels-brunxs-13884124.jpg",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737658752_pexels-brunxs-13884124.jpg",
+    "url": "/uploads/posts/posts_1786737658752_pexels-brunxs-13884124.jpg",
+    "sizeBytes": 132414,
+    "mimeType": "image/jpeg",
+    "createdAt": "2026-08-14T20:00:58.754Z",
+    "updatedAt": "2026-08-14T20:00:58.754Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737658687_5v659z",
+    "name": "posts_1786737658687_pexels-aliaksei-lepik-557018408-34787094.jpg",
+    "originalName": "pexels-aliaksei-lepik-557018408-34787094.jpg",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737658687_pexels-aliaksei-lepik-557018408-34787094.jpg",
+    "url": "/uploads/posts/posts_1786737658687_pexels-aliaksei-lepik-557018408-34787094.jpg",
+    "sizeBytes": 45744,
+    "mimeType": "image/jpeg",
+    "createdAt": "2026-08-14T20:00:58.689Z",
+    "updatedAt": "2026-08-14T20:00:58.689Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737658650_suq1rz",
+    "name": "posts_1786737658650_cat__1_.png",
+    "originalName": "cat (1).png",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737658650_cat__1_.png",
+    "url": "/uploads/posts/posts_1786737658650_cat__1_.png",
+    "sizeBytes": 27032,
+    "mimeType": "image/png",
+    "createdAt": "2026-08-14T20:00:58.652Z",
+    "updatedAt": "2026-08-14T20:00:58.652Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  },
+  {
+    "id": "file_1786737490323_wi44wm",
+    "name": "posts_1786737490323_pexels-amar-13965345.jpg",
+    "originalName": "pexels-amar-13965345.jpg",
+    "folder": "posts",
+    "driver": "local",
+    "path": "posts/posts_1786737490323_pexels-amar-13965345.jpg",
+    "url": "/uploads/posts/posts_1786737490323_pexels-amar-13965345.jpg",
+    "sizeBytes": 91365,
+    "mimeType": "image/jpeg",
+    "createdAt": "2026-08-14T19:58:10.326Z",
+    "updatedAt": "2026-08-14T19:58:10.327Z",
+    "uploadedBy": {
+      "id": "system-admin-id",
+      "name": "System Admin",
+      "username": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+    },
+    "isLinked": false
+  }
+]

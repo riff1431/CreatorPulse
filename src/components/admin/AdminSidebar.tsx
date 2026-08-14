@@ -99,17 +99,22 @@ const allAdminNavGroups: NavGroup[] = [
   },
 ];
 
+import { usePlugins } from '@/lib/extensions/plugin-engine';
+
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navFilter, setNavFilter] = useState('');
+  const { activePlugins } = usePlugins();
+  const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories');
 
   const filteredGroups = allAdminNavGroups.map((group) => ({
     ...group,
-    items: group.items.filter((item) =>
-      item.label.toLowerCase().includes(navFilter.toLowerCase())
-    ),
+    items: group.items.filter((item) => {
+      if (item.href === '/admin/stories' && !hasStoriesPlugin) return false;
+      return item.label.toLowerCase().includes(navFilter.toLowerCase());
+    }),
   })).filter((group) => group.items.length > 0);
 
   const sidebarContent = (

@@ -10,10 +10,12 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { useCMS, CMSPage } from '@/lib/cms/cms-context';
 import { useToast } from '@/components/ui/Toast';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 
 export default function AdminCMSPage() {
   const { pages, deletePage, toggleStatus, resetToDefaults } = useCMS();
   const { addToast } = useToast();
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
 
@@ -31,6 +33,36 @@ export default function AdminCMSPage() {
     }
   };
 
+  const handleResetDefaults = async () => {
+    startProgress({
+      title: "Resetting CMS Pages to Defaults",
+      steps: [
+        "Purging custom CMS page directories...",
+        "Restoring standard layout templates...",
+        "Rebuilding static routes & link paths..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 25, "Purging custom CMS page directories...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 50, "Custom page directories purged.");
+
+      updateProgress(1, 'running', 65, "Restoring standard layout templates...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(1, 'success', 85, "Default layouts restored.");
+
+      updateProgress(2, 'running', 95, "Rebuilding static routes & link paths...");
+      await resetToDefaults();
+      await new Promise(r => setTimeout(r, 400));
+
+      completeProgress("CMS Page defaults restored successfully!");
+      addToast({ title: 'Reset Completed', message: 'Standard platform CMS pages restored.', type: 'success' });
+    } catch (e) {
+      errorProgress(1, "Failed to restore CMS defaults.");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -44,7 +76,7 @@ export default function AdminCMSPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults} leftIcon={<RefreshCw size={14} />}>
+          <Button variant="outline" size="sm" onClick={handleResetDefaults} leftIcon={<RefreshCw size={14} />}>
             Reset Defaults
           </Button>
           <Link href="/admin/cms/editor">

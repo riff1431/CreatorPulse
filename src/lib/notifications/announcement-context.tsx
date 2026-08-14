@@ -17,6 +17,7 @@ export interface Announcement {
   expiresAt?: string;
   ctaText?: string;
   ctaLink?: string;
+  mediaUrl?: string;
   isDismissible: boolean;
   createdAt: string;
   viewsCount?: number;
@@ -222,6 +223,7 @@ export const AnnouncementProvider: React.FC<{ children: React.ReactNode }> = ({ 
         status: data.status || 'active',
         ctaText: data.ctaText || '',
         ctaLink: data.ctaLink || '',
+        mediaUrl: data.mediaUrl || '',
         isDismissible: data.isDismissible !== false,
         publishedAt: data.publishedAt || now,
         expiresAt: data.expiresAt || undefined,

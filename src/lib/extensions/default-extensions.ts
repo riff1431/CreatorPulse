@@ -989,6 +989,81 @@ export const PLUGIN_LIBRARY_CATALOG: PluginManifest[] = [
     changelog: [
       { version: '1.0.8', date: '2026-08-14', changes: ['Solana Pay QR code integration'] }
     ]
+  },
+  {
+    id: 'plugin-creator-stories',
+    name: '24-Hour Creator Stories & Ephemeral Updates',
+    slug: 'creator-stories',
+    description: 'Empowers creators to share text, image, and video stories that disappear after 24 hours. Includes seen/unseen states, viewer tracking, replies, reactions, and customizable settings.',
+    version: '1.0.0',
+    author: 'CreatorPulse Core Team',
+    authorUrl: 'https://creatorpulse.com',
+    iconUrl: '📸',
+    category: 'Community & Media',
+    tags: ['Stories', 'Ephemeral', 'Community', 'Engagement'],
+    minAppVersion: '1.0.0',
+    permissions: ['storage_access', 'notifications_send'],
+    hooks: ['member_dashboard_widgets', 'creator_dashboard_widgets'],
+    isEnabled: false,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-15',
+    updatedAt: '2026-08-15',
+    isLibraryItem: true,
+    requiresLicense: true,
+    licenseStatus: 'unlicensed',
+    settingsSchema: [
+      { id: 'maxDuration', label: 'Maximum Story Duration (hours)', type: 'number', defaultValue: 24, required: true },
+      { id: 'allowedTypes', label: 'Allowed Media Types', type: 'select', defaultValue: 'all', options: [
+        { label: 'All Media (Image, Video, Text)', value: 'all' },
+        { label: 'Images & Text Only', value: 'image_text' },
+        { label: 'Images Only', value: 'images' },
+        { label: 'Text Only', value: 'text' }
+      ]},
+      { id: 'enableViewerTracking', label: 'Enable Viewer Tracking', type: 'boolean', defaultValue: true, description: 'Allow creators to see who viewed their stories.' },
+      { id: 'enableRepliesReactions', label: 'Enable Replies & Reactions', type: 'boolean', defaultValue: true, description: 'Allow fans to reply or react with emojis to stories.' },
+      { id: 'cleanupInterval', label: 'Expired Story Cleanup Check (hours)', type: 'number', defaultValue: 24, description: 'Interval for auto-purging expired stories.' },
+      { id: 'requireSubscriptionForStories', label: 'Require Subscription to View', type: 'boolean', defaultValue: false, description: 'Only paid subscribers can view creator stories.' }
+    ],
+    settingsValues: {
+      maxDuration: 24,
+      allowedTypes: 'all',
+      enableViewerTracking: true,
+      enableRepliesReactions: true,
+      cleanupInterval: 24,
+      requireSubscriptionForStories: false
+    },
+    changelog: [
+      { version: '1.0.0', date: '2026-08-15', changes: ['Initial release of the 24-Hour Creator Stories modular plugin.'] }
+    ],
+    databaseMigrations: [
+      {
+        version: '1.0.0',
+        description: 'Initialize story reactions and story replies tables with RLS and index optimizations.',
+        sql: `CREATE TABLE IF NOT EXISTS public.story_reactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  story_id UUID NOT NULL REFERENCES public.stories(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  emoji TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE TABLE IF NOT EXISTS public.story_replies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  story_id UUID NOT NULL REFERENCES public.stories(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE public.story_reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.story_replies ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated read reactions" ON public.story_reactions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated insert reactions" ON public.story_reactions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Allow authenticated read replies" ON public.story_replies FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated insert replies" ON public.story_replies FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE INDEX IF NOT EXISTS story_reactions_story_id_idx ON public.story_reactions(story_id);
+CREATE INDEX IF NOT EXISTS story_replies_story_id_idx ON public.story_replies(story_id);`
+      }
+    ]
   }
 ];
 

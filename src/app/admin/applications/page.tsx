@@ -34,20 +34,28 @@ export default function AdminApplicationsPage() {
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const { showToast } = useToast();
 
-  const handleApprove = (id: string, name: string) => {
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const handleApprove = async (id: string, name: string) => {
+    setProcessingId(id);
+    await new Promise(r => setTimeout(r, 600));
     setApplications(applications.map((a) => (a.id === id ? { ...a, status: 'approved' } : a)));
     showToast(`Creator application for "${name}" approved successfully!`, 'success');
     if (selectedApp && selectedApp.id === id) {
       setSelectedApp({ ...selectedApp, status: 'approved' });
     }
+    setProcessingId(null);
   };
 
-  const handleReject = (id: string, name: string) => {
+  const handleReject = async (id: string, name: string) => {
+    setProcessingId(id);
+    await new Promise(r => setTimeout(r, 600));
     setApplications(applications.map((a) => (a.id === id ? { ...a, status: 'rejected' } : a)));
     showToast(`Creator application for "${name}" has been rejected.`, 'warning');
     if (selectedApp && selectedApp.id === id) {
       setSelectedApp({ ...selectedApp, status: 'rejected' });
     }
+    setProcessingId(null);
   };
 
   const filteredApps = applications.filter(app => activeFilter === 'all' || app.status === activeFilter);
@@ -125,10 +133,10 @@ export default function AdminApplicationsPage() {
                 </Button>
                 {app.status === 'pending' && (
                   <>
-                    <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleReject(app.id, app.name)}>
+                    <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleReject(app.id, app.name)} isLoading={processingId === app.id}>
                       <XCircle size={14} />
                     </Button>
-                    <Button variant="primary" size="sm" onClick={() => handleApprove(app.id, app.name)}>
+                    <Button variant="primary" size="sm" onClick={() => handleApprove(app.id, app.name)} isLoading={processingId === app.id}>
                       <Check size={14} />
                     </Button>
                   </>
@@ -204,6 +212,7 @@ export default function AdminApplicationsPage() {
                   size="sm"
                   className="text-red-600 border-rose-200 hover:bg-rose-50"
                   onClick={() => handleReject(selectedApp.id, selectedApp.name)}
+                  isLoading={processingId === selectedApp.id}
                 >
                   Reject Application
                 </Button>
@@ -212,6 +221,7 @@ export default function AdminApplicationsPage() {
                   size="sm"
                   leftIcon={<CheckCircle2 size={13} />}
                   onClick={() => handleApprove(selectedApp.id, selectedApp.name)}
+                  isLoading={processingId === selectedApp.id}
                 >
                   Verify Creator
                 </Button>

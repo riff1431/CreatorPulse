@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/Badge';
 import { THEME_UPDATE_REGISTRY, DEFAULT_THEMES } from '@/lib/extensions/default-extensions';
 import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 
 export default function AdminThemesPage() {
   const {
@@ -2355,28 +2356,26 @@ export default function AdminThemesPage() {
                       <p className="text-[10px] text-slate-500">Configure theme-specific uploads and style options</p>
                     </div>
 
-                    <div className="space-y-3.5">
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Brand Logo Path URL</label>
-                        <input
-                          type="text"
-                          value={customLogoUrl}
-                          onChange={(e) => setCustomLogoUrl(e.target.value)}
-                          placeholder="https://yourdomain.com/logo.svg"
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:border-[#EC4899] focus:outline-none"
-                        />
-                      </div>
+                    <div className="space-y-4">
+                      <MediaUploader
+                        label="Theme Brand Logo Image"
+                        description="SVG, PNG, or WebP logo asset used by this theme."
+                        folder="themes"
+                        accept="images"
+                        aspectRatio="banner"
+                        value={customLogoUrl}
+                        onChange={(url) => setCustomLogoUrl(url)}
+                      />
 
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Brand Favicon Path URL</label>
-                        <input
-                          type="text"
-                          value={customFaviconUrl}
-                          onChange={(e) => setCustomFaviconUrl(e.target.value)}
-                          placeholder="https://yourdomain.com/favicon.ico"
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:border-[#EC4899] focus:outline-none"
-                        />
-                      </div>
+                      <MediaUploader
+                        label="Theme Browser Favicon"
+                        description="Favicon icon loaded when this theme is active."
+                        folder="documents"
+                        accept="icons"
+                        aspectRatio="square"
+                        value={customFaviconUrl}
+                        onChange={(url) => setCustomFaviconUrl(url)}
+                      />
 
                       <div>
                         <label className="block font-bold text-slate-700 mb-1">Button Visual Style Preset</label>
