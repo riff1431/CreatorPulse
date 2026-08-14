@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, Send, CheckCircle2, AlertTriangle, ArrowRight, DollarSign, Building } from 'lucide-react';
+import { Wallet, Send, AlertTriangle, Building } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';

@@ -73,11 +73,16 @@ export default function CreatorProfilePage() {
 
   // Simulate loader on tab changes
   useEffect(() => {
-    setIsTabLoading(true);
-    const timer = setTimeout(() => {
+    const timer1 = setTimeout(() => {
+      setIsTabLoading(true);
+    }, 0);
+    const timer2 = setTimeout(() => {
       setIsTabLoading(false);
     }, 450);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [activeTab]);
 
   const handleSubscribeConfirm = () => {
@@ -190,7 +195,7 @@ export default function CreatorProfilePage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'posts' | 'media' | 'reels' | 'memberships' | 'about')}
                 className={`px-4 py-3 border-b-2 shrink-0 transition-all cursor-pointer ${
                   activeTab === tab.id 
                     ? 'border-[#EC4899] text-[#BE185D]' 

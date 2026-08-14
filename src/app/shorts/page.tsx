@@ -15,6 +15,12 @@ import { MOCK_SHORTS, ShortVideo } from '@/lib/supabase/store';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 
+const mockReelComments = [
+  { userName: 'Alex Vance', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Wow, this transition is clean!', time: '2m ago' },
+  { userName: 'Jordan Lee', userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', content: 'What software did you use to build this? Figma?', time: '1h ago' },
+  { userName: 'Mia Wong', userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', content: 'Incredible work, Sarah!', time: '1d ago' },
+];
+
 export default function ShortsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shortsList, setShortsList] = useState<ShortVideo[]>(MOCK_SHORTS);
@@ -23,20 +29,17 @@ export default function ShortsPage() {
   const [copiedShare, setCopiedShare] = useState(false);
   const [newComment, setNewComment] = useState('');
   
-  const mockReelComments = [
-    { userName: 'Alex Vance', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Wow, this transition is clean!', time: '2m ago' },
-    { userName: 'Jordan Lee', userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', content: 'What software did you use to build this? Figma?', time: '1h ago' },
-    { userName: 'Mia Wong', userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', content: 'Incredible work, Sarah!', time: '1d ago' },
-  ];
-  
   const [activeComments, setActiveComments] = useState(mockReelComments);
   const reelCardRef = useRef<HTMLDivElement>(null);
   const activeShort = shortsList[currentIndex];
 
   // Sync active comments on reel change
   useEffect(() => {
-    setActiveComments(mockReelComments);
-    setShowComments(false);
+    const timer = setTimeout(() => {
+      setActiveComments(mockReelComments);
+      setShowComments(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [currentIndex]);
 
   const animateTransition = (nextIndex: number, direction: 'up' | 'down') => {

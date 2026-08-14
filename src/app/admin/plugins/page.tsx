@@ -27,7 +27,7 @@ export default function AdminPluginsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [configuringPlugin, setConfiguringPlugin] = useState<PluginManifest | null>(null);
-  const [configDraft, setConfigDraft] = useState<Record<string, any>>({});
+  const [configDraft, setConfigDraft] = useState<Record<string, unknown>>({});
   const [permissionsPlugin, setPermissionsPlugin] = useState<PluginManifest | null>(null);
   const [changelogPlugin, setChangelogPlugin] = useState<PluginManifest | null>(null);
 
@@ -82,7 +82,7 @@ export default function AdminPluginsPage() {
           setIsUploadOpen(false);
           setUploadSuccess(false);
         }, 1200);
-      } catch (err: any) {
+      } catch (err) {
         setUploadError('Invalid file format. Please upload a valid JSON plugin manifest or ZIP package.');
       }
     };
@@ -106,8 +106,9 @@ export default function AdminPluginsPage() {
         setUploadSuccess(false);
         setUploadText('');
       }, 1200);
-    } catch (e: any) {
-      setUploadError('JSON syntax error: ' + e.message);
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : 'Unknown syntax error';
+      setUploadError('JSON syntax error: ' + errMsg);
     }
   };
 
@@ -347,7 +348,7 @@ export default function AdminPluginsPage() {
                   {field.type === 'text' && (
                     <input
                       type="text"
-                      value={configDraft[field.id] || ''}
+                      value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
                       className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
@@ -357,7 +358,7 @@ export default function AdminPluginsPage() {
                   {field.type === 'number' && (
                     <input
                       type="number"
-                      value={configDraft[field.id] ?? ''}
+                      value={configDraft[field.id] !== undefined ? Number(configDraft[field.id]) : ''}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: parseFloat(e.target.value) })}
                       className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899] font-medium"
                     />
@@ -377,7 +378,7 @@ export default function AdminPluginsPage() {
 
                   {field.type === 'select' && (
                     <select
-                      value={configDraft[field.id] || ''}
+                      value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none font-medium"
                     >
@@ -392,7 +393,7 @@ export default function AdminPluginsPage() {
                   {field.type === 'textarea' && (
                     <textarea
                       rows={3}
-                      value={configDraft[field.id] || ''}
+                      value={String(configDraft[field.id] ?? '')}
                       onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
                       className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl p-3 text-xs font-mono text-[#18181B] focus:outline-none focus:border-[#EC4899]"

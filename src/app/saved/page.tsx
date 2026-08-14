@@ -22,11 +22,16 @@ export default function SavedPage() {
 
   // Simulate loader when filter updates
   useEffect(() => {
-    setIsSavedLoading(true);
-    const timer = setTimeout(() => {
+    const timer1 = setTimeout(() => {
+      setIsSavedLoading(true);
+    }, 0);
+    const timer2 = setTimeout(() => {
       setIsSavedLoading(false);
     }, 450);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [searchQuery, savedCategory]);
 
   const filteredPosts = savedPosts.filter((p) => {
@@ -86,7 +91,7 @@ export default function SavedPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setSavedCategory(tab.id as any)}
+                onClick={() => setSavedCategory(tab.id as 'all' | 'image' | 'video' | 'poll')}
                 className={`px-4 py-2 rounded-2xl transition-all shrink-0 cursor-pointer ${
                   savedCategory === tab.id
                     ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
@@ -123,7 +128,7 @@ export default function SavedPage() {
                 <Bookmark size={32} className="text-[#A1A1AA] mx-auto animate-pulse" />
                 <h3 className="font-extrabold text-[#18181B] text-base">No Saved Items Found</h3>
                 <p className="text-xs text-[#71717A] max-w-sm mx-auto leading-relaxed font-semibold">
-                  We couldn't find any saved posts matching your active selection criteria. Try adjusting filters.
+                  We couldn&apos;t find any saved posts matching your active selection criteria. Try adjusting filters.
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleResetFilters} leftIcon={<RefreshCw size={12} />}>

@@ -4,7 +4,7 @@ import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FFE4E6] selection:text-[#BE123C]">
+    <div className="admin-portal-isolated min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FFE4E6] selection:text-[#BE123C]">
       <AdminHeader />
       <div className="flex flex-1 overflow-hidden">
         <AdminSidebar />

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   Palette, Upload, Sparkles, Check, Download, RotateCcw, 
-  Trash2, Sliders, ExternalLink, ShieldCheck, Info, X, CheckCircle2, AlertTriangle, Layers
+  Trash2, Sliders, ExternalLink, ShieldCheck, Info, X, CheckCircle2, 
+  AlertTriangle, Layers, Eye, Monitor, Smartphone, User, Lock, Heart, MessageSquare, Star
 } from 'lucide-react';
 import { useTheme } from '@/lib/extensions/theme-engine';
 import { ThemeManifest } from '@/lib/extensions/theme-types';
@@ -13,10 +15,22 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
 export default function AdminThemesPage() {
-  const { themes, activeTheme, activateTheme, installTheme, deleteTheme, customizeTheme, rollbackTheme, exportTheme } = useTheme();
+  const { 
+    themes, 
+    activeTheme, 
+    activateTheme, 
+    installTheme, 
+    deleteTheme, 
+    customizeTheme, 
+    rollbackTheme, 
+    exportTheme 
+  } = useTheme();
 
   const [selectedThemeForDetails, setSelectedThemeForDetails] = useState<ThemeManifest | null>(null);
   const [customizerTheme, setCustomizerTheme] = useState<ThemeManifest | null>(null);
+  const [livePreviewTheme, setLivePreviewTheme] = useState<ThemeManifest | null>(null);
+  const [previewTab, setPreviewTab] = useState<'feed' | 'profile' | 'landing'>('feed');
+
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadText, setUploadText] = useState('');
   const [uploadError, setUploadError] = useState('');
@@ -75,7 +89,7 @@ export default function AdminThemesPage() {
           setIsUploadOpen(false);
           setUploadSuccess(false);
         }, 1200);
-      } catch (err: any) {
+      } catch (err) {
         setUploadError('Invalid file format. Please upload a valid JSON theme manifest or ZIP package.');
       }
     };
@@ -99,8 +113,9 @@ export default function AdminThemesPage() {
         setUploadSuccess(false);
         setUploadText('');
       }, 1200);
-    } catch (e: any) {
-      setUploadError('JSON syntax error: ' + e.message);
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : 'Unknown syntax error';
+      setUploadError('JSON syntax error: ' + errMsg);
     }
   };
 
@@ -110,7 +125,7 @@ export default function AdminThemesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${theme.slug}-theme-v${theme.version}.json`;
+    a.download = `${theme.slug}-frontend-theme-v${theme.version}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -122,10 +137,10 @@ export default function AdminThemesPage() {
         <div>
           <div className="flex items-center gap-2">
             <Palette className="text-[#EC4899]" size={24} />
-            <h1 className="text-2xl font-black text-[#18181B]">Theme & Design Studio</h1>
+            <h1 className="text-2xl font-black text-[#18181B]">Frontend Theme System</h1>
           </div>
           <p className="text-xs text-[#71717A] mt-1 font-medium">
-            Manage, customize, and switch visual themes, CSS variable tokens, and typography layouts without rebuilding.
+            Control the visual appearance of public landing pages, user feeds, creator profiles, reels, and member dashboards.
           </p>
         </div>
 
@@ -141,7 +156,33 @@ export default function AdminThemesPage() {
         </div>
       </div>
 
-      {/* Active Theme Banner */}
+      {/* Admin Panel Isolation Guarantee Banner */}
+      <div className="p-4 bg-white border border-[#F3DCE8] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <h4 className="font-bold text-xs text-[#18181B] flex items-center gap-2">
+              <span>Admin Panel Isolation Guarantee</span>
+              <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
+                Protected & Locked
+              </span>
+            </h4>
+            <p className="text-[11px] text-[#71717A] mt-0.5">
+              Frontend themes exclusively modify public website styling, creator profiles, and member portals. The Admin Panel is strictly isolated and maintains its dedicated control room layout.
+            </p>
+          </div>
+        </div>
+
+        <Link href="/feed" target="_blank" className="shrink-0">
+          <Button variant="outline" size="sm" leftIcon={<ExternalLink size={13} />}>
+            Open Public Website
+          </Button>
+        </Link>
+      </div>
+
+      {/* Active Frontend Theme Banner */}
       <Card className="p-6 bg-gradient-to-br from-white to-[#FFF1F7] border border-[#F3DCE8] relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
           <div className="flex items-start gap-4">
@@ -151,7 +192,7 @@ export default function AdminThemesPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE7F3] text-[#BE185D] px-2.5 py-0.5 rounded-full border border-[#FBCFE8]">
-                  Active Theme
+                  Active Frontend Theme
                 </span>
                 <Badge variant="emerald" size="sm">v{activeTheme.version}</Badge>
               </div>
@@ -182,11 +223,11 @@ export default function AdminThemesPage() {
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Sliders size={14} className="text-[#EC4899]" />}
-              onClick={() => openCustomizer(activeTheme)}
+              leftIcon={<Eye size={14} className="text-[#EC4899]" />}
+              onClick={() => setLivePreviewTheme(activeTheme)}
               className="ml-2"
             >
-              Customize Active
+              Live Preview
             </Button>
           </div>
         </div>
@@ -197,9 +238,9 @@ export default function AdminThemesPage() {
         <div className="flex items-center justify-between">
           <h3 className="font-extrabold text-base text-[#18181B] flex items-center gap-2">
             <Layers size={18} className="text-[#EC4899]" />
-            <span>Installed Themes ({themes.length})</span>
+            <span>Installed Frontend Themes ({themes.length})</span>
           </h3>
-          <span className="text-xs text-[#71717A] font-medium">Click activate to switch real-time platform branding</span>
+          <span className="text-xs text-[#71717A] font-medium">Activate to update public visitor and member styling</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -234,7 +275,7 @@ export default function AdminThemesPage() {
 
                   {isActive && (
                     <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EC4899] text-white text-[11px] font-extrabold shadow-lg shadow-[#EC4899]/40">
-                      <Check size={12} strokeWidth={3} /> Active
+                      <Check size={12} strokeWidth={3} /> Active Frontend Theme
                     </div>
                   )}
 
@@ -264,9 +305,16 @@ export default function AdminThemesPage() {
                   <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#F3DCE8]">
                     <div className="flex items-center gap-1">
                       <button
+                        onClick={() => setLivePreviewTheme(theme)}
+                        className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                        title="Live Frontend Preview"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
                         onClick={() => openCustomizer(theme)}
                         className="p-2 rounded-xl text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                        title="Customize Theme"
+                        title="Customize Tokens"
                       >
                         <Sliders size={15} />
                       </button>
@@ -321,6 +369,299 @@ export default function AdminThemesPage() {
         </div>
       </div>
 
+      {/* Interactive Frontend Live Preview Modal */}
+      {livePreviewTheme && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-4xl w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center font-bold">
+                  <Eye size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#18181B]">
+                    Frontend Live Preview: {livePreviewTheme.name}
+                  </h3>
+                  <p className="text-xs text-[#71717A]">
+                    Simulating public website appearance under {livePreviewTheme.name} tokens
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLivePreviewTheme(null)}
+                  className="p-1.5 rounded-xl text-[#71717A] hover:text-[#18181B] cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Viewport View Switcher Tabs */}
+            <div className="flex items-center justify-between gap-3 shrink-0 border-b border-[#F3DCE8] pb-3">
+              <div className="flex items-center gap-2 text-xs font-bold">
+                <button
+                  onClick={() => setPreviewTab('feed')}
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    previewTab === 'feed'
+                      ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
+                      : 'text-[#71717A] hover:text-[#18181B]'
+                  }`}
+                >
+                  Community Feed Post View
+                </button>
+                <button
+                  onClick={() => setPreviewTab('profile')}
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    previewTab === 'profile'
+                      ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
+                      : 'text-[#71717A] hover:text-[#18181B]'
+                  }`}
+                >
+                  Creator Profile View
+                </button>
+                <button
+                  onClick={() => setPreviewTab('landing')}
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    previewTab === 'landing'
+                      ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
+                      : 'text-[#71717A] hover:text-[#18181B]'
+                  }`}
+                >
+                  Landing Page Hero View
+                </button>
+              </div>
+
+              {livePreviewTheme.id !== activeTheme.id && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    activateTheme(livePreviewTheme.id);
+                    setLivePreviewTheme(null);
+                  }}
+                  leftIcon={<Check size={14} />}
+                >
+                  Activate This Theme
+                </Button>
+              )}
+            </div>
+
+            {/* Simulated Live Viewport Container */}
+            <div
+              className="flex-1 overflow-y-auto p-6 rounded-2xl border transition-all space-y-6"
+              style={{
+                backgroundColor: livePreviewTheme.tokens.background,
+                borderColor: livePreviewTheme.tokens.border,
+                color: livePreviewTheme.tokens.textPrimary
+              }}
+            >
+              {previewTab === 'feed' && (
+                <div className="max-w-lg mx-auto space-y-4">
+                  {/* Simulated Post Card */}
+                  <div
+                    className="p-5 border shadow-sm space-y-4"
+                    style={{
+                      backgroundColor: livePreviewTheme.tokens.surface,
+                      borderColor: livePreviewTheme.tokens.border,
+                      borderRadius: livePreviewTheme.tokens.cardRadius
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full p-0.5"
+                          style={{ background: `linear-gradient(135deg, ${livePreviewTheme.tokens.primary}, ${livePreviewTheme.tokens.accent})` }}
+                        >
+                          <img
+                            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
+                            alt="Creator"
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm" style={{ color: livePreviewTheme.tokens.textPrimary }}>Sarah Jenkins</h4>
+                          <span className="text-xs" style={{ color: livePreviewTheme.tokens.textSecondary }}>@sarahdesign • 15m ago</span>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: livePreviewTheme.tokens.softPrimary,
+                          color: livePreviewTheme.tokens.primary
+                        }}
+                      >
+                        VIP Update
+                      </span>
+                    </div>
+
+                    <p className="text-xs leading-relaxed" style={{ color: livePreviewTheme.tokens.textSecondary }}>
+                      Excited to unveil our new masterclass series on UI tokens and responsive styling. Click below to download exclusive resources!
+                    </p>
+
+                    <div
+                      className="p-4 rounded-xl text-center space-y-2 border"
+                      style={{
+                        backgroundColor: livePreviewTheme.tokens.surfaceSecondary,
+                        borderColor: livePreviewTheme.tokens.border
+                      }}
+                    >
+                      <span className="text-xs font-bold" style={{ color: livePreviewTheme.tokens.primary }}>
+                        ✨ VIP Member Exclusive Download
+                      </span>
+                      <p className="text-[11px]" style={{ color: livePreviewTheme.tokens.textSecondary }}>
+                        Available to active Pro Tier subscribers.
+                      </p>
+                      <button
+                        className="px-4 py-2 text-xs font-bold text-white shadow-sm"
+                        style={{
+                          backgroundColor: livePreviewTheme.tokens.primary,
+                          borderRadius: livePreviewTheme.tokens.buttonRadius
+                        }}
+                      >
+                        Unlock Resource ($9.99/mo)
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t pt-3 text-xs" style={{ borderColor: livePreviewTheme.tokens.border }}>
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1 font-bold" style={{ color: livePreviewTheme.tokens.primary }}>
+                          <Heart size={15} fill={livePreviewTheme.tokens.primary} /> 342
+                        </span>
+                        <span className="flex items-center gap-1" style={{ color: livePreviewTheme.tokens.textSecondary }}>
+                          <MessageSquare size={15} /> 28
+                        </span>
+                      </div>
+                      <span className="text-[11px]" style={{ color: livePreviewTheme.tokens.textMuted }}>1.2k views</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {previewTab === 'profile' && (
+                <div className="max-w-xl mx-auto space-y-4">
+                  {/* Creator Cover & Profile Card */}
+                  <div
+                    className="p-6 border shadow-sm space-y-4 text-center relative overflow-hidden"
+                    style={{
+                      backgroundColor: livePreviewTheme.tokens.surface,
+                      borderColor: livePreviewTheme.tokens.border,
+                      borderRadius: livePreviewTheme.tokens.cardRadius
+                    }}
+                  >
+                    <div
+                      className="w-20 h-20 rounded-full mx-auto p-1 shadow-lg"
+                      style={{ background: `linear-gradient(135deg, ${livePreviewTheme.tokens.primary}, ${livePreviewTheme.tokens.accent})` }}
+                    >
+                      <img
+                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
+                        alt="Creator"
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-lg" style={{ color: livePreviewTheme.tokens.textPrimary }}>Sarah Jenkins</h3>
+                      <p className="text-xs" style={{ color: livePreviewTheme.tokens.textSecondary }}>UI/UX Design Engineering Educator</p>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-6 py-2 border-y" style={{ borderColor: livePreviewTheme.tokens.border }}>
+                      <div>
+                        <p className="font-extrabold text-sm" style={{ color: livePreviewTheme.tokens.primary }}>14.2k</p>
+                        <span className="text-[10px]" style={{ color: livePreviewTheme.tokens.textSecondary }}>Followers</span>
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-sm" style={{ color: livePreviewTheme.tokens.primary }}>840</p>
+                        <span className="text-[10px]" style={{ color: livePreviewTheme.tokens.textSecondary }}>VIP Members</span>
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-sm" style={{ color: livePreviewTheme.tokens.primary }}>$12.99</p>
+                        <span className="text-[10px]" style={{ color: livePreviewTheme.tokens.textSecondary }}>Starting/mo</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        className="px-5 py-2.5 text-xs font-bold text-white shadow-md"
+                        style={{
+                          backgroundColor: livePreviewTheme.tokens.primary,
+                          borderRadius: livePreviewTheme.tokens.buttonRadius
+                        }}
+                      >
+                        Subscribe to Tier
+                      </button>
+                      <button
+                        className="px-4 py-2.5 text-xs font-bold border"
+                        style={{
+                          backgroundColor: livePreviewTheme.tokens.surface,
+                          borderColor: livePreviewTheme.tokens.border,
+                          color: livePreviewTheme.tokens.textPrimary,
+                          borderRadius: livePreviewTheme.tokens.buttonRadius
+                        }}
+                      >
+                        Tip Creator
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {previewTab === 'landing' && (
+                <div className="max-w-2xl mx-auto text-center space-y-5 py-6">
+                  <span
+                    className="text-[11px] font-extrabold uppercase tracking-widest px-3.5 py-1 rounded-full border inline-block"
+                    style={{
+                      backgroundColor: livePreviewTheme.tokens.softPrimary,
+                      borderColor: livePreviewTheme.tokens.border,
+                      color: livePreviewTheme.tokens.primary
+                    }}
+                  >
+                    🚀 Next-Gen Creator Platform
+                  </span>
+                  <h2 className="text-3xl font-black" style={{ color: livePreviewTheme.tokens.textPrimary }}>
+                    Monetize Your Passion With Zero Code
+                  </h2>
+                  <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: livePreviewTheme.tokens.textSecondary }}>
+                    Empower your community with recurring memberships, direct paywalled posts, and live vertical shorts.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <button
+                      className="px-6 py-3 text-xs font-bold text-white shadow-lg"
+                      style={{
+                        backgroundColor: livePreviewTheme.tokens.primary,
+                        borderRadius: livePreviewTheme.tokens.buttonRadius
+                      }}
+                    >
+                      Get Started Free
+                    </button>
+                    <button
+                      className="px-5 py-3 text-xs font-bold border"
+                      style={{
+                        backgroundColor: livePreviewTheme.tokens.surface,
+                        borderColor: livePreviewTheme.tokens.border,
+                        color: livePreviewTheme.tokens.textPrimary,
+                        borderRadius: livePreviewTheme.tokens.buttonRadius
+                      }}
+                    >
+                      Explore Creators
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-[#F3DCE8] shrink-0">
+              <span className="text-xs text-[#71717A]">
+                Theme Category: <strong className="text-[#18181B]">{livePreviewTheme.category}</strong>
+              </span>
+              <Button variant="outline" size="sm" onClick={() => setLivePreviewTheme(null)}>
+                Close Preview
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Live Customizer Modal */}
       {customizerTheme && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -329,9 +670,9 @@ export default function AdminThemesPage() {
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Sliders size={18} className="text-[#EC4899]" />
-                  <span>Customize {customizerTheme.name}</span>
+                  <span>Customize Frontend Tokens: {customizerTheme.name}</span>
                 </h3>
-                <p className="text-xs text-[#71717A]">Adjust CSS variables and styling tokens live</p>
+                <p className="text-xs text-[#71717A]">Fine-tune public palette, canvas, and card radius</p>
               </div>
               <button
                 onClick={() => setCustomizerTheme(null)}
@@ -521,9 +862,9 @@ export default function AdminThemesPage() {
               <div>
                 <h3 className="font-bold text-base text-[#18181B] flex items-center gap-2">
                   <Upload size={18} className="text-[#EC4899]" />
-                  <span>Upload Theme Package</span>
+                  <span>Upload Frontend Theme Package</span>
                 </h3>
-                <p className="text-xs text-[#71717A]">Install custom themes via JSON manifest or ZIP file</p>
+                <p className="text-xs text-[#71717A]">Install custom public themes via JSON manifest or ZIP file</p>
               </div>
               <button
                 onClick={() => setIsUploadOpen(false)}
@@ -536,7 +877,7 @@ export default function AdminThemesPage() {
             {uploadSuccess && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Theme package verified and installed successfully!</span>
+                <span>Frontend theme package verified and installed successfully!</span>
               </div>
             )}
 

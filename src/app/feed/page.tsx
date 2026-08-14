@@ -51,11 +51,16 @@ export default function FeedPage() {
 
   // Simulate loader on feed tab switcher
   useEffect(() => {
-    setIsFeedLoading(true);
-    const timer = setTimeout(() => {
+    const timer1 = setTimeout(() => {
+      setIsFeedLoading(true);
+    }, 0);
+    const timer2 = setTimeout(() => {
       setIsFeedLoading(false);
     }, 600);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [feedTab]);
 
   const handleCreatePost = (e: React.FormEvent) => {

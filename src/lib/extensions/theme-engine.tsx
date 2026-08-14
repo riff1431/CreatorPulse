@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { ThemeManifest, ThemeTokens } from './theme-types';
 import { DEFAULT_THEMES } from './default-extensions';
 import { logAuditEvent } from './package-installer';
@@ -14,6 +15,8 @@ interface ThemeContextType {
   customizeTheme: (themeId: string, updatedTokens: Partial<ThemeTokens>) => void;
   rollbackTheme: (themeId: string) => void;
   exportTheme: (themeId: string) => string;
+  previewTheme: ThemeManifest | null;
+  setPreviewTheme: (theme: ThemeManifest | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,61 +24,108 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const STORAGE_THEMES_KEY = 'creatorpulse_themes';
 const STORAGE_ACTIVE_THEME_ID = 'creatorpulse_active_theme_id';
 
+// Standard fixed Admin Control Panel tokens (Never altered by frontend themes)
+export const ADMIN_LOCKED_TOKENS: ThemeTokens = {
+  primary: '#EC4899',
+  primaryHover: '#DB2777',
+  softPrimary: '#FCE7F3',
+  lightPrimary: '#FDF2F8',
+  accent: '#F43F5E',
+  background: '#FFF9FC',
+  surface: '#FFFFFF',
+  surfaceSecondary: '#FFF1F7',
+  border: '#F3DCE8',
+  textPrimary: '#18181B',
+  textSecondary: '#71717A',
+  textMuted: '#A1A1AA',
+  cardRadius: '20px',
+  buttonRadius: '14px',
+  fontFamily: 'Plus Jakarta Sans, sans-serif',
+  isDark: false
+};
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
   const [themes, setThemes] = useState<ThemeManifest[]>(DEFAULT_THEMES);
   const [activeThemeId, setActiveThemeId] = useState<string>('theme-rose-blush');
-
-  // Load from localStorage on mount
+  const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);  // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
-      const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
+    const initThemes = () => {
+      try {
+        const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
+        const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
 
-      let currentThemes = DEFAULT_THEMES;
-      if (storedThemesRaw) {
-        currentThemes = JSON.parse(storedThemesRaw);
-        setThemes(currentThemes);
-      }
+        let currentThemes = DEFAULT_THEMES;
+        if (storedThemesRaw) {
+          currentThemes = JSON.parse(storedThemesRaw);
+          setThemes(currentThemes);
+        }
 
-      if (storedActiveId && currentThemes.some(t => t.id === storedActiveId)) {
-        setActiveThemeId(storedActiveId);
-      } else {
-        setActiveThemeId('theme-rose-blush');
+        if (storedActiveId && currentThemes.some((t) => t.id === storedActiveId)) {
+          setActiveThemeId(storedActiveId);
+        } else {
+          setActiveThemeId('theme-rose-blush');
+        }
+      } catch (e) {
+        console.error('Failed to load themes from storage', e);
       }
-    } catch (e) {
-      console.error('Failed to load themes from storage', e);
-    }
+    };
+    const timer = setTimeout(initThemes, 0);
+    return () => clearTimeout(timer);
   }, []);
-
   const activeTheme = themes.find((t) => t.id === activeThemeId) || themes[0] || DEFAULT_THEMES[0];
+  const effectiveTheme = previewTheme || activeTheme;
 
-  // Apply CSS custom properties dynamically to document.documentElement
+  // Apply CSS custom properties dynamically with strict ADMIN ISOLATION
   useEffect(() => {
-    if (typeof document === 'undefined' || !activeTheme) return;
+    if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
-    const tokens = activeTheme.tokens;
+    const isAdminRoute = pathname?.startsWith('/admin');
 
-    root.style.setProperty('--color-primary', tokens.primary);
-    root.style.setProperty('--color-primary-hover', tokens.primaryHover);
-    root.style.setProperty('--color-soft-primary', tokens.softPrimary);
-    root.style.setProperty('--color-light-primary', tokens.lightPrimary);
-    root.style.setProperty('--color-accent', tokens.accent);
-    root.style.setProperty('--color-bg', tokens.background);
-    root.style.setProperty('--color-surface', tokens.surface);
-    root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
-    root.style.setProperty('--color-border', tokens.border);
-    root.style.setProperty('--color-text-primary', tokens.textPrimary);
-    root.style.setProperty('--color-text-secondary', tokens.textSecondary);
-    root.style.setProperty('--radius-card', tokens.cardRadius);
-    root.style.setProperty('--radius-button', tokens.buttonRadius);
-
-    if (tokens.isDark) {
-      root.classList.add('dark-theme');
-    } else {
+    if (isAdminRoute) {
+      // Keep Admin Panel strictly locked to standard Admin tokens
+      const adminTokens = ADMIN_LOCKED_TOKENS;
+      root.style.setProperty('--color-primary', adminTokens.primary);
+      root.style.setProperty('--color-primary-hover', adminTokens.primaryHover);
+      root.style.setProperty('--color-soft-primary', adminTokens.softPrimary);
+      root.style.setProperty('--color-light-primary', adminTokens.lightPrimary);
+      root.style.setProperty('--color-accent', adminTokens.accent);
+      root.style.setProperty('--color-bg', adminTokens.background);
+      root.style.setProperty('--color-surface', adminTokens.surface);
+      root.style.setProperty('--color-surface-secondary', adminTokens.surfaceSecondary);
+      root.style.setProperty('--color-border', adminTokens.border);
+      root.style.setProperty('--color-text-primary', adminTokens.textPrimary);
+      root.style.setProperty('--color-text-secondary', adminTokens.textSecondary);
+      root.style.setProperty('--radius-card', adminTokens.cardRadius);
+      root.style.setProperty('--radius-button', adminTokens.buttonRadius);
       root.classList.remove('dark-theme');
+      root.classList.add('admin-isolated');
+    } else {
+      // Apply active Frontend theme tokens across public & user portals
+      const tokens = effectiveTheme.tokens;
+      root.style.setProperty('--color-primary', tokens.primary);
+      root.style.setProperty('--color-primary-hover', tokens.primaryHover);
+      root.style.setProperty('--color-soft-primary', tokens.softPrimary);
+      root.style.setProperty('--color-light-primary', tokens.lightPrimary);
+      root.style.setProperty('--color-accent', tokens.accent);
+      root.style.setProperty('--color-bg', tokens.background);
+      root.style.setProperty('--color-surface', tokens.surface);
+      root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
+      root.style.setProperty('--color-border', tokens.border);
+      root.style.setProperty('--color-text-primary', tokens.textPrimary);
+      root.style.setProperty('--color-text-secondary', tokens.textSecondary);
+      root.style.setProperty('--radius-card', tokens.cardRadius);
+      root.style.setProperty('--radius-button', tokens.buttonRadius);
+
+      root.classList.remove('admin-isolated');
+      if (tokens.isDark) {
+        root.classList.add('dark-theme');
+      } else {
+        root.classList.remove('dark-theme');
+      }
     }
-  }, [activeTheme]);
+  }, [effectiveTheme, pathname]);
 
   const activateTheme = (themeId: string) => {
     const target = themes.find((t) => t.id === themeId);
@@ -95,13 +145,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_ACTIVATED',
       entityType: 'theme',
       entityName: target.name,
-      details: `Activated theme version ${target.version} (${target.category})`,
+      details: `Activated frontend theme version ${target.version} (${target.category})`,
       severity: 'success'
     });
   };
 
   const installTheme = (manifest: ThemeManifest): boolean => {
-    // Check if ID already exists
     const exists = themes.some((t) => t.id === manifest.id);
     let updated: ThemeManifest[];
 
@@ -118,7 +167,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_INSTALLED',
       entityType: 'theme',
       entityName: manifest.name,
-      details: `Installed theme version ${manifest.version} by ${manifest.author}`,
+      details: `Installed frontend theme version ${manifest.version} by ${manifest.author}`,
       severity: 'success'
     });
     return true;
@@ -145,7 +194,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_DELETED',
       entityType: 'theme',
       entityName: target.name,
-      details: `Deleted theme ${target.name}`,
+      details: `Deleted frontend theme ${target.name}`,
       severity: 'warning'
     });
     return true;
@@ -172,8 +221,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     logAuditEvent({
       action: 'THEME_CUSTOMIZED',
       entityType: 'theme',
-      entityName: themes.find(t => t.id === themeId)?.name || 'Theme',
-      details: `Customized CSS tokens (primary: ${updatedTokens.primary || 'unchanged'})`,
+      entityName: themes.find((t) => t.id === themeId)?.name || 'Theme',
+      details: `Customized frontend tokens (primary: ${updatedTokens.primary || 'unchanged'})`,
       severity: 'info'
     });
   };
@@ -190,7 +239,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       action: 'THEME_ROLLBACK',
       entityType: 'theme',
       entityName: defaultPreset.name,
-      details: `Rolled back theme to original default preset tokens`,
+      details: `Rolled back frontend theme to original default preset tokens`,
       severity: 'info'
     });
   };
@@ -211,7 +260,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         deleteTheme,
         customizeTheme,
         rollbackTheme,
-        exportTheme
+        exportTheme,
+        previewTheme,
+        setPreviewTheme
       }}
     >
       {children}

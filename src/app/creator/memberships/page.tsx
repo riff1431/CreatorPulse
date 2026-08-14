@@ -39,6 +39,8 @@ const initialPlans: Plan[] = [
   },
 ];
 
+const generatePlanId = () => `plan-${Date.now()}`;
+
 export default function CreatorMembershipsPage() {
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [showAdd, setShowAdd] = useState(false);
@@ -69,7 +71,7 @@ export default function CreatorMembershipsPage() {
       return;
     }
     const newPlan: Plan = {
-      id: `plan-${Date.now()}`,
+      id: generatePlanId(),
       name: newName,
       price: `$${parseFloat(newPrice).toFixed(2)}/mo`,
       description: newDesc || 'Access to exclusive member-only benefits.',
@@ -227,7 +229,7 @@ export default function CreatorMembershipsPage() {
                     className="accent-[#EC4899] w-4 h-4 cursor-pointer"
                   />
                   <label htmlFor="isPopular" className="text-[#18181B] font-extrabold cursor-pointer">
-                    Promote as "Popular Choice" on profile
+                    Promote as &quot;Popular Choice&quot; on profile
                   </label>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BarChart3, Eye, Film, Clock, Heart, MessageSquare, Search, ArrowUpDown } from 'lucide-react';
+import { BarChart3, Film, Clock, Heart, MessageSquare, Search, ArrowUpDown } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -325,7 +325,7 @@ export default function CreatorAnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F3DCE8]/60">
-              {filteredContent.map((c, i) => (
+              {filteredContent.map((c) => (
                 <tr key={c.id} className="hover:bg-[#FFF9FC]/50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-[#18181B] max-w-[280px] truncate">{c.title}</td>
                   <td className="py-3.5 px-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, CheckCircle2, XCircle, Eye, Building, Receipt, FileText, AlertCircle } from 'lucide-react';
+import { Wallet, CheckCircle2, Eye, Building, Receipt } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -47,7 +47,7 @@ export default function AdminPayoutsPage() {
 
   const handleReject = (id: string, name: string) => {
     setPayouts(payouts.map((p) => (p.id === id ? { ...p, status: 'Rejected' } : p)));
-    showToast(`Payout request ${id} rejected.`, 'warning');
+    showToast(`Payout request ${id} for "${name}" rejected.`, 'warning');
     if (selectedPayout && selectedPayout.id === id) {
       setSelectedPayout({ ...selectedPayout, status: 'Rejected' });
     }

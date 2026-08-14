@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, Save, User, CreditCard, Lock, Shield, Sparkles } from 'lucide-react';
+import { Settings, Save, User, CreditCard, Lock } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';

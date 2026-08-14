@@ -9,7 +9,7 @@ interface PluginContextType {
   plugins: PluginManifest[];
   activePlugins: PluginManifest[];
   togglePlugin: (pluginId: string, enabled: boolean) => void;
-  updatePluginSettings: (pluginId: string, values: Record<string, any>) => void;
+  updatePluginSettings: (pluginId: string, values: Record<string, unknown>) => void;
   toggleAutoUpdate: (pluginId: string, autoUpdate: boolean) => void;
   updatePluginVersion: (pluginId: string) => void;
   installPlugin: (manifest: PluginManifest) => boolean;
@@ -27,14 +27,18 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const storedPluginsRaw = localStorage.getItem(STORAGE_PLUGINS_KEY);
-      if (storedPluginsRaw) {
-        setPlugins(JSON.parse(storedPluginsRaw));
+    const initPlugins = () => {
+      try {
+        const storedPluginsRaw = localStorage.getItem(STORAGE_PLUGINS_KEY);
+        if (storedPluginsRaw) {
+          setPlugins(JSON.parse(storedPluginsRaw));
+        }
+      } catch (e) {
+        console.error('Failed to load plugins from storage', e);
       }
-    } catch (e) {
-      console.error('Failed to load plugins from storage', e);
-    }
+    };
+    const timer = setTimeout(initPlugins, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const activePlugins = plugins.filter((p) => p.isEnabled);
@@ -62,7 +66,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   };
 
-  const updatePluginSettings = (pluginId: string, values: Record<string, any>) => {
+  const updatePluginSettings = (pluginId: string, values: Record<string, unknown>) => {
     const target = plugins.find((p) => p.id === pluginId);
     if (!target) return;
 
@@ -216,7 +220,7 @@ export const usePlugins = () => {
  */
 interface HookPointProps {
   name: PluginHookType;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   className?: string;
 }
 
@@ -232,15 +236,16 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
         try {
           // Render specific built-in add-on behavior based on plugin id
           if (plugin.id === 'plugin-drm-watermark' && name === 'post_card_footer') {
-            const watermarkText = plugin.settingsValues.watermarkText || '© CreatorPulse Protected';
+            const watermarkText: string = String(plugin.settingsValues.watermarkText || '© CreatorPulse Protected');
+            const postAuthor: string = String((context as any)?.post?.authorUsername || 'public');
             return (
               <div key={plugin.id} className="pt-2 border-t border-[#F3DCE8]/60 flex items-center justify-between text-[10px] text-[#A1A1AA] select-none">
                 <span className="flex items-center gap-1 font-semibold">
                   <span className="text-[#EC4899]">🛡️ DRM</span> {watermarkText}
                 </span>
-                {plugin.settingsValues.includeViewerUsername && (
+                {Boolean(plugin.settingsValues.includeViewerUsername) && (
                   <span className="font-mono bg-[#FFF1F7] px-1.5 py-0.5 rounded text-[#BE185D]">
-                    ID: #{context.post?.authorUsername || 'public'}
+                    ID: #{postAuthor}
                   </span>
                 )}
               </div>
@@ -278,7 +283,7 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
           }
 
           return null;
-        } catch (err: any) {
+        } catch (err) {
           console.error(`Error executing plugin ${plugin.name} on hook ${name}:`, err);
           return null;
         }

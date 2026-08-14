@@ -23,7 +23,10 @@ function ExplorePageContent() {
   useEffect(() => {
     const query = searchParams.get('q');
     if (query !== null) {
-      setSearchQuery(query);
+      const timer = setTimeout(() => {
+        setSearchQuery(query);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 

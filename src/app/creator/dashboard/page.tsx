@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Users, Star, Eye, DollarSign, TrendingUp, Clock,
-  Sparkles, ArrowRight, PlusSquare, Wallet, Radio, ArrowUpRight, ArrowDownRight
+  Sparkles, ArrowRight, PlusSquare, Wallet, Radio, ArrowUpRight
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';

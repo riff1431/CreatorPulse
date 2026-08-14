@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Trash2, Eye, ShieldAlert, Flag, UserMinus, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, Flag, ShieldCheck } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -231,7 +231,7 @@ export default function AdminReportsPage() {
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F3DCE8] mt-4">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedApp(null)}>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedReport(null)}>
                 Cancel
               </Button>
               <Button

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, CheckCircle2, XCircle, Clock, Eye, AlertCircle, Building, Check } from 'lucide-react';
+import { FileText, CheckCircle2, XCircle, Clock, AlertCircle, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';

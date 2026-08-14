@@ -47,63 +47,81 @@ export function getAuditLogs(): AuditLogEntry[] {
   }
 }
 
+interface RawThemeManifest {
+  id?: unknown;
+  name?: unknown;
+  slug?: unknown;
+  description?: unknown;
+  version?: unknown;
+  author?: unknown;
+  authorUrl?: unknown;
+  previewImageUrl?: unknown;
+  category?: unknown;
+  tags?: unknown;
+  minAppVersion?: unknown;
+  tokens?: unknown;
+  changelog?: unknown;
+}
+
 /**
  * Validates a Theme package manifest object.
  */
-export function validateThemePackage(manifest: any): { valid: boolean; error?: string; theme?: ThemeManifest } {
+export function validateThemePackage(manifest: unknown): { valid: boolean; error?: string; theme?: ThemeManifest } {
   if (!manifest || typeof manifest !== 'object') {
     return { valid: false, error: 'Invalid manifest format. JSON object expected.' };
   }
 
-  if (!manifest.name || typeof manifest.name !== 'string') {
+  const pkg = manifest as RawThemeManifest;
+
+  if (!pkg.name || typeof pkg.name !== 'string') {
     return { valid: false, error: 'Missing or invalid theme "name".' };
   }
 
-  if (!manifest.version || typeof manifest.version !== 'string') {
+  if (!pkg.version || typeof pkg.version !== 'string') {
     return { valid: false, error: 'Missing or invalid theme "version".' };
   }
 
-  if (!manifest.tokens || typeof manifest.tokens !== 'object') {
+  if (!pkg.tokens || typeof pkg.tokens !== 'object') {
     return { valid: false, error: 'Missing theme "tokens" design palette.' };
   }
 
-  const { tokens } = manifest;
+  const tokens = pkg.tokens as Record<string, unknown>;
   if (!tokens.primary || !tokens.background || !tokens.surface) {
     return { valid: false, error: 'Theme tokens must define primary, background, and surface colors.' };
   }
 
   const validatedTheme: ThemeManifest = {
-    id: manifest.id || `theme-${Date.now()}`,
-    name: manifest.name,
-    slug: manifest.slug || manifest.name.toLowerCase().replace(/[^a-z0-9_]/g, '-'),
-    description: manifest.description || 'Custom installed CreatorPulse theme.',
-    version: manifest.version,
-    author: manifest.author || 'Custom Developer',
-    authorUrl: manifest.authorUrl || '',
-    previewImageUrl: manifest.previewImageUrl || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
-    category: manifest.category || 'Modern Light',
-    tags: Array.isArray(manifest.tags) ? manifest.tags : ['Custom', 'User-Installed'],
-    minAppVersion: manifest.minAppVersion || '1.0.0',
+    id: (pkg.id as string) || `theme-${Date.now()}`,
+    name: pkg.name,
+    slug: (pkg.slug as string) || pkg.name.toLowerCase().replace(/[^a-z0-9_]/g, '-'),
+    description: (pkg.description as string) || 'Custom installed CreatorPulse theme.',
+    version: pkg.version,
+    author: (pkg.author as string) || 'Custom Developer',
+    authorUrl: (pkg.authorUrl as string) || '',
+    previewImageUrl: (pkg.previewImageUrl as string) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
+    category: (pkg.category as ThemeManifest['category']) || 'Modern Light',
+    tags: Array.isArray(pkg.tags) ? (pkg.tags as string[]) : ['Custom', 'User-Installed'],
+    minAppVersion: (pkg.minAppVersion as string) || '1.0.0',
     tokens: {
-      primary: tokens.primary,
-      primaryHover: tokens.primaryHover || tokens.primary,
-      softPrimary: tokens.softPrimary || '#FCE7F3',
-      lightPrimary: tokens.lightPrimary || '#FDF2F8',
-      accent: tokens.accent || '#F43F5E',
-      background: tokens.background,
-      surface: tokens.surface,
-      surfaceSecondary: tokens.surfaceSecondary || '#FFF1F7',
-      border: tokens.border || '#F3DCE8',
-      textPrimary: tokens.textPrimary || '#18181B',
-      textSecondary: tokens.textSecondary || '#71717A',
-      textMuted: tokens.textMuted || '#A1A1AA',
-      cardRadius: tokens.cardRadius || '20px',
-      buttonRadius: tokens.buttonRadius || '14px',
-      fontFamily: tokens.fontFamily || 'Plus Jakarta Sans, sans-serif',
+      primary: tokens.primary as string,
+      primaryHover: (tokens.primaryHover as string) || (tokens.primary as string),
+      softPrimary: (tokens.softPrimary as string) || '#FCE7F3',
+      lightPrimary: (tokens.lightPrimary as string) || '#FDF2F8',
+      accent: (tokens.accent as string) || '#F43F5E',
+      background: tokens.background as string,
+      surface: tokens.surface as string,
+      surfaceSecondary: (tokens.surfaceSecondary as string) || '#FFF1F7',
+      border: (tokens.border as string) || '#F3DCE8',
+      textPrimary: (tokens.textPrimary as string) || '#18181B',
+      textSecondary: (tokens.textSecondary as string) || '#71717A',
+      textMuted: (tokens.textMuted as string) || '#A1A1AA',
+      cardRadius: (tokens.cardRadius as string) || '20px',
+      buttonRadius: (tokens.buttonRadius as string) || '14px',
+      fontFamily: (tokens.fontFamily as string) || 'Plus Jakarta Sans, sans-serif',
       isDark: Boolean(tokens.isDark)
     },
-    changelog: Array.isArray(manifest.changelog) ? manifest.changelog : [
-      { version: manifest.version, date: new Date().toISOString().split('T')[0], changes: ['Initial custom install'] }
+    changelog: Array.isArray(pkg.changelog) ? (pkg.changelog as ThemeManifest['changelog']) : [
+      { version: pkg.version, date: new Date().toISOString().split('T')[0], changes: ['Initial custom install'] }
     ],
     isCustom: true,
     installedAt: new Date().toISOString().split('T')[0],
@@ -113,47 +131,69 @@ export function validateThemePackage(manifest: any): { valid: boolean; error?: s
   return { valid: true, theme: validatedTheme };
 }
 
+interface RawPluginManifest {
+  id?: unknown;
+  name?: unknown;
+  slug?: unknown;
+  description?: unknown;
+  version?: unknown;
+  author?: unknown;
+  authorUrl?: unknown;
+  iconUrl?: unknown;
+  category?: unknown;
+  tags?: unknown;
+  minAppVersion?: unknown;
+  permissions?: unknown;
+  hooks?: unknown;
+  settingsSchema?: unknown;
+  settingsValues?: unknown;
+  changelog?: unknown;
+  autoUpdate?: unknown;
+}
+
 /**
  * Validates a Plugin package manifest object.
  */
-export function validatePluginPackage(manifest: any): { valid: boolean; error?: string; plugin?: PluginManifest } {
+export function validatePluginPackage(manifest: unknown): { valid: boolean; error?: string; plugin?: PluginManifest } {
   if (!manifest || typeof manifest !== 'object') {
     return { valid: false, error: 'Invalid manifest format. JSON object expected.' };
   }
 
-  if (!manifest.name || typeof manifest.name !== 'string') {
+  const pkg = manifest as RawPluginManifest;
+
+  if (!pkg.name || typeof pkg.name !== 'string') {
     return { valid: false, error: 'Missing or invalid plugin "name".' };
   }
 
-  if (!manifest.version || typeof manifest.version !== 'string') {
+  if (!pkg.version || typeof pkg.version !== 'string') {
     return { valid: false, error: 'Missing or invalid plugin "version".' };
   }
 
-  if (!Array.isArray(manifest.hooks)) {
+  if (!Array.isArray(pkg.hooks)) {
     return { valid: false, error: 'Plugin must declare an array of registered "hooks".' };
   }
 
   const validatedPlugin: PluginManifest = {
-    id: manifest.id || `plugin-${Date.now()}`,
-    name: manifest.name,
-    slug: manifest.slug || manifest.name.toLowerCase().replace(/[^a-z0-9_]/g, '-'),
-    description: manifest.description || 'Custom installed CreatorPulse add-on.',
-    version: manifest.version,
-    author: manifest.author || 'Third-Party Developer',
-    authorUrl: manifest.authorUrl || '',
-    iconUrl: manifest.iconUrl || '🔌',
-    category: manifest.category || 'Community & Media',
-    tags: Array.isArray(manifest.tags) ? manifest.tags : ['Add-on', 'Custom'],
-    minAppVersion: manifest.minAppVersion || '1.0.0',
-    permissions: Array.isArray(manifest.permissions) ? manifest.permissions : [],
-    hooks: manifest.hooks,
-    settingsSchema: Array.isArray(manifest.settingsSchema) ? manifest.settingsSchema : [],
-    settingsValues: typeof manifest.settingsValues === 'object' ? manifest.settingsValues : {},
-    changelog: Array.isArray(manifest.changelog) ? manifest.changelog : [
-      { version: manifest.version, date: new Date().toISOString().split('T')[0], changes: ['Initial custom installation'] }
+    id: (pkg.id as string) || `plugin-${Date.now()}`,
+    name: pkg.name,
+    slug: (pkg.slug as string) || pkg.name.toLowerCase().replace(/[^a-z0-9_]/g, '-'),
+    description: (pkg.description as string) || 'Custom installed CreatorPulse add-on.',
+    version: pkg.version,
+    author: (pkg.author as string) || 'Third-Party Developer',
+    authorUrl: (pkg.authorUrl as string) || '',
+    iconUrl: (pkg.iconUrl as string) || '🔌',
+    category: (pkg.category as PluginManifest['category']) || 'Community & Media',
+    tags: Array.isArray(pkg.tags) ? (pkg.tags as string[]) : ['Add-on', 'Custom'],
+    minAppVersion: (pkg.minAppVersion as string) || '1.0.0',
+    permissions: Array.isArray(pkg.permissions) ? (pkg.permissions as PluginManifest['permissions']) : [],
+    hooks: pkg.hooks as PluginManifest['hooks'],
+    settingsSchema: Array.isArray(pkg.settingsSchema) ? (pkg.settingsSchema as PluginManifest['settingsSchema']) : [],
+    settingsValues: typeof pkg.settingsValues === 'object' ? (pkg.settingsValues as PluginManifest['settingsValues']) : {},
+    changelog: Array.isArray(pkg.changelog) ? (pkg.changelog as PluginManifest['changelog']) : [
+      { version: pkg.version, date: new Date().toISOString().split('T')[0], changes: ['Initial custom installation'] }
     ],
     isEnabled: false,
-    autoUpdate: Boolean(manifest.autoUpdate),
+    autoUpdate: Boolean(pkg.autoUpdate),
     installedAt: new Date().toISOString().split('T')[0],
     updatedAt: new Date().toISOString().split('T')[0]
   };

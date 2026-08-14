@@ -6,6 +6,9 @@ import { MOCK_STORIES, Story } from '@/lib/supabase/store';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 
+const getReactionId = () => Date.now() + Math.random();
+const getReactionLeft = () => Math.floor(Math.random() * 50) + 25;
+
 export const StoryBar: React.FC = () => {
   const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -79,8 +82,8 @@ export const StoryBar: React.FC = () => {
   };
 
   const handleReact = (emoji: string) => {
-    const id = Date.now() + Math.random();
-    const left = Math.floor(Math.random() * 50) + 25; // 25% to 75%
+    const id = getReactionId();
+    const left = getReactionLeft();
     setReactions((prev) => [...prev, { id, emoji, left }]);
     // Remove reaction DOM after animation ends
     setTimeout(() => {

@@ -23,7 +23,7 @@ export interface PluginSettingField {
   label: string;
   description?: string;
   type: 'text' | 'password' | 'number' | 'boolean' | 'select' | 'textarea';
-  defaultValue: any;
+  defaultValue: unknown;
   options?: { label: string; value: string }[];
   placeholder?: string;
   required?: boolean;
@@ -50,7 +50,7 @@ export interface PluginManifest {
   permissions: PluginPermission[];
   hooks: PluginHookType[];
   settingsSchema: PluginSettingField[];
-  settingsValues: Record<string, any>;
+  settingsValues: Record<string, unknown>;
   changelog: PluginChangelog[];
   isEnabled: boolean;
   autoUpdate: boolean;

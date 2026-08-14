@@ -56,11 +56,16 @@ export default function NotificationsPage() {
 
   // Simulate loader on filter switch
   useEffect(() => {
-    setIsNotificationLoading(true);
-    const timer = setTimeout(() => {
+    const timer1 = setTimeout(() => {
+      setIsNotificationLoading(true);
+    }, 0);
+    const timer2 = setTimeout(() => {
       setIsNotificationLoading(false);
     }, 450);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [filter]);
 
   const handleMarkAllRead = () => {
@@ -172,7 +177,7 @@ export default function NotificationsPage() {
                 <Inbox className="w-12 h-12 text-[#BE185D] mx-auto animate-pulse" />
                 <h3 className="font-extrabold text-[#18181B] text-base">Inbox Empty</h3>
                 <p className="text-xs text-[#71717A] font-semibold leading-relaxed">
-                  You don't have any notifications under this filter. Tap 'All' to check other updates.
+                  You don&apos;t have any notifications under this filter. Tap &apos;All&apos; to check other updates.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => setFilter('all')}>
                   View All Notifications

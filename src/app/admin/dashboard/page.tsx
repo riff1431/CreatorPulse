@@ -4,12 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Users, UserCheck, CreditCard, DollarSign, TrendingUp,
-  Receipt, Wallet, AlertTriangle, FileText, Shield, ArrowRight, ArrowUpRight, CheckCircle2
+  Receipt, Wallet, AlertTriangle, FileText, Shield, ArrowRight
 } from 'lucide-react';
-import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Sparkline } from '@/components/ui/Sparkline';
 
 const recentActivity = [

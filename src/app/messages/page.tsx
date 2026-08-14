@@ -45,21 +45,29 @@ export default function MessagesPage() {
 
   // Handle switching conversations (loading & typing simulators)
   useEffect(() => {
-    setIsChatLoading(true);
-    setIsTyping(false);
+    let typingTimer: NodeJS.Timeout;
+    
+    const timer1 = setTimeout(() => {
+      setIsChatLoading(true);
+      setIsTyping(false);
+    }, 0);
     
     const loadTimer = setTimeout(() => {
       setIsChatLoading(false);
-      // Simulate typing indicator before a response
       setIsTyping(true);
-      const typingTimer = setTimeout(() => {
+      typingTimer = setTimeout(() => {
         setIsTyping(false);
       }, 1500);
-      return () => clearTimeout(typingTimer);
     }, 450);
 
-    return () => clearTimeout(loadTimer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(loadTimer);
+      if (typingTimer) clearTimeout(typingTimer);
+    };
   }, [selectedConvId]);
+
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

@@ -21,10 +21,13 @@ export default function AdminAuditLogsPage() {
   };
 
   useEffect(() => {
-    loadLogs();
+    const timer = setTimeout(() => {
+      loadLogs();
+    }, 0);
     const handleUpdate = () => loadLogs();
     window.addEventListener('creatorpulse_audit_log_updated', handleUpdate);
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('creatorpulse_audit_log_updated', handleUpdate);
     };
   }, []);
