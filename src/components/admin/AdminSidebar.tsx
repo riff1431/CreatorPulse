@@ -27,10 +27,18 @@ interface NavGroup {
 
 const allAdminNavGroups: NavGroup[] = [
   {
-    title: 'Overview',
+    title: 'Core Overview',
     items: [
       { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Platform Earnings', href: '/admin/earnings', icon: TrendingUp },
+    ],
+  },
+  {
+    title: 'Themes & Plugins',
+    items: [
+      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'pink' },
+      { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
+      { label: 'System Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck },
     ],
   },
   {
@@ -60,25 +68,17 @@ const allAdminNavGroups: NavGroup[] = [
     ],
   },
   {
-    title: 'Themes & Extensions',
-    items: [
-      { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'pink' },
-      { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
-      { label: 'System Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck },
-    ],
-  },
-  {
-    title: 'System & Configuration',
+    title: 'System & Database',
     items: [
       { label: 'Categories & Tags', href: '/admin/categories', icon: Layers },
       { label: 'Platform Settings', href: '/admin/settings', icon: Settings },
-      { label: 'Database & Schema', href: '/database', icon: Database },
+      { label: 'Database Schema', href: '/database', icon: Database },
     ],
   },
   {
-    title: 'Platform Portals',
+    title: 'Live Portals',
     items: [
-      { label: 'Live Public Feed', href: '/feed', icon: Compass, isExternal: true },
+      { label: 'View Public Feed', href: '/feed', icon: Compass, isExternal: true },
       { label: 'Creator Studio', href: '/creator/dashboard', icon: Radio, isExternal: true },
     ],
   },
@@ -102,7 +102,7 @@ export const AdminSidebar: React.FC = () => {
     <div className="flex flex-col h-full bg-white border-r border-[#F3DCE8]">
       {/* Quick Menu Filter (Desktop Only when not collapsed) */}
       {!collapsed && (
-        <div className="p-3 border-b border-[#F3DCE8]">
+        <div className="p-3 border-b border-[#F3DCE8] shrink-0 bg-[#FFF9FC]/50">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
             <input
@@ -110,14 +110,14 @@ export const AdminSidebar: React.FC = () => {
               placeholder="Filter menu items..."
               value={navFilter}
               onChange={(e) => setNavFilter(e.target.value)}
-              className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-8 pr-2.5 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium"
+              className="w-full bg-white border border-[#F3DCE8] rounded-xl pl-8 pr-2.5 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] font-medium shadow-xs"
             />
           </div>
         </div>
       )}
 
-      {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-4 scrollbar-thin scrollbar-thumb-[#FCE7F3]">
+      {/* Navigation Links Scrollable Area */}
+      <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin scrollbar-thumb-[#FCE7F3]">
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1">
             {!collapsed && (
@@ -185,7 +185,7 @@ export const AdminSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-[#F3DCE8] p-3 bg-[#FFF9FC]">
+      <div className="hidden lg:block border-t border-[#F3DCE8] p-3 bg-[#FFF9FC] shrink-0">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center justify-center gap-2 text-xs font-bold text-[#71717A] hover:text-[#18181B] py-2 rounded-xl hover:bg-white border border-transparent hover:border-[#F3DCE8] transition-all cursor-pointer"
@@ -199,7 +199,7 @@ export const AdminSidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
+      {/* Mobile Floating Menu Button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-[#EC4899] text-white shadow-xl shadow-[#EC4899]/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
@@ -222,7 +222,7 @@ export const AdminSidebar: React.FC = () => {
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#F3DCE8]">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#F3DCE8] bg-[#FFF9FC]">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-[#EC4899] flex items-center justify-center text-white font-black text-xs">
               CP
@@ -236,9 +236,9 @@ export const AdminSidebar: React.FC = () => {
         {sidebarContent}
       </aside>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar (Sticky to full height) */}
       <aside
-        className={`hidden lg:flex flex-col bg-white shrink-0 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col bg-white shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
           collapsed ? 'w-18' : 'w-64'
         }`}
       >

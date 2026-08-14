@@ -6,7 +6,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="admin-portal-isolated min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FFE4E6] selection:text-[#BE123C]">
       <AdminHeader />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-[calc(100vh-64px)]">
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <RoleGuard
