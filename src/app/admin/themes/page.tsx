@@ -458,6 +458,38 @@ export default function AdminThemesPage() {
     });
   };
 
+  const handleResolveThemeDependency = async (depId: string, action: string) => {
+    if (action === 'enable') {
+      try {
+        startProgress({
+          title: `Enabling dependency ${depId}`,
+          steps: ["Activating dependency..."]
+        });
+        updateProgress(0, 'running', 50, "Enabling...");
+        await fetch('/api/admin/plugins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'toggle', pluginId: depId, isEnabled: true })
+        });
+        
+        // Also update local storage if available
+        const rawPlugins = localStorage.getItem('creatorpulse_plugins');
+        if (rawPlugins) {
+          const list = JSON.parse(rawPlugins);
+          const updated = list.map((p: any) => p.id === depId ? { ...p, isEnabled: true } : p);
+          localStorage.setItem('creatorpulse_plugins', JSON.stringify(updated));
+        }
+        
+        completeProgress("Dependency enabled successfully! Reloading theme page...");
+        window.location.reload();
+      } catch (err) {
+        errorProgress(1, "Failed to enable dependency.");
+      }
+    } else {
+      alert(`Please go to the Plugins manager to ${action} the required plugin "${depId}".`);
+    }
+  };
+
   const executeThemeAction = async () => {
     if (!confirmThemeAction) return;
 
@@ -672,8 +704,8 @@ export default function AdminThemesPage() {
           finalTheme.isDefault = false;
           finalTheme.isCustom = true;
         } else {
-          if (importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core') {
-            throw new Error('Cannot overwrite the permanent default Blush Core theme. Please select "Keep both" or rename the theme.');
+          if (importConflict.existing.isDefault || importConflict.existing.id === 'theme-default-theme' || importConflict.existing.id === 'theme-blush-core') {
+            throw new Error('Cannot overwrite the permanent Official Default Theme. Please select "Keep both" or rename the theme.');
           }
         }
       }
@@ -721,7 +753,7 @@ export default function AdminThemesPage() {
       });
 
       errorProgress(
-        importConflict && (conflictResolution === 'overwrite') && (importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core') ? 1 : 2, 
+        importConflict && (conflictResolution === 'overwrite') && (importConflict.existing.isDefault || importConflict.existing.id === 'theme-default-theme' || importConflict.existing.id === 'theme-blush-core') ? 1 : 2, 
         err.message || "Failed to install theme package."
       );
       setUploadError(`Import failed. Safely rolled back. Error: ${err.message}`);
@@ -1137,6 +1169,61 @@ export default function AdminThemesPage() {
                           <div className="h-3.5 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} title={`Surface: ${theme.tokens.surface}`} />
                           <span className="text-[10px] text-[#A1A1AA] font-mono ml-1">{theme.tokens.isDark ? '🌙 Dark' : '☀️ Light'}</span>
                         </div>
+
+                        {/* Theme plugin dependency check */}
+                        {theme.dependencies?.plugins && Object.keys(theme.dependencies.plugins).length > 0 && (
+                          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Required Plugins:</span>
+                            <div className="flex flex-col gap-1.5">
+                              {Object.entries(theme.dependencies.plugins).map(([depId, minVer]) => {
+                                const dep = plugins.find(p => p.id === depId || p.slug === depId);
+                                const isInstalled = !!dep;
+                                const isEnabled = dep?.isEnabled;
+                                const isCompatible = dep && CompatibilityChecker.compareVersions(dep.version, minVer as string);
+
+                                let statusText = 'Missing';
+                                let badgeColor = 'bg-rose-50 text-rose-700 border-rose-100';
+                                let showFix = true;
+                                let fixAction = 'install';
+
+                                if (isInstalled) {
+                                  if (!isCompatible) {
+                                    statusText = `Needs v${minVer}+ (Have: v${dep.version})`;
+                                    badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                                    fixAction = 'upgrade';
+                                  } else if (!isEnabled) {
+                                    statusText = 'Disabled';
+                                    badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+                                    fixAction = 'enable';
+                                  } else {
+                                    statusText = 'Active';
+                                    badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                                    showFix = false;
+                                  }
+                                }
+
+                                return (
+                                  <div key={depId} className="flex items-center justify-between text-[11px] gap-2">
+                                    <span className="font-semibold text-slate-600 truncate max-w-[120px] font-mono">{depId}</span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className={`px-1.5 py-0.5 text-[9px] font-bold border rounded-md ${badgeColor}`}>
+                                        {statusText}
+                                      </span>
+                                      {showFix && (
+                                        <button
+                                          onClick={() => handleResolveThemeDependency(depId, fixAction)}
+                                          className="px-1.5 py-0.5 text-[9px] font-bold bg-[#EC4899] hover:bg-pink-700 text-white rounded-md transition-colors cursor-pointer"
+                                        >
+                                          {fixAction === 'install' ? 'Install' : fixAction === 'enable' ? 'Enable' : 'Upgrade'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1220,7 +1307,7 @@ export default function AdminThemesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleThemeDeactivateClick(theme)}
-                            disabled={theme.id === 'theme-blush-core'}
+                            disabled={theme.isDefault || theme.id === 'theme-default-theme' || theme.id === 'theme-blush-core'}
                           >
                             Deactivate
                           </Button>
@@ -1285,7 +1372,7 @@ export default function AdminThemesPage() {
                   </div>
                   <h5 className="font-bold text-sm text-[#18181B]">All Themes Up to Date</h5>
                   <p className="text-xs text-[#71717A] max-w-md mx-auto">
-                    Every installed CreatorPulse theme is running the latest available version. Click "Check Updates Registry" above to poll for any new package releases.
+                    Every installed CreatorPulse theme is running the latest available version. Click &quot;Check Updates Registry&quot; above to poll for any new package releases.
                   </p>
                 </div>
               ) : (
@@ -1558,7 +1645,7 @@ export default function AdminThemesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={theme.id === 'theme-blush-core'}
+                          disabled={theme.isDefault || theme.id === 'theme-default-theme' || theme.id === 'theme-blush-core'}
                           onClick={() => handleThemeDeactivateClick(theme)}
                         >
                           Deactivate
@@ -3085,7 +3172,7 @@ export default function AdminThemesPage() {
                 <h4 className="font-bold text-[#18181B] mb-1">Live Stylesheet: /styles/theme.css</h4>
                 <div className="p-3 bg-slate-950 text-pink-200 rounded-2xl font-mono text-[11px] max-h-36 overflow-y-auto space-y-0.5">
                   <p className="text-slate-500">{"/* Dynamic CSS variables injected by Theme Engine */"}</p>
-                  <p className="text-emerald-400">:root[data-theme="{inspectingTheme.id}"] &#123;</p>
+                  <p className="text-emerald-400">{`:root[data-theme="${inspectingTheme.id}"] {`}</p>
                   <p className="pl-3 text-pink-300">--theme-primary: {inspectingTheme.tokens?.primary || '#EC4899'};</p>
                   <p className="pl-3 text-pink-300">--theme-bg: {inspectingTheme.tokens?.background || '#FFFFFF'};</p>
                   <p className="pl-3 text-pink-300">--theme-surface: {inspectingTheme.tokens?.surface || '#FFF9FC'};</p>
@@ -3527,11 +3614,11 @@ export default function AdminThemesPage() {
                         checked={conflictResolution === 'overwrite'}
                         onChange={() => setConflictResolution('overwrite')}
                         className="accent-rose-600"
-                        disabled={importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core'}
+                        disabled={importConflict.existing.isDefault || importConflict.existing.id === 'theme-default-theme' || importConflict.existing.id === 'theme-blush-core'}
                       />
                       <div className="leading-tight">
                         <p className="font-bold text-slate-800">Overwrite Existing</p>
-                        {importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core' ? (
+                        {importConflict.existing.isDefault || importConflict.existing.id === 'theme-default-theme' || importConflict.existing.id === 'theme-blush-core' ? (
                           <p className="text-[10px] text-rose-500 font-semibold">(Protected Theme)</p>
                         ) : (
                           <p className="text-[10px] text-slate-500">Replace current version</p>

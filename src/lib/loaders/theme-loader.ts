@@ -31,7 +31,7 @@ export interface ThemePackageConfig {
 }
 
 export class ThemeLoader {
-  private static defaultThemeSlug = 'blush-core';
+  private static defaultThemeSlug = 'default-theme';
 
   /**
    * Standard folder list for Theme SDK v1.0 compliance

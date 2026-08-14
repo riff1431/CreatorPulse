@@ -3,21 +3,21 @@ import { PluginManifest, AuditLogEntry } from './plugin-types';
 
 export const DEFAULT_THEMES: ThemeManifest[] = [
   {
-    id: 'theme-blush-core',
-    name: 'Blush Core',
-    slug: 'blush-core',
-    description: 'The signature built-in default frontend creator-platform theme with soft rose pink hues, warm blush canvas, and editorial typography.',
-    version: '1.2.0',
+    id: 'theme-default-theme',
+    name: 'Official Default Theme',
+    slug: 'default-theme',
+    description: 'The official built-in creator-platform default theme featuring radiant blush hues, editorial typography, full responsive layouts, and rich interactive components.',
+    version: '1.0.0',
     author: 'CreatorPulse Core Team',
     authorUrl: 'https://creatorpulse.com',
     previewImageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
     category: 'Modern Light',
-    tags: ['Built-in Default', 'Blush Core', 'Light Pink', 'Official'],
+    tags: ['Official', 'Default Theme', 'Built-in', 'Responsive', 'Blush'],
     minAppVersion: '1.0.0',
-    isDefault: true, // Cannot be deleted; serves as the ultimate fallback
+    isDefault: true, // Permanently protected default theme
     isActive: true,
     installedAt: '2026-08-01',
-    updatedAt: '2026-08-14',
+    updatedAt: '2026-08-15',
     tokens: {
       primary: '#EC4899',
       primaryHover: '#DB2777',
@@ -38,358 +38,58 @@ export const DEFAULT_THEMES: ThemeManifest[] = [
       isDark: false
     },
     settings: {
-      logoUrl: '',
-      faviconUrl: '',
       containerWidth: 'max-w-7xl',
       buttonStyle: 'gradient-glow',
       animationIntensity: 'normal',
       cardShadow: 'soft-pink'
     },
     changelog: [
-      { version: '1.2.0', date: '2026-08-14', changes: ['Standardized as official built-in default Blush Core theme', 'Added complete visual customization schema'] },
-      { version: '1.0.0', date: '2026-08-01', changes: ['Initial official release'] }
+      { version: '1.0.0', date: '2026-08-15', changes: ['Converted entire frontend UI into the official built-in Default Theme'] }
     ]
   },
   {
-    id: 'theme-rose-flow',
-    name: 'RoseFlow',
-    slug: 'rose-flow',
-    description: 'A premium light theme featuring a soft rose and neutral palette, modern typography, rounded cards, and smooth animations.',
+    id: 'theme-starter-theme',
+    name: 'Starter Theme Template',
+    slug: 'starter-theme',
+    description: 'Clean, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.',
     version: '1.0.0',
-    author: 'Theme Architect',
-    authorUrl: 'https://theme-architect.io',
-    previewImageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=600',
+    author: 'Your Studio / Developer Name',
+    authorUrl: 'https://yourwebsite.com',
+    previewImageUrl: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600',
     category: 'Modern Light',
-    tags: ['Premium Light', 'Rose', 'Neutral', 'GSAP', 'Elegant'],
+    tags: ['Starter', 'Developer', 'Template', 'SDK'],
     minAppVersion: '1.0.0',
+    isDefault: false,
     isActive: false,
     installedAt: '2026-08-15',
     updatedAt: '2026-08-15',
     tokens: {
-      primary: '#E11D48',
-      primaryHover: '#BE185D',
-      softPrimary: '#FFE4E6',
-      lightPrimary: '#FFF1F2',
-      accent: '#FDA4AF',
-      background: '#FFF9FB',
-      surface: '#FFFFFF',
-      surfaceSecondary: '#FFF1F5',
-      border: '#FCE7F3',
-      textPrimary: '#3F2D33',
-      textSecondary: '#6B565C',
-      textMuted: '#B59FA5',
-      cardRadius: '24px',
-      buttonRadius: '16px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: false
-    },
-    settings: {
-      containerWidth: 'max-w-7xl',
-      buttonStyle: 'gradient-glow',
-      animationIntensity: 'normal',
-      cardShadow: 'soft-pink'
-    },
-    changelog: [
-      { version: '1.0.0', date: '2026-08-15', changes: ['Initial release of RoseFlow premium light theme'] }
-    ],
-    assets: {
-      cssOverrides: `
-/* ==========================================
-   RoseFlow Premium Theme Stylesheet Overrides
-   ========================================== */
-
-/* 1. Base Typography & Background Canvas */
-html.theme-rose-flow body {
-  background-color: var(--color-bg) !important;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(254, 228, 230, 0.45) 0px, transparent 40%),
-    radial-gradient(at 100% 100%, rgba(255, 241, 245, 0.55) 0px, transparent 45%),
-    radial-gradient(at 50% 20%, rgba(255, 248, 250, 0.3) 0px, transparent 55%) !important;
-  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif) !important;
-  color: var(--color-text-primary) !important;
-}
-
-/* 2. Premium Rounded Geometry for Cards & Panels */
-html.theme-rose-flow .glass-card,
-html.theme-rose-flow .bg-white\\/90,
-html.theme-rose-flow [class*="rounded-2xl"],
-html.theme-rose-flow [class*="rounded-3xl"] {
-  border-radius: var(--radius-card) !important;
-}
-
-/* Clean, glowing shadows for elements */
-html.theme-rose-flow .glass-card {
-  border: 1px solid var(--color-border) !important;
-  box-shadow: 0 10px 30px rgba(225, 29, 72, 0.03), 0 1px 3px rgba(225, 29, 72, 0.01) !important;
-}
-
-/* Refined hover scales and glows */
-html.theme-rose-flow .glass-card-hover:hover {
-  transform: translateY(-4px) scale(1.005) !important;
-  border-color: rgba(225, 29, 72, 0.22) !important;
-  box-shadow: 0 20px 40px -10px rgba(225, 29, 72, 0.08) !important;
-}
-
-/* 3. Gradient Rebranding (Rose to Peach/Gold) */
-html.theme-rose-flow .gradient-text {
-  background: linear-gradient(135deg, #BE185D 0%, #E11D48 60%, #FDA4AF 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-}
-
-html.theme-rose-flow .gradient-btn {
-  background: linear-gradient(135deg, #E11D48 0%, #F43F5E 100%) !important;
-  border-radius: var(--radius-button) !important;
-  box-shadow: 0 6px 20px -4px rgba(225, 29, 72, 0.25) !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-html.theme-rose-flow .gradient-btn:hover {
-  background: linear-gradient(135deg, #BE185D 0%, #E11D48 100%) !important;
-  box-shadow: 0 10px 24px -4px rgba(225, 29, 72, 0.35) !important;
-  transform: translateY(-2px) scale(1.01) !important;
-}
-
-/* 4. Elegant Forms & Modern Input Styling */
-html.theme-rose-flow input,
-html.theme-rose-flow textarea,
-html.theme-rose-flow select {
-  border-radius: 12px !important;
-  border-color: var(--color-border) !important;
-  background-color: var(--color-surface) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-html.theme-rose-flow input:focus,
-html.theme-rose-flow textarea:focus,
-html.theme-rose-flow select:focus {
-  outline: none !important;
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3.5px rgba(225, 29, 72, 0.12) !important;
-}
-
-/* 5. Clean Navigation Elements */
-html.theme-rose-flow nav a,
-html.theme-rose-flow .nav-link {
-  transition: all 0.2s ease !important;
-}
-html.theme-rose-flow nav a:hover,
-html.theme-rose-flow .nav-link:hover {
-  color: var(--color-primary) !important;
-}
-html.theme-rose-flow nav a.active,
-html.theme-rose-flow .nav-link.active {
-  color: var(--color-primary) !important;
-  background-color: var(--color-soft-primary) !important;
-}
-
-/* 6. Stories Ring Glow */
-html.theme-rose-flow .story-ring {
-  background: linear-gradient(135deg, #E11D48 0%, #FDA4AF 100%) !important;
-  animation: storyGlowRoseFlow 2.5s infinite !important;
-}
-
-@keyframes storyGlowRoseFlow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.35);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(225, 29, 72, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
-  }
-}
-
-/* 7. Scrollbar customizer styles */
-html.theme-rose-flow ::-webkit-scrollbar-track {
-  background: rgba(255, 241, 245, 0.5) !important;
-}
-html.theme-rose-flow ::-webkit-scrollbar-thumb {
-  background: rgba(225, 29, 72, 0.16) !important;
-}
-html.theme-rose-flow ::-webkit-scrollbar-thumb:hover {
-  background: rgba(225, 29, 72, 0.32) !important;
-}
-      `
-    }
-  },
-  {
-    id: 'theme-cyber-neon',
-    name: 'Cyber Neon Dark',
-    slug: 'cyber-neon',
-    description: 'High-energy dark glass aesthetic with vibrant electric pink, neon cyan highlights, and deep charcoal surfaces.',
-    version: '1.1.4',
-    author: 'Studio Vortex',
-    authorUrl: 'https://studiovortex.io',
-    previewImageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600',
-    category: 'Dark Cyber',
-    tags: ['Dark Mode', 'Neon', 'Glassmorphism', 'Cyberpunk'],
-    minAppVersion: '1.0.0',
-    isActive: false,
-    installedAt: '2026-08-05',
-    updatedAt: '2026-08-12',
-    tokens: {
-      primary: '#F43F5E',
-      primaryHover: '#E11D48',
-      softPrimary: '#3F1728',
-      lightPrimary: '#1F111D',
-      accent: '#06B6D4',
-      background: '#09090B',
-      surface: '#18181B',
-      surfaceSecondary: '#27272A',
-      border: '#3F3F46',
-      textPrimary: '#FAFAFA',
-      textSecondary: '#A1A1AA',
-      textMuted: '#71717A',
-      cardRadius: '24px',
-      buttonRadius: '16px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: true
-    },
-    settings: {
-      containerWidth: 'max-w-7xl',
-      buttonStyle: 'gradient-glow',
-      animationIntensity: 'playful',
-      cardShadow: 'glow'
-    },
-    changelog: [
-      { version: '1.1.4', date: '2026-08-12', changes: ['Deepened background contrast', 'Enhanced glow on active badges'] },
-      { version: '1.0.0', date: '2026-08-05', changes: ['Initial release'] }
-    ]
-  },
-  {
-    id: 'theme-lavender-frost',
-    name: 'Lavender Frost',
-    slug: 'lavender-frost',
-    description: 'Calm and sophisticated frosted lavender with soft violet highlights and clean minimalist layout.',
-    version: '1.0.8',
-    author: 'Nordic UI Labs',
-    authorUrl: 'https://nordicui.dev',
-    previewImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600',
-    category: 'Frosted Pastel',
-    tags: ['Frosted', 'Lavender', 'Pastel', 'Minimal'],
-    minAppVersion: '1.0.0',
-    isActive: false,
-    installedAt: '2026-08-08',
-    updatedAt: '2026-08-10',
-    tokens: {
-      primary: '#8B5CF6',
-      primaryHover: '#7C3AED',
-      softPrimary: '#EDE9FE',
-      lightPrimary: '#F5F3FF',
-      accent: '#EC4899',
-      background: '#FAF8FF',
-      surface: '#FFFFFF',
-      surfaceSecondary: '#F3E8FF',
-      border: '#E9D5FF',
-      textPrimary: '#1E1B4B',
-      textSecondary: '#6B7280',
-      textMuted: '#9CA3AF',
-      cardRadius: '22px',
-      buttonRadius: '14px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: false
-    },
-    settings: {
-      containerWidth: 'max-w-6xl',
-      buttonStyle: 'soft-glass',
-      animationIntensity: 'subtle',
-      cardShadow: 'soft-pink'
-    },
-    changelog: [
-      { version: '1.0.8', date: '2026-08-10', changes: ['Refined frosted glass card borders'] }
-    ]
-  },
-  {
-    id: 'theme-sunset-coral',
-    name: 'Sunset Coral',
-    slug: 'sunset-coral',
-    description: 'Warm and vibrant sunset palette with peach, golden rose, and energizing cream surfaces.',
-    version: '1.0.2',
-    author: 'Solstice Design',
-    authorUrl: 'https://solsticethemes.com',
-    previewImageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600',
-    category: 'Warm Vibrant',
-    tags: ['Warm', 'Coral', 'Peach', 'Summer'],
-    minAppVersion: '1.0.0',
-    isActive: false,
-    installedAt: '2026-08-09',
-    updatedAt: '2026-08-09',
-    tokens: {
-      primary: '#FB7185',
-      primaryHover: '#F43F5E',
-      softPrimary: '#FFE4E6',
-      lightPrimary: '#FFF1F2',
+      primary: '#3B82F6',
+      primaryHover: '#2563EB',
+      softPrimary: '#DBEAFE',
+      lightPrimary: '#EFF6FF',
       accent: '#F59E0B',
-      background: '#FFFBF9',
+      background: '#F8FAFC',
       surface: '#FFFFFF',
-      surfaceSecondary: '#FFF1EE',
-      border: '#FED7D7',
-      textPrimary: '#29181B',
-      textSecondary: '#7A6B6E',
-      textMuted: '#AB9B9E',
-      cardRadius: '20px',
-      buttonRadius: '12px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: false
-    },
-    settings: {
-      containerWidth: 'max-w-7xl',
-      buttonStyle: 'gradient-glow',
-      animationIntensity: 'normal',
-      cardShadow: 'elevated'
-    },
-    changelog: [
-      { version: '1.0.2', date: '2026-08-09', changes: ['Initial release of Sunset Coral theme'] }
-    ]
-  },
-  {
-    id: 'theme-obsidian-gold',
-    name: 'Obsidian Gold',
-    slug: 'obsidian-gold',
-    description: 'High-end luxury aesthetic with deep matte obsidian, subtle champagne gold accents, and sleek borders.',
-    version: '1.3.0',
-    author: 'Aura Luxury Group',
-    authorUrl: 'https://auralux.com',
-    previewImageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600',
-    category: 'Luxury Dark',
-    tags: ['Luxury', 'Gold', 'Matte Black', 'Premium'],
-    minAppVersion: '1.0.0',
-    isActive: false,
-    installedAt: '2026-08-02',
-    updatedAt: '2026-08-11',
-    tokens: {
-      primary: '#D97706',
-      primaryHover: '#B45309',
-      softPrimary: '#451A03',
-      lightPrimary: '#1E140C',
-      accent: '#FBBF24',
-      background: '#0C0A09',
-      surface: '#1C1917',
-      surfaceSecondary: '#292524',
-      border: '#44403C',
-      textPrimary: '#FAFAF9',
-      textSecondary: '#A8A29E',
-      textMuted: '#78716C',
+      surfaceSecondary: '#F1F5F9',
+      border: '#E2E8F0',
+      textPrimary: '#0F172A',
+      textSecondary: '#64748B',
+      textMuted: '#94A3B8',
       cardRadius: '16px',
       buttonRadius: '10px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: true
+      fontFamily: 'Inter, sans-serif',
+      fontHeading: 'Inter, sans-serif',
+      isDark: false
     },
     settings: {
       containerWidth: 'max-w-7xl',
-      buttonStyle: 'flat-solid',
-      animationIntensity: 'subtle',
+      buttonStyle: 'gradient-glow',
+      animationIntensity: 'normal',
       cardShadow: 'elevated'
     },
     changelog: [
-      { version: '1.3.0', date: '2026-08-11', changes: ['Enhanced champagne gold gradients', 'Reduced border blur'] }
+      { version: '1.0.0', date: '2026-08-15', changes: ['Initial starter theme template'] }
     ]
   }
 ];
@@ -1115,10 +815,10 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
 ];
 
 export const THEME_UPDATE_REGISTRY: Record<string, Partial<ThemeManifest>> = {
-  'theme-blush-core': {
-    version: '1.3.0',
+  'theme-default-theme': {
+    version: '1.0.1',
     minAppVersion: '1.0.0',
-    description: 'The signature built-in default frontend creator-platform theme with soft rose pink hues, warm blush canvas, and advanced glassmorphism style rules.',
+    description: 'The official built-in creator-platform default theme featuring radiant blush hues, editorial typography, and full responsive layouts.',
     tokens: {
       primary: '#EC4899',
       primaryHover: '#DB2777',
@@ -1132,127 +832,43 @@ export const THEME_UPDATE_REGISTRY: Record<string, Partial<ThemeManifest>> = {
       textPrimary: '#18181B',
       textSecondary: '#71717A',
       textMuted: '#A1A1AA',
-      cardRadius: '22px',
-      buttonRadius: '16px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: false
-    },
-    changelog: [
-      { version: '1.3.0', date: '2026-08-15', changes: ['Optimized spacing & page paddings', 'Upgraded default card and button border radii for a softer, premium visual balance', 'Added micro-animations support'] },
-      { version: '1.2.0', date: '2026-08-14', changes: ['Standardized as official built-in default Blush Core theme', 'Added complete visual customization schema'] }
-    ]
-  },
-  'theme-cyber-neon': {
-    version: '1.2.0',
-    minAppVersion: '1.1.0',
-    description: 'High-energy dark glass aesthetic with vibrant electric pink, neon cyan highlights, and deep charcoal surfaces. Now requires CreatorPulse 1.1.0+ for layout optimizations.',
-    tokens: {
-      primary: '#F43F5E',
-      primaryHover: '#E11D48',
-      softPrimary: '#3F1728',
-      lightPrimary: '#1F111D',
-      accent: '#06B6D4',
-      background: '#09090B',
-      surface: '#18181B',
-      surfaceSecondary: '#27272A',
-      border: '#3F3F46',
-      textPrimary: '#FAFAFA',
-      textSecondary: '#A1A1AA',
-      textMuted: '#71717A',
-      cardRadius: '24px',
-      buttonRadius: '16px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: true
-    },
-    changelog: [
-      { version: '1.2.0', date: '2026-08-15', changes: ['Added advanced container-queries grids', 'Optimized neon cyan glow intensity', 'Requires CreatorPulse 1.1.0+ core engine'] },
-      { version: '1.1.4', date: '2026-08-12', changes: ['Deepened background contrast', 'Enhanced glow on active badges'] }
-    ]
-  },
-  'theme-lavender-frost': {
-    version: '1.1.0',
-    minAppVersion: '1.0.0',
-    description: 'Calm and sophisticated frosted lavender with soft violet highlights and clean minimalist layout. Upgraded with custom glassmorphism styles.',
-    tokens: {
-      primary: '#8B5CF6',
-      primaryHover: '#7C3AED',
-      softPrimary: '#EDE9FE',
-      lightPrimary: '#F5F3FF',
-      accent: '#EC4899',
-      background: '#FAF8FF',
-      surface: '#FFFFFF',
-      surfaceSecondary: '#F3E8FF',
-      border: '#E9D5FF',
-      textPrimary: '#1E1B4B',
-      textSecondary: '#6B7280',
-      textMuted: '#9CA3AF',
-      cardRadius: '22px',
+      cardRadius: '20px',
       buttonRadius: '14px',
       fontFamily: 'Plus Jakarta Sans, sans-serif',
       fontHeading: 'Plus Jakarta Sans, sans-serif',
       isDark: false
     },
     changelog: [
-      { version: '1.1.0', date: '2026-08-15', changes: ['Added custom glassmorphism styles', 'Enhanced dark text readability'] },
-      { version: '1.0.8', date: '2026-08-10', changes: ['Refined frosted glass card borders'] }
+      { version: '1.0.1', date: '2026-08-15', changes: ['Optimized responsive viewport calculations and theme token performance'] },
+      { version: '1.0.0', date: '2026-08-15', changes: ['Initial official Default Theme release'] }
     ]
   },
-  'theme-sunset-coral': {
-    version: '1.1.0',
+  'theme-starter-theme': {
+    version: '1.0.1',
     minAppVersion: '1.0.0',
-    description: 'Warm and vibrant sunset palette with peach, golden rose, and energizing cream surfaces. Upgraded with golden hour background gradients.',
+    description: 'Clean, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.',
     tokens: {
-      primary: '#FB7185',
-      primaryHover: '#F43F5E',
-      softPrimary: '#FFE4E6',
-      lightPrimary: '#FFF1F2',
+      primary: '#3B82F6',
+      primaryHover: '#2563EB',
+      softPrimary: '#DBEAFE',
+      lightPrimary: '#EFF6FF',
       accent: '#F59E0B',
-      background: '#FFFBF9',
+      background: '#F8FAFC',
       surface: '#FFFFFF',
-      surfaceSecondary: '#FFF1EE',
-      border: '#FED7D7',
-      textPrimary: '#29181B',
-      textSecondary: '#7A6B6E',
-      textMuted: '#AB9B9E',
-      cardRadius: '22px',
-      buttonRadius: '14px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
+      surfaceSecondary: '#F1F5F9',
+      border: '#E2E8F0',
+      textPrimary: '#0F172A',
+      textSecondary: '#64748B',
+      textMuted: '#94A3B8',
+      cardRadius: '16px',
+      buttonRadius: '10px',
+      fontFamily: 'Inter, sans-serif',
+      fontHeading: 'Inter, sans-serif',
       isDark: false
     },
     changelog: [
-      { version: '1.1.0', date: '2026-08-15', changes: ['Enhanced contrast on text items', 'Refined peach borders'] },
-      { version: '1.0.2', date: '2026-08-09', changes: ['Initial release of Sunset Coral theme'] }
-    ]
-  },
-  'theme-obsidian-gold': {
-    version: '1.4.0',
-    minAppVersion: '1.0.0',
-    description: 'High-end luxury aesthetic with deep matte obsidian, subtle champagne gold accents, and sleek borders. Upgraded with high-end luxury gradient buttons.',
-    tokens: {
-      primary: '#D97706',
-      primaryHover: '#B45309',
-      softPrimary: '#451A03',
-      lightPrimary: '#1E140C',
-      accent: '#FBBF24',
-      background: '#0C0A09',
-      surface: '#1C1917',
-      surfaceSecondary: '#292524',
-      border: '#44403C',
-      textPrimary: '#FAFAF9',
-      textSecondary: '#A8A29E',
-      textMuted: '#78716C',
-      cardRadius: '18px',
-      buttonRadius: '12px',
-      fontFamily: 'Plus Jakarta Sans, sans-serif',
-      fontHeading: 'Plus Jakarta Sans, sans-serif',
-      isDark: true
-    },
-    changelog: [
-      { version: '1.4.0', date: '2026-08-15', changes: ['Added high-end luxury gradient buttons', 'Polished surface secondary color for better card layering'] },
-      { version: '1.3.0', date: '2026-08-11', changes: ['Enhanced champagne gold gradients', 'Reduced border blur'] }
+      { version: '1.0.1', date: '2026-08-15', changes: ['Added extended SDK documentation examples'] },
+      { version: '1.0.0', date: '2026-08-15', changes: ['Initial starter theme template'] }
     ]
   }
 };

@@ -134,7 +134,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       themes,
-      activeThemeId: themes.find((t) => t.isActive)?.id || 'theme-blush-core',
+      activeThemeId: themes.find((t) => t.isActive)?.id || 'theme-default-theme',
       count: themes.length
     });
   } catch (error: any) {
@@ -156,9 +156,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Theme ID is required.' }, { status: 400 });
       }
 
-      if (themeId === 'theme-blush-core' || themeId === 'blush-core') {
+      if (themeId === 'theme-default-theme' || themeId === 'default-theme' || themeId === 'theme-blush-core') {
         return NextResponse.json(
-          { success: false, error: 'The core default "Blush Core" theme is protected and cannot be deleted.' },
+          { success: false, error: 'The core Official Default Theme is protected and cannot be deleted.' },
           { status: 400 }
         );
       }

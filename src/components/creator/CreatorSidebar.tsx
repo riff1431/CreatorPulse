@@ -89,7 +89,9 @@ export const CreatorSidebar: React.FC = () => {
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white/40 backdrop-blur-md">
-      <div className="flex-1 overflow-y-auto py-5 px-3.5 space-y-5 scrollbar-thin scrollbar-thumb-pink-200">
+      <div className={`flex-1 overflow-y-auto py-5 space-y-5 scrollbar-thin scrollbar-thumb-pink-200 ${
+        collapsed ? 'px-2' : 'px-3.5'
+      }`}>
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1.5">
             {!collapsed && (
@@ -108,16 +110,20 @@ export const CreatorSidebar: React.FC = () => {
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all relative group ${
+                    className={`flex items-center rounded-2xl text-xs font-bold transition-all relative group ${
+                      collapsed
+                        ? 'justify-center py-2.5 px-0 mx-auto w-11 h-11'
+                        : 'justify-between px-3.5 py-2.5'
+                    } ${
                       isActive
                         ? 'bg-[#FCE7F3]/90 text-[#BE185D] border border-[#FBCFE8] shadow-sm shadow-[#EC4899]/10'
                         : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/70'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 z-10">
+                    <div className={`flex items-center z-10 ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
                       <Icon
                         size={16}
-                        className={`transition-colors duration-200 ${isActive ? 'text-[#EC4899]' : 'text-[#71717A] group-hover:text-[#EC4899]'}`}
+                        className={`transition-colors duration-200 shrink-0 ${isActive ? 'text-[#EC4899]' : 'text-[#71717A] group-hover:text-[#EC4899]'}`}
                       />
                       {!collapsed && <span className="transition-opacity duration-200">{item.label}</span>}
                     </div>
@@ -129,8 +135,8 @@ export const CreatorSidebar: React.FC = () => {
                     )}
 
                     {/* Active side indicator glow */}
-                    {isActive && (
-                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-[#EC4899] rounded-r-full shadow-lg shadow-[#EC4899]" />
+                    {isActive && !collapsed && (
+                      <div className="absolute left-1 top-1/4 bottom-1/4 w-1 bg-[#EC4899] rounded-full shadow-lg shadow-[#EC4899]" />
                     )}
                   </Link>
                 );
@@ -173,19 +179,21 @@ export const CreatorSidebar: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-[#F3DCE8] z-50 transition-transform duration-300 w-64 shadow-2xl ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-[#F3DCE8] z-50 transition-transform duration-300 w-64 shadow-2xl flex flex-col ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center px-4 border-b border-[#F3DCE8]">
+        <div className="h-16 flex items-center px-4 border-b border-[#F3DCE8] shrink-0">
           <span className="text-sm font-black text-[#18181B] tracking-tight">Creator Studio</span>
         </div>
-        {sidebarContent}
+        <div className="flex-1 min-h-0">
+          {sidebarContent}
+        </div>
       </aside>
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/40 shrink-0 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/40 shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
           collapsed ? 'w-18' : 'w-60'
         }`}
       >

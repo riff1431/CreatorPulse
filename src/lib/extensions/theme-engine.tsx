@@ -75,7 +75,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const pathname = usePathname();
   const { settings: siteSettings } = useSiteSettings();
   const [themes, setThemes] = useState<ThemeManifest[]>(DISCOVERED_THEMES);
-  const [activeThemeId, setActiveThemeId] = useState<string>('theme-blush-core');
+  const [activeThemeId, setActiveThemeId] = useState<string>('theme-default-theme');
   const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
 
   // Theme Update System States
@@ -118,7 +118,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (storedActiveId && mergedThemes.some((t) => t.id === storedActiveId)) {
           setActiveThemeId(storedActiveId);
         } else {
-          setActiveThemeId('theme-blush-core');
+          setActiveThemeId('theme-default-theme');
         }
 
         if (storedBackupsRaw) {
@@ -129,9 +129,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           setLastUpdateCheck(storedLastCheck);
         }
       } catch (e) {
-        console.error('Failed to load themes from storage, reverting to Blush Core default', e);
+        console.error('Failed to load themes from storage, reverting to Default Theme', e);
         setThemes(DISCOVERED_THEMES);
-        setActiveThemeId('theme-blush-core');
+        setActiveThemeId('theme-default-theme');
       }
     };
 
@@ -467,11 +467,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const deactivateTheme = (themeId: string) => {
-    if (themeId === 'theme-blush-core') {
-      alert('The core default Blush Core theme cannot be deactivated without activating another theme.');
+    if (themeId === 'theme-default-theme' || themeId === 'default-theme' || themeId === 'theme-blush-core') {
+      alert('The core Official Default Theme cannot be deactivated without activating another theme.');
       return;
     }
-    activateTheme('theme-blush-core');
+    activateTheme('theme-default-theme');
   };
 
   const updateThemeVersion = (themeId: string) => {
@@ -603,11 +603,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const target = themes.find((t) => t.id === themeId);
     if (!target) return { success: false, error: 'Theme not found.' };
 
-    // Prevent deletion of Blush Core default theme
-    if (target.isDefault || target.id === 'theme-blush-core') {
+    // Prevent deletion of Official Default Theme
+    if (target.isDefault || target.id === 'theme-default-theme' || target.id === 'theme-blush-core') {
       return { 
         success: false, 
-        error: 'The built-in default "Blush Core" theme is permanent and protected from deletion.' 
+        error: 'The built-in Official Default Theme is permanent and protected from deletion.' 
       };
     }
 
@@ -615,7 +615,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (activeThemeId === themeId) {
       return { 
         success: false, 
-        error: `Cannot delete "${target.name}" because it is currently the active theme. Please activate another theme (such as Blush Core) first.` 
+        error: `Cannot delete "${target.name}" because it is currently the active theme. Please activate another theme (such as Default Theme) first.` 
       };
     }
 

@@ -130,6 +130,8 @@ export default function AdminPluginsPage() {
     pluginName: string;
     targetVersion?: string;
     dependencies?: string[];
+    dependenciesToEnable?: string[];
+    dependentsToDisable?: string[];
   } | null>(null);
 
   // Upload state
@@ -383,6 +385,30 @@ export default function AdminPluginsPage() {
     triggerNotice('Downloaded CreatorPulse Plugin SDK v1.0 Starter Template!');
   };
 
+  const handleResolveDependency = async (depId: string, action: string) => {
+    if (action === 'enable') {
+      const dep = plugins.find(p => p.id === depId || p.slug === depId);
+      if (dep) {
+        setConfirmAction({
+          type: 'activate',
+          pluginId: dep.id,
+          pluginName: dep.name
+        });
+      }
+    } else if (action === 'install' || action === 'upgrade') {
+      const libItem = libraryPlugins.find(p => p.id === depId || p.slug === depId);
+      if (libItem) {
+        setConfirmAction({
+          type: 'install',
+          pluginId: libItem.id,
+          pluginName: libItem.name
+        });
+      } else {
+        alert(`Dependency "${depId}" is not available in the library catalog. Please upload its ZIP file manually.`);
+      }
+    }
+  };
+
   // Licensing Modal Actions
   const handleOpenLicenseActivation = (plugin: PluginManifest) => {
     setLicenseTargetPlugin(plugin);
@@ -442,6 +468,48 @@ export default function AdminPluginsPage() {
       if (plugin.requiresLicense && plugin.licenseStatus !== 'licensed') {
         handleOpenLicenseActivation(plugin);
       } else {
+        // Intercept dependencies check here before activation progress starts
+        if (plugin.dependencies && typeof plugin.dependencies === 'object') {
+          const deps = plugin.dependencies as Record<string, unknown>;
+          if (deps.plugins && typeof deps.plugins === 'object') {
+            const pluginsToEnable: string[] = [];
+            let dependencyAlert: string | null = null;
+            
+            for (const [depId, minVer] of Object.entries(deps.plugins)) {
+              const dep = plugins.find(p => p.id === depId || p.slug === depId);
+              if (!dep) {
+                dependencyAlert = `Required dependency plugin "${depId}" (v${minVer}+) is not installed. Please install it first.`;
+                break;
+              }
+              if (dep.version && minVer) {
+                const hasCompatible = CompatibilityChecker.compareVersions(dep.version, minVer as string);
+                if (!hasCompatible) {
+                  dependencyAlert = `Dependency plugin "${dep.name}" version is v${dep.version}, but v${minVer} or higher is required. Please upgrade it first.`;
+                  break;
+                }
+              }
+              if (!dep.isEnabled) {
+                pluginsToEnable.push(dep.id);
+              }
+            }
+
+            if (dependencyAlert) {
+              alert(`Activation Blocked: ${dependencyAlert}`);
+              return;
+            }
+
+            if (pluginsToEnable.length > 0) {
+              setConfirmAction({
+                type: 'activate',
+                pluginId: plugin.id,
+                pluginName: plugin.name,
+                dependenciesToEnable: pluginsToEnable
+              });
+              return;
+            }
+          }
+        }
+
         setConfirmAction({
           type: 'activate',
           pluginId: plugin.id,
@@ -449,6 +517,28 @@ export default function AdminPluginsPage() {
         });
       }
     } else {
+      // Intercept active dependents check here before deactivation progress starts
+      const activeDependents = plugins.filter(p => {
+        if (!p.isEnabled || p.id === plugin.id) return false;
+        if (p.dependencies && typeof p.dependencies === 'object') {
+          const deps = p.dependencies as Record<string, unknown>;
+          if (deps.plugins && typeof deps.plugins === 'object') {
+            return Object.keys(deps.plugins).some(depId => depId === plugin.id || depId === plugin.slug);
+          }
+        }
+        return false;
+      });
+
+      if (activeDependents.length > 0) {
+        setConfirmAction({
+          type: 'deactivate',
+          pluginId: plugin.id,
+          pluginName: plugin.name,
+          dependentsToDisable: activeDependents.map(d => d.id)
+        });
+        return;
+      }
+
       setConfirmAction({
         type: 'deactivate',
         pluginId: plugin.id,
@@ -533,6 +623,14 @@ export default function AdminPluginsPage() {
         updateProgress(0, 'success', 60, "Compliance checks OK.");
 
         updateProgress(1, 'running', 80, "Binding plugin event hooks...");
+        
+        // Auto-enable any required dependencies first!
+        if (confirmAction.dependenciesToEnable && confirmAction.dependenciesToEnable.length > 0) {
+          for (const depId of confirmAction.dependenciesToEnable) {
+            togglePlugin(depId, true);
+          }
+        }
+        
         togglePlugin(pluginId, true);
         await new Promise((resolve) => setTimeout(resolve, 500));
         updateProgress(1, 'success', 90, "Event hooks mapped.");
@@ -561,6 +659,14 @@ export default function AdminPluginsPage() {
         updateProgress(0, 'success', 60, "Active tasks stopped.");
 
         updateProgress(1, 'running', 80, "Unbinding plugin event hooks...");
+        
+        // Auto-disable any dependent plugins first to avoid crash/errors!
+        if (confirmAction.dependentsToDisable && confirmAction.dependentsToDisable.length > 0) {
+          for (const depId of confirmAction.dependentsToDisable) {
+            togglePlugin(depId, false);
+          }
+        }
+        
         togglePlugin(pluginId, false);
         await new Promise((resolve) => setTimeout(resolve, 500));
         updateProgress(1, 'success', 90, "Hooks cleared.");
@@ -896,6 +1002,61 @@ export default function AdminPluginsPage() {
                       <div className="p-2 bg-red-50 border border-red-200 text-red-700 rounded-xl text-[10px] font-bold flex items-start gap-1.5">
                         <AlertTriangle size={12} className="shrink-0 mt-0.5" />
                         <span>{plugin.errorMessage}</span>
+                      </div>
+                    )}
+
+                    {/* Dependencies Status Check block */}
+                    {plugin.dependencies?.plugins && Object.keys(plugin.dependencies.plugins).length > 0 && (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Dependencies:</span>
+                        <div className="flex flex-col gap-1.5">
+                          {Object.entries(plugin.dependencies.plugins).map(([depId, minVer]) => {
+                            const dep = plugins.find(p => p.id === depId || p.slug === depId);
+                            const isInstalled = !!dep;
+                            const isEnabled = dep?.isEnabled;
+                            const isCompatible = dep && CompatibilityChecker.compareVersions(dep.version, minVer as string);
+
+                            let statusText = 'Missing';
+                            let badgeColor = 'bg-rose-50 text-rose-700 border-rose-100';
+                            let showFix = true;
+                            let fixAction = 'install';
+
+                            if (isInstalled) {
+                              if (!isCompatible) {
+                                statusText = `Needs v${minVer}+ (Have: v${dep.version})`;
+                                badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                                fixAction = 'upgrade';
+                              } else if (!isEnabled) {
+                                statusText = 'Disabled';
+                                badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+                                fixAction = 'enable';
+                              } else {
+                                statusText = `v${dep.version} Active`;
+                                badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                                showFix = false;
+                              }
+                            }
+
+                            return (
+                              <div key={depId} className="flex items-center justify-between text-[11px] gap-2">
+                                <span className="font-semibold text-slate-600 truncate max-w-[120px] font-mono">{depId}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className={`px-1.5 py-0.5 text-[9px] font-bold border rounded-md ${badgeColor}`}>
+                                    {statusText}
+                                  </span>
+                                  {showFix && (
+                                    <button
+                                      onClick={() => handleResolveDependency(depId, fixAction)}
+                                      className="px-1.5 py-0.5 text-[9px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors cursor-pointer"
+                                    >
+                                      {fixAction === 'install' ? 'Install' : fixAction === 'enable' ? 'Enable' : 'Upgrade'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
@@ -1269,6 +1430,44 @@ export default function AdminPluginsPage() {
                     ))}
                   </div>
                 </div>
+
+                {detailsPlugin.dependencies?.plugins && Object.keys(detailsPlugin.dependencies.plugins).length > 0 && (
+                  <div className="pt-2">
+                    <span className="text-[#A1A1AA] block text-[11px] mb-1.5 font-bold uppercase tracking-wider">Required Plugins Dependencies:</span>
+                    <div className="space-y-1.5">
+                      {Object.entries(detailsPlugin.dependencies.plugins).map(([depId, minVer]) => {
+                        const dep = plugins.find(p => p.id === depId || p.slug === depId);
+                        const isInstalled = !!dep;
+                        const isEnabled = dep?.isEnabled;
+                        const isCompatible = dep && CompatibilityChecker.compareVersions(dep.version, minVer as string);
+
+                        let statusText = 'Not Installed';
+                        let badgeColor = 'bg-rose-50 text-rose-700 border-rose-100';
+                        if (isInstalled) {
+                          if (!isCompatible) {
+                            statusText = `Requires upgrade (Needs v${minVer}+, current is v${dep.version})`;
+                            badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                          } else if (!isEnabled) {
+                            statusText = 'Disabled';
+                            badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+                          } else {
+                            statusText = `v${dep.version} Active`;
+                            badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                          }
+                        }
+
+                        return (
+                          <div key={depId} className="flex items-center justify-between text-[11px] p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                            <span className="font-mono text-slate-700">{depId}</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${badgeColor}`}>
+                              {statusText}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Dynamic Operations & Integrations */}
@@ -1618,7 +1817,7 @@ export default function AdminPluginsPage() {
               </div>
 
               <div className="p-3.5 bg-slate-950 text-indigo-200 rounded-2xl font-mono text-[11px] space-y-1">
-                <p className="text-[#A1A1AA]">// Example plugin.json</p>
+                <p className="text-[#A1A1AA]">{"// Example plugin.json"}</p>
                 <p>{`{`}</p>
                 <p className="pl-3">{`"id": "plugin-custom-watermark",`}</p>
                 <p className="pl-3">{`"name": "Custom Watermark Tool",`}</p>
@@ -1747,17 +1946,55 @@ export default function AdminPluginsPage() {
 
             <div className="text-xs text-[#71717A] leading-relaxed space-y-3 font-medium">
               {confirmAction.type === 'activate' && (
-                <p>
-                  Are you sure you want to activate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
-                  This will register its lifecycle triggers and hook endpoints.
-                </p>
+                <div className="space-y-3">
+                  <p>
+                    Are you sure you want to activate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
+                    This will register its lifecycle triggers and hook endpoints.
+                  </p>
+                  {confirmAction.dependenciesToEnable && confirmAction.dependenciesToEnable.length > 0 && (
+                    <div className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-2xl space-y-1.5">
+                      <p className="font-bold flex items-center gap-1.5 text-xs text-indigo-950">
+                        <Zap size={14} className="text-indigo-600 animate-pulse" />
+                        <span>Dependency Auto-Enable Fix:</span>
+                      </p>
+                      <p className="text-[11px] text-indigo-700 leading-normal">
+                        Activating this plugin will automatically enable the following required dependency plugin(s) first:
+                      </p>
+                      <ul className="list-disc list-inside text-[11px] font-semibold text-indigo-900 ml-1">
+                        {confirmAction.dependenciesToEnable.map((depId) => {
+                          const dep = plugins.find(p => p.id === depId || p.slug === depId);
+                          return <li key={depId}>{dep ? dep.name : depId}</li>;
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
 
               {confirmAction.type === 'deactivate' && (
-                <p>
-                  Are you sure you want to deactivate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
-                  Any active widgets, forms, or visual alterations will immediately stop running.
-                </p>
+                <div className="space-y-3">
+                  <p>
+                    Are you sure you want to deactivate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
+                    Any active widgets, forms, or visual alterations will immediately stop running.
+                  </p>
+                  {confirmAction.dependentsToDisable && confirmAction.dependentsToDisable.length > 0 && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl space-y-1.5">
+                      <p className="font-bold flex items-center gap-1.5 text-xs text-amber-950">
+                        <AlertTriangle size={14} className="text-amber-600 animate-bounce" />
+                        <span>Active Dependents Warning:</span>
+                      </p>
+                      <p className="text-[11px] text-amber-700 leading-normal">
+                        Deactivating this plugin will automatically disable the following active dependent plugin(s) to prevent platform conflicts:
+                      </p>
+                      <ul className="list-disc list-inside text-[11px] font-semibold text-amber-900 ml-1">
+                        {confirmAction.dependentsToDisable.map((depId) => {
+                          const dep = plugins.find(p => p.id === depId || p.slug === depId);
+                          return <li key={depId}>{dep ? dep.name : depId}</li>;
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
 
               {confirmAction.type === 'update' && (

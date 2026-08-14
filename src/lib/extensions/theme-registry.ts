@@ -18,11 +18,6 @@ import { CreatorLayout as DefaultCreatorLayout } from '@themes/default-theme/lay
 import { AuthLayout as DefaultAuthLayout } from '@themes/default-theme/layouts/AuthLayout';
 import { MinimalLayout as DefaultMinimalLayout } from '@themes/default-theme/layouts/MinimalLayout';
 
-// Midnight Dark Cyber Custom Theme Override Imports
-import { LandingPage as MidnightLandingPage } from '@themes/midnight-dark/pages/LandingPage';
-import { MainLayout as MidnightMainLayout } from '@themes/midnight-dark/layouts/MainLayout';
-import { Navbar as MidnightNavbar } from '@themes/midnight-dark/components/Navbar';
-
 export const ALL_THEME_PAGES: ThemePageName[] = [
   'LandingPage',
   'LoginPage',
@@ -122,25 +117,11 @@ class ThemeRegistryManager {
 
   constructor() {
     this.registerModule(DEFAULT_THEME_MODULE);
-    // Also register under aliases
+    // Also register under aliases for backwards compatibility
+    this.modules.set('theme-default-theme', DEFAULT_THEME_MODULE);
+    this.modules.set('default-theme', DEFAULT_THEME_MODULE);
     this.modules.set('theme-blush-core', DEFAULT_THEME_MODULE);
     this.modules.set('blush-core', DEFAULT_THEME_MODULE);
-    this.modules.set('default-theme', DEFAULT_THEME_MODULE);
-
-    // Register Midnight Dark Cyber Overrides (LandingPage, MainLayout, Navbar)
-    this.registerModule({
-      id: 'theme-midnight-dark',
-      slug: 'midnight-dark',
-      pages: {
-        LandingPage: MidnightLandingPage,
-      },
-      layouts: {
-        MainLayout: MidnightMainLayout,
-      },
-      components: {
-        Navbar: MidnightNavbar,
-      },
-    });
   }
 
   public registerModule(module: ThemeModulePackage) {

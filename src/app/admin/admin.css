@@ -57,10 +57,17 @@
 .admin-btn-primary {
   background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%) !important;
   color: #FFFFFF !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .admin-btn-primary:hover {
   background: linear-gradient(135deg, #1D4ED8 0%, #4338CA 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+}
+
+.admin-btn-primary:active {
+  transform: translateY(0);
 }
 
 /* Theme Engine variable fallbacks for admin page logic */
@@ -137,11 +144,11 @@
 .admin-icon-container {
   display: inline-flex;
   align-items: center;
-  justify-center: center;
+  justify-content: center;
   background: rgba(248, 250, 252, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.7);
+  border: 1.5px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 1px 3px -1px rgba(15, 23, 42, 0.02);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   color: #475569;
@@ -172,12 +179,21 @@
   background: rgba(255, 255, 255, 0.95);
 }
 
+/* Sidebar Link Hover Effect on Inactive Icons */
+.group:hover .admin-icon-container:not(.admin-icon-active) {
+  transform: translateY(-1px) scale(1.08);
+  border-color: rgba(99, 102, 241, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #4f46e5 !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12), 0 0 0 2px rgba(99, 102, 241, 0.06);
+}
+
 /* Active menu & active-icon states */
 .admin-icon-active {
-  background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%) !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%) !important;
   color: #FFFFFF !important;
-  border-color: rgba(79, 70, 229, 0.2) !important;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.35), 0 0 0 2px rgba(79, 70, 229, 0.15) !important;
 }
 
 /* Gradient accents and variations */
@@ -437,13 +453,20 @@
 
 /* Premium Icon System hover backgrounds in dark mode */
 .admin-dark .admin-icon-container {
-  background: rgba(22, 27, 38, 0.6) !important;
-  border-color: rgba(46, 58, 82, 0.7) !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: var(--color-text-secondary) !important;
+  border-width: 1.5px !important;
 }
 .admin-dark .admin-icon-hover-lift:hover:not(:disabled) {
   background: rgba(30, 41, 59, 0.95) !important;
-  border-color: rgba(99, 102, 241, 0.5) !important;
+  border-color: rgba(129, 140, 248, 0.5) !important;
+}
+.admin-dark .group:hover .admin-icon-container:not(.admin-icon-active) {
+  border-color: rgba(129, 140, 248, 0.5) !important;
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: #818cf8 !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
 }
 
 /* Modal and Dialog overrides */

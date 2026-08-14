@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Users, UserCheck, CreditCard, DollarSign, TrendingUp,
-  Receipt, Wallet, AlertTriangle, FileText, Shield, ArrowRight,
-  Palette, Puzzle
+  Receipt, Wallet, ShieldAlert, FileText, Shield, ArrowRight,
+  Palette, Puzzle, ClipboardCheck, Newspaper
 } from 'lucide-react';
 import { Card } from '@/components/admin/ui/Card';
 import { Sparkline } from '@/components/admin/ui/Sparkline';
@@ -124,7 +124,7 @@ export default function AdminDashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Members</span>
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Total Creators */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Creators</span>
@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Active Subscriptions */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Active Subscriptions</span>
@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Platform Revenue */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Platform Revenue</span>
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Creator Earnings */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Creator Earnings</span>
@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Total Transactions */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Transactions</span>
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Pending Payouts */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Pending Payouts</span>
@@ -229,11 +229,11 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Open Reports */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
+        <Card hoverable={true} className="p-5 flex flex-col justify-between min-h-32 gsap-card">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Open Reports</span>
-              <AdminIcon icon={AlertTriangle} size="sm" variant="rose" container gradientAccent glow rounded="md" />
+              <AdminIcon icon={ShieldAlert} size="sm" variant="rose" container gradientAccent glow rounded="md" />
             </div>
             <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="7">0</p>
           </div>
@@ -284,6 +284,10 @@ export default function AdminDashboardPage() {
               })}
 
               <defs>
+                <linearGradient id="adminChartStroke" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="100%" stopColor="#4F46E5" />
+                </linearGradient>
                 <linearGradient id="adminChartGlow" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.2" />
                   <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.0" />
@@ -291,7 +295,7 @@ export default function AdminDashboardPage() {
               </defs>
 
               <path d={pathArea} fill="url(#adminChartGlow)" />
-              <path d={pathLine} fill="none" stroke="#4F46E5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={pathLine} fill="none" stroke="url(#adminChartStroke)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
               {/* Circles */}
               {points.map((p, idx) => (
@@ -328,17 +332,17 @@ export default function AdminDashboardPage() {
 
             {hoveredIdx !== null && (
               <div
-                className="absolute bg-white border border-slate-200 p-2 rounded-lg shadow-md text-[10px] space-y-0.5 z-10 font-bold"
+                className="absolute bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 p-2 rounded-lg shadow-md text-[10px] space-y-0.5 z-10 font-bold"
                 style={{
                   left: `${(points[hoveredIdx].x / graphWidth) * 100}%`,
                   top: `${(points[hoveredIdx].y / graphHeight) * 100 - 30}%`,
                   transform: 'translateX(-50%)',
                 }}
               >
-                <span className="text-indigo-600 block font-black">
+                <span className="text-indigo-600 dark:text-indigo-400 block font-black">
                   {selectedMetric === 'revenue' ? `$${points[hoveredIdx].val.toLocaleString()}` : `${points[hoveredIdx].val.toLocaleString()} txs`}
                 </span>
-                <span className="text-slate-400 text-[8px] font-semibold">{points[hoveredIdx].label}</span>
+                <span className="text-slate-400 dark:text-slate-500 text-[8px] font-semibold">{points[hoveredIdx].label}</span>
               </div>
             )}
           </div>
@@ -354,7 +358,7 @@ export default function AdminDashboardPage() {
             <Link href="/admin/applications">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <AdminIcon icon={FileText} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
+                  <AdminIcon icon={ClipboardCheck} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Review Applications</p>
                     <p className="text-[9px] text-slate-500 font-medium">2 pending</p>
@@ -406,7 +410,7 @@ export default function AdminDashboardPage() {
             <Link href="/admin/reports">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <AdminIcon icon={AlertTriangle} size="sm" variant="rose" container rounded="md" className="shadow-4xs" />
+                  <AdminIcon icon={ShieldAlert} size="sm" variant="rose" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Moderate Reports</p>
                     <p className="text-[9px] text-slate-500 font-medium">7 open reports</p>

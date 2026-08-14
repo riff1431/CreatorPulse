@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, UserCheck, FileText, Film, Clock,
-  AlertTriangle, CreditCard, Star, Receipt, TrendingUp, Wallet,
+  LayoutDashboard, Users, UserCheck, FileText, Clapperboard, Sparkles,
+  ShieldAlert, CreditCard, Crown, Receipt, TrendingUp, Wallet,
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
-  Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive, RefreshCw
+  Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive, RefreshCw,
+  ClipboardCheck, Newspaper
 } from 'lucide-react';
 import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 
@@ -51,7 +52,7 @@ const allAdminNavGroups: NavGroup[] = [
       { label: 'All Users', href: '/admin/users', icon: Users },
       { label: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
       { label: 'Creators', href: '/admin/creators', icon: UserCheck },
-      { label: 'Creator Applications', href: '/admin/applications', icon: FileText, badge: 2, badgeVariant: 'blue' },
+      { label: 'Creator Applications', href: '/admin/applications', icon: ClipboardCheck, badge: 2, badgeVariant: 'blue' },
     ],
   },
   {
@@ -59,10 +60,10 @@ const allAdminNavGroups: NavGroup[] = [
     items: [
       { label: 'Media Manager', href: '/admin/media', icon: ImageIcon, badge: 'Pro', badgeVariant: 'indigo' },
       { label: 'Email Templates', href: '/admin/email-templates', icon: Mail },
-      { label: 'Posts', href: '/admin/posts', icon: FileText },
-      { label: 'Reels & Shorts', href: '/admin/reels', icon: Film },
-      { label: '24h Stories', href: '/admin/stories', icon: Clock },
-      { label: 'Abuse Reports', href: '/admin/reports', icon: AlertTriangle, badge: 2, badgeVariant: 'amber' },
+      { label: 'Posts', href: '/admin/posts', icon: Newspaper },
+      { label: 'Reels & Shorts', href: '/admin/reels', icon: Clapperboard },
+      { label: '24h Stories', href: '/admin/stories', icon: Sparkles },
+      { label: 'Abuse Reports', href: '/admin/reports', icon: ShieldAlert, badge: 2, badgeVariant: 'amber' },
     ],
   },
   {
@@ -77,7 +78,7 @@ const allAdminNavGroups: NavGroup[] = [
     title: 'Finance & Commerce',
     items: [
       { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
-      { label: 'VIP Memberships', href: '/admin/memberships', icon: Star },
+      { label: 'VIP Memberships', href: '/admin/memberships', icon: Crown },
       { label: 'Transactions', href: '/admin/transactions', icon: Receipt },
       { label: 'Payout Requests', href: '/admin/payouts', icon: Wallet, badge: 1, badgeVariant: 'emerald' },
     ],
@@ -123,7 +124,7 @@ export const AdminSidebar: React.FC = () => {
   })).filter((group) => group.items.length > 0);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200">
+    <div className="flex flex-col h-full bg-white">
       {/* Quick Menu Filter */}
       {!collapsed && (
         <div className="p-3 border-b border-slate-100 shrink-0 bg-slate-50/50">
@@ -141,7 +142,9 @@ export const AdminSidebar: React.FC = () => {
       )}
 
       {/* Navigation Links Scrollable Area */}
-      <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
+      <div className={`flex-1 overflow-y-auto py-3 space-y-4 scrollbar-thin scrollbar-thumb-slate-200 ${
+        collapsed ? 'px-2' : 'px-3'
+      }`}>
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1">
             {!collapsed && (
@@ -161,13 +164,17 @@ export const AdminSidebar: React.FC = () => {
                     target={item.isExternal ? '_blank' : undefined}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative group ${
+                    className={`flex items-center rounded-lg text-xs font-semibold transition-all relative group ${
+                      collapsed
+                        ? 'justify-center py-2 px-0 mx-auto w-10 h-10'
+                        : 'justify-between px-3 py-1.5'
+                    } ${
                       isActive
                         ? 'bg-indigo-50/60 text-indigo-700 shadow-3xs border border-indigo-100/30'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 z-10 min-w-0">
+                    <div className={`flex items-center z-10 ${collapsed ? 'justify-center' : 'gap-2.5 min-w-0'}`}>
                       <AdminIcon
                         icon={Icon as any}
                         size="xs"
@@ -175,7 +182,7 @@ export const AdminSidebar: React.FC = () => {
                         active={isActive}
                         container
                         rounded="sm"
-                        className="shrink-0 transition-transform duration-200 shadow-4xs group-hover:scale-105"
+                        className="shrink-0 transition-transform duration-200 shadow-4xs"
                       />
                       {!collapsed && (
                         <span className="font-semibold truncate flex items-center gap-1.5">
@@ -204,8 +211,8 @@ export const AdminSidebar: React.FC = () => {
                     )}
 
                     {/* Active left indicator pill */}
-                    {isActive && (
-                      <div className="absolute left-0 top-1.5 bottom-1.5 w-0.75 bg-indigo-600 rounded-r-full" />
+                    {isActive && !collapsed && (
+                      <div className="absolute left-1 top-2 bottom-2 w-1 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full" />
                     )}
                   </Link>
                 );
@@ -254,11 +261,11 @@ export const AdminSidebar: React.FC = () => {
 
       {/* Mobile Sidebar Drawer */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-50 transition-transform duration-300 w-64 shadow-xl ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-50 transition-transform duration-300 w-64 shadow-xl flex flex-col ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 bg-slate-50">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             {settings.logo_url ? (
               <img src={settings.logo_url} alt={siteName} className="h-6.5 w-auto max-w-[100px] object-contain rounded-md shrink-0" />
@@ -273,12 +280,14 @@ export const AdminSidebar: React.FC = () => {
             <AdminIcon icon={ChevronLeft} size="sm" variant="slate" />
           </button>
         </div>
-        {sidebarContent}
+        <div className="flex-1 min-h-0">
+          {sidebarContent}
+        </div>
       </aside>
 
       {/* Desktop Sidebar (Sticky to full height) */}
       <aside
-        className={`hidden lg:flex flex-col bg-white shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
+        className={`hidden lg:flex flex-col bg-white border-r border-slate-200 shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
           collapsed ? 'w-16' : 'w-60'
         }`}
       >
