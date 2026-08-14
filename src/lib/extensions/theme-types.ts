@@ -25,6 +25,9 @@ export interface ThemeVisualSettings {
   buttonStyle: 'gradient-glow' | 'flat-solid' | 'soft-glass' | 'outline-neo';
   animationIntensity: 'off' | 'subtle' | 'normal' | 'playful';
   cardShadow: 'soft-pink' | 'elevated' | 'glow' | 'flat';
+  spacing?: 'compact' | 'standard' | 'cozy' | 'spacious';
+  sidebarPlacement?: 'left' | 'right';
+  headerStyle?: 'fixed' | 'floating' | 'simple';
 }
 
 export interface ThemeChangelog {
@@ -65,6 +68,21 @@ export interface ThemeManifest {
   licenseStatus?: 'licensed' | 'unlicensed' | 'exempt';
   installedAt: string;
   updatedAt: string;
+  customizations?: {
+    tokens?: Partial<ThemeTokens>;
+    settings?: Partial<ThemeVisualSettings>;
+  };
+}
+
+export interface ThemeBackup {
+  id: string;
+  themeId: string;
+  themeName: string;
+  version: string;
+  timestamp: string;
+  tokens: ThemeTokens;
+  settings: ThemeVisualSettings;
+  manifest: ThemeManifest;
 }
 
 export interface ThemeCustomizerDraft {
@@ -78,8 +96,12 @@ export interface ThemeCustomizerDraft {
   buttonRadius: string;
   fontFamily: string;
   logoUrl?: string;
+  faviconUrl?: string;
   containerWidth: 'max-w-6xl' | 'max-w-7xl' | 'max-w-full';
   buttonStyle: 'gradient-glow' | 'flat-solid' | 'soft-glass' | 'outline-neo';
   animationIntensity: 'off' | 'subtle' | 'normal' | 'playful';
   cardShadow: 'soft-pink' | 'elevated' | 'glow' | 'flat';
+  spacing: 'compact' | 'standard' | 'cozy' | 'spacious';
+  sidebarPlacement: 'left' | 'right';
+  headerStyle: 'fixed' | 'floating' | 'simple';
 }

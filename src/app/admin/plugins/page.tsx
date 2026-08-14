@@ -6,7 +6,7 @@ import {
   Puzzle, Upload, CheckCircle2, AlertTriangle, Settings, RefreshCw,
   Trash2, Plus, Info, ExternalLink, Shield, Code, Download, X,
   Search, SlidersHorizontal, Check, Zap, Sparkles, Lock, ArrowUpRight,
-  BookOpen, Terminal, Layers, ArrowRight, Play, Eye
+  BookOpen, Terminal, Layers, ArrowRight, Play, Eye, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { usePlugins } from '@/lib/extensions/plugin-engine';
 import { PluginManifest, PluginHookType, PluginPermission } from '@/lib/extensions/plugin-types';
@@ -14,6 +14,75 @@ import { validatePluginPackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
+
+// Helper to extract plugin.json from binary ZIP archive using DecompressionStream
+async function extractPluginJsonFromZip(arrayBuffer: ArrayBuffer): Promise<string> {
+  const view = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  
+  // Find End of Central Directory (EOCD) signature (0x06054b50) from the end of the file
+  let eocdOffset = -1;
+  for (let i = arrayBuffer.byteLength - 22; i >= 0; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      eocdOffset = i;
+      break;
+    }
+  }
+  if (eocdOffset === -1) {
+    throw new Error("Invalid ZIP file: End of Central Directory (EOCD) signature not found.");
+  }
+  
+  const cdSize = view.getUint32(eocdOffset + 12, true);
+  const cdOffset = view.getUint32(eocdOffset + 16, true);
+  
+  let currentOffset = cdOffset;
+  while (currentOffset < cdOffset + cdSize) {
+    if (view.getUint32(currentOffset, true) !== 0x02014b50) {
+      break; // central directory signature mismatch
+    }
+    
+    const method = view.getUint16(currentOffset + 10, true);
+    const compressedSize = view.getUint32(currentOffset + 20, true);
+    const fileNameLen = view.getUint16(currentOffset + 28, true);
+    const extraLen = view.getUint16(currentOffset + 30, true);
+    const commentLen = view.getUint16(currentOffset + 32, true);
+    const localHeaderOffset = view.getUint32(currentOffset + 42, true);
+    
+    const fileNameBytes = bytes.subarray(currentOffset + 46, currentOffset + 46 + fileNameLen);
+    const fileName = new TextDecoder().decode(fileNameBytes);
+    
+    if (fileName === "plugin.json" || fileName.endsWith("/plugin.json")) {
+      // Validate local header
+      if (view.getUint32(localHeaderOffset, true) !== 0x04034b50) {
+        throw new Error("Invalid local file header signature in ZIP archive.");
+      }
+      const localFileNameLen = view.getUint16(localHeaderOffset + 26, true);
+      const localExtraLen = view.getUint16(localHeaderOffset + 28, true);
+      const dataOffset = localHeaderOffset + 30 + localFileNameLen + localExtraLen;
+      
+      const compressedData = bytes.subarray(dataOffset, dataOffset + compressedSize);
+      
+      if (method === 0) { // Stored (uncompressed)
+        return new TextDecoder().decode(compressedData);
+      } else if (method === 8) { // Deflated
+        // Use standard Web API DecompressionStream to decompress deflate-raw format
+        // @ts-ignore
+        const ds = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        writer.write(compressedData);
+        writer.close();
+        const response = new Response(ds.readable);
+        return await response.text();
+      } else {
+        throw new Error("Unsupported ZIP compression method: " + method);
+      }
+    }
+    
+    currentOffset += 46 + fileNameLen + extraLen + commentLen;
+  }
+  
+  throw new Error("Manifest file 'plugin.json' was not found inside the ZIP archive.");
+}
 
 export default function AdminPluginsPage() {
   const {
@@ -25,7 +94,8 @@ export default function AdminPluginsPage() {
     updatePluginVersion,
     installPlugin,
     installFromLibrary,
-    deletePlugin
+    deletePlugin,
+    activatePluginWithLicense
   } = usePlugins();
 
   const [activeTab, setActiveTab] = useState<'installed' | 'active' | 'inactive' | 'updates' | 'library'>('installed');
@@ -38,6 +108,21 @@ export default function AdminPluginsPage() {
   const [detailsPlugin, setDetailsPlugin] = useState<PluginManifest | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+
+  // License Verification Modal
+  const [licenseTargetPlugin, setLicenseTargetPlugin] = useState<PluginManifest | null>(null);
+  const [licenseInputKey, setLicenseInputKey] = useState('');
+  const [licenseError, setLicenseError] = useState('');
+  const [licenseSuccess, setLicenseSuccess] = useState(false);
+
+  // Action Confirmations Modal
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'activate' | 'deactivate' | 'update' | 'delete' | 'install';
+    pluginId: string;
+    pluginName: string;
+    targetVersion?: string;
+    dependencies?: string[];
+  } | null>(null);
 
   // Upload state
   const [uploadText, setUploadText] = useState('');
@@ -71,14 +156,13 @@ export default function AdminPluginsPage() {
   });
 
   const filteredLibraryPlugins = libraryPlugins.filter((p) => {
-    const isAlreadyInstalled = plugins.some((installed) => installed.id === p.id);
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
 
-    return !isAlreadyInstalled && matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const updateCount = plugins.filter((p) => p.hasUpdate).length;
@@ -95,42 +179,46 @@ export default function AdminPluginsPage() {
     triggerNotice(`Saved settings for ${configuringPlugin.name}`);
   };
 
-  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
     setUploadSuccess(false);
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        const parsed = JSON.parse(content);
-        const result = validatePluginPackage(parsed);
-
-        if (!result.valid || !result.plugin) {
-          setUploadError(result.error || 'Failed to validate plugin package.');
-          return;
-        }
-
-        // Check duplicate ID
-        if (plugins.some((p) => p.id === result.plugin!.id)) {
-          setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
-          return;
-        }
-
-        installPlugin(result.plugin);
-        setUploadSuccess(true);
-        triggerNotice(`Installed "${result.plugin.name}" successfully!`);
-        setTimeout(() => {
-          setIsUploadOpen(false);
-          setUploadSuccess(false);
-        }, 1200);
-      } catch (err: any) {
-        setUploadError('Invalid package format. Please provide a valid plugin JSON manifest or ZIP.');
+    try {
+      let manifestText = '';
+      if (file.name.endsWith('.zip')) {
+        const arrayBuffer = await file.arrayBuffer();
+        manifestText = await extractPluginJsonFromZip(arrayBuffer);
+      } else {
+        const text = await file.text();
+        manifestText = text;
       }
-    };
-    reader.readAsText(file);
+
+      const parsed = JSON.parse(manifestText);
+      const result = validatePluginPackage(parsed);
+
+      if (!result.valid || !result.plugin) {
+        setUploadError(result.error || 'Failed to validate plugin package.');
+        return;
+      }
+
+      // Check duplicate ID
+      if (plugins.some((p) => p.id === result.plugin!.id)) {
+        setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
+        return;
+      }
+
+      installPlugin(result.plugin);
+      setUploadSuccess(true);
+      triggerNotice(`Installed "${result.plugin.name}" successfully!`);
+      setTimeout(() => {
+        setIsUploadOpen(false);
+        setUploadSuccess(false);
+      }, 1200);
+    } catch (err: any) {
+      setUploadError(err.message || 'Invalid package format. Please provide a valid plugin JSON manifest or ZIP.');
+    }
   };
 
   const handleManualJsonInstall = () => {
@@ -205,8 +293,123 @@ export default function AdminPluginsPage() {
     triggerNotice('Downloaded CreatorPulse Plugin SDK v1.0 Starter Template!');
   };
 
+  // Licensing Modal Actions
+  const handleOpenLicenseActivation = (plugin: PluginManifest) => {
+    setLicenseTargetPlugin(plugin);
+    setLicenseInputKey(plugin.licenseKey || '');
+    setLicenseError('');
+    setLicenseSuccess(false);
+  };
+
+  const handleConfirmLicenseActivation = async () => {
+    if (!licenseTargetPlugin) return;
+    setLicenseError('');
+    setLicenseSuccess(false);
+    const res = await activatePluginWithLicense(licenseTargetPlugin.id, licenseInputKey);
+    if (!res.success) {
+      setLicenseError(res.error || 'Failed to activate plugin.');
+      return;
+    }
+    setLicenseSuccess(true);
+    triggerNotice(`Activated "${licenseTargetPlugin.name}" successfully!`);
+    setTimeout(() => {
+      setLicenseTargetPlugin(null);
+      setLicenseSuccess(false);
+      setLicenseInputKey('');
+    }, 1200);
+  };
+
+  // Actions confirmations
+  const handleToggleClick = (plugin: PluginManifest, checked: boolean) => {
+    if (checked) {
+      if (plugin.requiresLicense && plugin.licenseStatus !== 'licensed') {
+        handleOpenLicenseActivation(plugin);
+      } else {
+        setConfirmAction({
+          type: 'activate',
+          pluginId: plugin.id,
+          pluginName: plugin.name
+        });
+      }
+    } else {
+      setConfirmAction({
+        type: 'deactivate',
+        pluginId: plugin.id,
+        pluginName: plugin.name
+      });
+    }
+  };
+
+  const handleInstallLibraryClick = (plugin: PluginManifest) => {
+    // Validate dependencies
+    const missing: string[] = [];
+    if (plugin.dependencies?.plugins) {
+      for (const depId of plugin.dependencies.plugins) {
+        const isInstalled = plugins.some((p) => p.id === depId);
+        if (!isInstalled) {
+          const libItem = libraryPlugins.find((p) => p.id === depId);
+          missing.push(libItem ? libItem.name : depId);
+        }
+      }
+    }
+
+    setConfirmAction({
+      type: 'install',
+      pluginId: plugin.id,
+      pluginName: plugin.name,
+      dependencies: missing.length > 0 ? missing : undefined
+    });
+  };
+
+  const handleUpdateClick = (plugin: PluginManifest) => {
+    setConfirmAction({
+      type: 'update',
+      pluginId: plugin.id,
+      pluginName: plugin.name,
+      targetVersion: plugin.latestVersion
+    });
+  };
+
+  const handleDeleteClick = (plugin: PluginManifest) => {
+    setConfirmAction({
+      type: 'delete',
+      pluginId: plugin.id,
+      pluginName: plugin.name
+    });
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+
+    const { type, pluginId } = confirmAction;
+
+    if (type === 'activate') {
+      togglePlugin(pluginId, true);
+      triggerNotice(`Activated "${confirmAction.pluginName}" successfully!`);
+    } else if (type === 'deactivate') {
+      togglePlugin(pluginId, false);
+      triggerNotice(`Deactivated "${confirmAction.pluginName}" successfully!`);
+    } else if (type === 'update') {
+      updatePluginVersion(pluginId);
+      triggerNotice(`Updated "${confirmAction.pluginName}" to v${confirmAction.targetVersion}!`);
+    } else if (type === 'delete') {
+      const res = deletePlugin(pluginId);
+      if (res) {
+        triggerNotice(`Deleted and uninstalled "${confirmAction.pluginName}".`);
+      }
+    } else if (type === 'install') {
+      const res = installFromLibrary(pluginId);
+      if (res) {
+        triggerNotice(`Installed "${confirmAction.pluginName}" from library. Open tab to activate.`);
+        setActiveTab('installed');
+      }
+    }
+
+    setConfirmAction(null);
+  };
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 max-w-7xl mx-auto pb-16 px-4 sm:px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
@@ -219,12 +422,13 @@ export default function AdminPluginsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             leftIcon={<BookOpen size={14} />}
             onClick={() => setIsDocsOpen(true)}
+            className="w-full sm:w-auto"
           >
             Developer SDK Docs
           </Button>
@@ -233,6 +437,7 @@ export default function AdminPluginsPage() {
             size="sm"
             leftIcon={<Upload size={14} />}
             onClick={() => setIsUploadOpen(true)}
+            className="w-full sm:w-auto"
           >
             Upload Plugin (.ZIP / JSON)
           </Button>
@@ -253,11 +458,11 @@ export default function AdminPluginsPage() {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2 text-xs font-bold">
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap gap-2 text-xs font-bold">
           <button
             onClick={() => setActiveTab('installed')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'installed'
                 ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
@@ -271,7 +476,7 @@ export default function AdminPluginsPage() {
 
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'active'
                 ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
@@ -286,7 +491,7 @@ export default function AdminPluginsPage() {
 
           <button
             onClick={() => setActiveTab('inactive')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'inactive'
                 ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
@@ -300,7 +505,7 @@ export default function AdminPluginsPage() {
 
           <button
             onClick={() => setActiveTab('updates')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'updates'
                 ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
@@ -316,7 +521,7 @@ export default function AdminPluginsPage() {
 
           <button
             onClick={() => setActiveTab('library')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'library'
                 ? 'bg-indigo-50 text-indigo-700 border border-slate-300 shadow-xs'
                 : 'text-[#71717A] hover:text-[#18181B]'
@@ -325,13 +530,13 @@ export default function AdminPluginsPage() {
             <Sparkles size={13} className="text-indigo-600" />
             <span>Plugin Library</span>
             <span className="text-[10px] bg-gradient-to-r from-[#4F46E5] to-[#EF4444] text-white px-1.5 py-0.5 rounded-full">
-              New
+              Available
             </span>
           </button>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 sm:w-60">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
             <input
@@ -346,7 +551,7 @@ export default function AdminPluginsPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#18181B] focus:outline-none font-medium w-full sm:w-auto"
           >
             <option value="all">All Categories</option>
             <option value="Monetization">Monetization</option>
@@ -380,38 +585,60 @@ export default function AdminPluginsPage() {
               {filteredInstalledPlugins.map((plugin) => (
                 <Card
                   key={plugin.id}
-                  className={`p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg ${
-                    plugin.isEnabled ? 'border-slate-200 bg-white' : 'border-slate-200/60 bg-slate-50/50 opacity-90'
-                  }`}
+                  className={`p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg relative overflow-hidden ${
+                    plugin.isEnabled 
+                      ? 'border-slate-200 bg-white ring-1 ring-indigo-500/10' 
+                      : 'border-slate-200 bg-slate-50/50 opacity-95'
+                  } ${plugin.hasError ? 'border-red-200 bg-red-50/10' : ''}`}
                 >
                   <div className="space-y-4">
                     {/* Top Row: Icon & Status Toggle */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center border border-slate-200 shrink-0 shadow-xs">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-2xl flex items-center justify-center border border-indigo-100 shrink-0 shadow-xs">
                           {plugin.iconUrl}
                         </div>
                         <div>
-                          <h3 className="font-bold text-sm text-[#18181B] leading-tight">{plugin.name}</h3>
+                          <h3 className="font-bold text-sm text-[#18181B] leading-tight flex items-center gap-1.5 flex-wrap">
+                            <span>{plugin.name}</span>
+                          </h3>
                           <p className="text-[11px] text-[#71717A] font-medium">By {plugin.author}</p>
                         </div>
                       </div>
 
-                      {/* Active Toggle Switch */}
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={plugin.isEnabled}
-                          onChange={(e) => togglePlugin(plugin.id, e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5.5 bg-[#E4E4E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E4E4E7] after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
-                      </label>
+                      {/* Active Toggle Switch or License Prompt */}
+                      {plugin.requiresLicense && plugin.licenseStatus !== 'licensed' ? (
+                        <button
+                          onClick={() => handleOpenLicenseActivation(plugin)}
+                          className="px-2.5 py-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg flex items-center gap-1 transition-all"
+                        >
+                          <Lock size={10} />
+                          <span>Unlock</span>
+                        </button>
+                      ) : (
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={plugin.isEnabled}
+                            onChange={(e) => handleToggleClick(plugin, e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5.5 bg-[#E4E4E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E4E4E7] after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
+                        </label>
+                      )}
                     </div>
 
                     <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">
                       {plugin.description}
                     </p>
+
+                    {/* Licensing & Compatibility Error Notice */}
+                    {plugin.hasError && (
+                      <div className="p-2 bg-red-50 border border-red-200 text-red-700 rounded-xl text-[10px] font-bold flex items-start gap-1.5">
+                        <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                        <span>{plugin.errorMessage}</span>
+                      </div>
+                    )}
 
                     {/* Metadata Badges */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -421,8 +648,26 @@ export default function AdminPluginsPage() {
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
                         v{plugin.version}
                       </span>
+
+                      {/* License Badge */}
+                      {plugin.requiresLicense ? (
+                        plugin.licenseStatus === 'licensed' ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                            <ShieldCheck size={10} /> Licensed
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
+                            <Lock size={10} /> License Required
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">
+                          Exempt
+                        </span>
+                      )}
+
                       {plugin.hasUpdate && (
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-[#FECDD3] flex items-center gap-1">
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-[#FECDD3] flex items-center gap-1 animate-pulse">
                           <Zap size={10} /> v{plugin.latestVersion} Available
                         </span>
                       )}
@@ -449,7 +694,7 @@ export default function AdminPluginsPage() {
                         <Info size={15} />
                       </button>
                       <button
-                        onClick={() => deletePlugin(plugin.id)}
+                        onClick={() => handleDeleteClick(plugin)}
                         className="p-2 rounded-xl text-[#71717A] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         title="Uninstall Plugin"
                       >
@@ -461,7 +706,7 @@ export default function AdminPluginsPage() {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => updatePluginVersion(plugin.id)}
+                        onClick={() => handleUpdateClick(plugin)}
                         leftIcon={<RefreshCw size={12} />}
                       >
                         Update to v{plugin.latestVersion}
@@ -488,7 +733,7 @@ export default function AdminPluginsPage() {
               <div>
                 <h4 className="font-bold text-xs text-[#18181B]">CreatorPulse Official & Verified Plugin Library</h4>
                 <p className="text-[11px] text-[#71717A] mt-0.5">
-                  Browse and install verified add-ons with 1-click. All plugins are sandboxed and adhere to Plugin SDK v1.0.
+                  Browse, search, and install verified modular plugins. Installing plugins will resolve and validate dependencies.
                 </p>
               </div>
             </div>
@@ -498,67 +743,87 @@ export default function AdminPluginsPage() {
               size="sm"
               leftIcon={<Download size={13} />}
               onClick={handleDownloadStarter}
+              className="w-full md:w-auto"
             >
               Download Plugin SDK Starter
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLibraryPlugins.map((plugin) => (
-              <Card
-                key={plugin.id}
-                className="p-5 flex flex-col justify-between border-slate-200 bg-white transition-all duration-300 hover:shadow-lg hover:border-slate-300/50"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center border border-slate-200 shrink-0 shadow-xs">
-                        {plugin.iconUrl}
+            {filteredLibraryPlugins.map((plugin) => {
+              const isInstalled = plugins.some((installed) => installed.id === plugin.id);
+              return (
+                <Card
+                  key={plugin.id}
+                  className={`p-5 flex flex-col justify-between border-slate-200 bg-white transition-all duration-300 hover:shadow-lg relative overflow-hidden ${
+                    isInstalled ? 'bg-slate-50/50 opacity-90' : ''
+                  }`}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center border border-slate-200 shrink-0 shadow-xs">
+                          {plugin.iconUrl}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-[#18181B] leading-tight">{plugin.name}</h3>
+                          <p className="text-[11px] text-[#71717A] font-medium">By {plugin.author}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-[#18181B] leading-tight">{plugin.name}</h3>
-                        <p className="text-[11px] text-[#71717A] font-medium">By {plugin.author}</p>
-                      </div>
+                      {isInstalled ? (
+                        <Badge variant="emerald" size="sm">Installed</Badge>
+                      ) : (
+                        <Badge variant="pink" size="sm">Available</Badge>
+                      )}
                     </div>
-                    <Badge variant="pink" size="sm">Available</Badge>
+
+                    <p className="text-xs text-[#71717A] leading-relaxed line-clamp-3 font-medium">
+                      {plugin.description}
+                    </p>
+
+                    {plugin.dependencies && (
+                      <div className="text-[10px] bg-indigo-50/50 p-2 rounded-xl text-indigo-700 font-semibold space-y-0.5">
+                        <p className="font-bold text-[10px] uppercase text-indigo-800">Required Plugins:</p>
+                        <p className="font-mono text-[9px]">{plugin.dependencies.plugins?.join(', ')}</p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-indigo-700 border border-slate-300">
+                        {plugin.category}
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
+                        v{plugin.version}
+                      </span>
+                      {plugin.requiresLicense && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200 flex items-center gap-1">
+                          <Lock size={9} /> License Key Required
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <p className="text-xs text-[#71717A] leading-relaxed line-clamp-3 font-medium">
-                    {plugin.description}
-                  </p>
+                  <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200">
+                    <button
+                      onClick={() => setDetailsPlugin(plugin)}
+                      className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Info size={13} /> View Specs
+                    </button>
 
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-indigo-700 border border-slate-300">
-                      {plugin.category}
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A]">
-                      v{plugin.version}
-                    </span>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleInstallLibraryClick(plugin)}
+                      disabled={isInstalled}
+                      leftIcon={isInstalled ? <Check size={13} /> : <Plus size={13} />}
+                    >
+                      {isInstalled ? 'Installed' : 'Install Add-on'}
+                    </Button>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200">
-                  <button
-                    onClick={() => setDetailsPlugin(plugin)}
-                    className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
-                  >
-                    <Info size={13} /> View Specs
-                  </button>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      installFromLibrary(plugin.id);
-                      triggerNotice(`Installed "${plugin.name}"! You can now activate and configure it.`);
-                    }}
-                    leftIcon={<Plus size={13} />}
-                  >
-                    Install Add-on
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
@@ -913,6 +1178,162 @@ export default function AdminPluginsPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => setIsDocsOpen(false)}>
                 Close Docs
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* License key Verification Modal */}
+      {licenseTargetPlugin && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-bold text-base text-[#18181B]">Activate {licenseTargetPlugin.name}</h3>
+                <p className="text-xs text-[#71717A]">Add-on License Verification</p>
+              </div>
+              <button
+                onClick={() => setLicenseTargetPlugin(null)}
+                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {licenseSuccess && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>License validated and plugin enabled successfully!</span>
+              </div>
+            )}
+
+            {licenseError && (
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center gap-2">
+                <AlertTriangle size={16} className="text-red-600 shrink-0" />
+                <span>{licenseError}</span>
+              </div>
+            )}
+
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 text-xl flex items-center justify-center border border-indigo-100">
+                  {licenseTargetPlugin.iconUrl}
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-[#18181B]">{licenseTargetPlugin.name} v{licenseTargetPlugin.version}</h4>
+                  <p className="text-[11px] text-[#71717A]">Developer: {licenseTargetPlugin.author}</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-bold text-[#18181B]">Plugin License Key / Purchase Code</label>
+                <input
+                  type="text"
+                  placeholder="CP-PLUGIN-XXXX-XXXX-XXXX"
+                  value={licenseInputKey}
+                  onChange={(e) => setLicenseInputKey(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-[#18181B] focus:outline-none focus:border-indigo-500"
+                />
+                <p className="text-[10px] text-[#A1A1AA]">
+                  Enter a valid purchase code to activate this plugin. Example: CP-PLUGIN-TEST-KEY-2026
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              <Button variant="ghost" size="sm" onClick={() => setLicenseTargetPlugin(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleConfirmLicenseActivation}>
+                Verify & Activate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-200">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#18181B]">
+                  Confirm {confirmAction.type.charAt(0).toUpperCase() + confirmAction.type.slice(1)}
+                </h3>
+                <p className="text-xs text-[#71717A]">Please confirm your action below</p>
+              </div>
+            </div>
+
+            <div className="text-xs text-[#71717A] leading-relaxed space-y-3 font-medium">
+              {confirmAction.type === 'activate' && (
+                <p>
+                  Are you sure you want to activate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
+                  This will register its lifecycle triggers and hook endpoints.
+                </p>
+              )}
+
+              {confirmAction.type === 'deactivate' && (
+                <p>
+                  Are you sure you want to deactivate <strong className="text-[#18181B]">{confirmAction.pluginName}</strong>?
+                  Any active widgets, forms, or visual alterations will immediately stop running.
+                </p>
+              )}
+
+              {confirmAction.type === 'update' && (
+                <p>
+                  Are you sure you want to update <strong className="text-[#18181B]">{confirmAction.pluginName}</strong> to v{confirmAction.targetVersion}?
+                  This will override current package configurations and run update migrations.
+                </p>
+              )}
+
+              {confirmAction.type === 'delete' && (
+                <p className="text-red-600 font-semibold bg-red-50/50 p-3 rounded-2xl border border-red-100">
+                  Warning: You are about to permanently delete and uninstall {confirmAction.pluginName}.
+                  All settings, database schemas, and associated secrets will be completely wiped from the platform.
+                </p>
+              )}
+
+              {confirmAction.type === 'install' && (
+                <div className="space-y-3">
+                  <p>
+                    Are you sure you want to install <strong className="text-[#18181B]">{confirmAction.pluginName}</strong> from the official library?
+                  </p>
+                  
+                  {confirmAction.dependencies && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl space-y-1.5">
+                      <p className="font-bold flex items-center gap-1">
+                        <ShieldAlert size={14} /> Missing Dependencies Found:
+                      </p>
+                      <ul className="list-disc list-inside space-y-0.5 font-semibold">
+                        {confirmAction.dependencies.map((dep) => (
+                          <li key={dep}>{dep}</li>
+                        ))}
+                      </ul>
+                      <p className="text-[10px] text-red-600 font-bold mt-1">
+                        Installation is blocked. Please install the required plugins listed above before installing this add-on.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmAction(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant={confirmAction.type === 'delete' ? 'danger' : 'primary'}
+                size="sm"
+                onClick={handleConfirmAction}
+                disabled={confirmAction.type === 'install' && !!confirmAction.dependencies}
+              >
+                Confirm {confirmAction.type.charAt(0).toUpperCase() + confirmAction.type.slice(1)}
               </Button>
             </div>
           </div>

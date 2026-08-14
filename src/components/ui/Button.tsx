@@ -19,7 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC4899]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none active:scale-[0.98]';
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-[var(--radius-button)] focus:outline-none focus:ring-2 focus:ring-[#EC4899]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none active:scale-[0.98]';
 
   const variantStyles = {
     primary: 'gradient-btn text-white font-semibold shadow-md shadow-[#EC4899]/20 hover:shadow-lg hover:shadow-[#EC4899]/30 hover:-translate-y-0.5',

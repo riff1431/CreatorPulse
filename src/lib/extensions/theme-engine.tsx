@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { ThemeManifest, ThemeTokens, ThemeVisualSettings } from './theme-types';
-import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG } from './default-extensions';
-import { logAuditEvent } from './package-installer';
+import { ThemeManifest, ThemeTokens, ThemeVisualSettings, ThemeBackup } from './theme-types';
+import { DEFAULT_THEMES, THEME_LIBRARY_CATALOG, THEME_UPDATE_REGISTRY } from './default-extensions';
+import { logAuditEvent, validateThemePackage } from './package-installer';
 
 interface ThemeContextType {
   themes: ThemeManifest[];
@@ -23,6 +23,15 @@ interface ThemeContextType {
   exportTheme: (themeId: string) => string;
   previewTheme: ThemeManifest | null;
   setPreviewTheme: (theme: ThemeManifest | null) => void;
+
+  // Theme Update System Addition
+  checkForUpdates: () => Promise<{ foundCount: number }>;
+  isCheckingUpdates: boolean;
+  lastUpdateCheck: string | null;
+  updateThemeWithBackup: (themeId: string) => Promise<{ success: boolean; error?: string }>;
+  rollbackToBackup: (backupId: string) => { success: boolean; error?: string };
+  backups: ThemeBackup[];
+  deleteBackup: (backupId: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -58,11 +67,18 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [activeThemeId, setActiveThemeId] = useState<string>('theme-blush-core');
   const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
 
+  // Theme Update System States
+  const [backups, setBackups] = useState<ThemeBackup[]>([]);
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [lastUpdateCheck, setLastUpdateCheck] = useState<string | null>(null);
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
       const storedThemesRaw = localStorage.getItem(STORAGE_THEMES_KEY);
       const storedActiveId = localStorage.getItem(STORAGE_ACTIVE_THEME_ID);
+      const storedBackupsRaw = localStorage.getItem('creatorpulse_theme_backups');
+      const storedLastCheck = localStorage.getItem('creatorpulse_last_update_check');
 
       let currentThemes = DEFAULT_THEMES;
       if (storedThemesRaw) {
@@ -79,6 +95,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       } else {
         setActiveThemeId('theme-blush-core');
       }
+
+      if (storedBackupsRaw) {
+        setBackups(JSON.parse(storedBackupsRaw));
+      }
+
+      if (storedLastCheck) {
+        setLastUpdateCheck(storedLastCheck);
+      }
     } catch (e) {
       console.error('Failed to load themes from storage, reverting to Blush Core default', e);
       setActiveThemeId('theme-blush-core');
@@ -94,6 +118,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const root = document.documentElement;
     const isAdminRoute = pathname?.startsWith('/admin');
+    const styleTag = document.getElementById('theme-assets-overrides');
 
     if (isAdminRoute) {
       // Keep Admin Panel strictly locked to standard Admin tokens
@@ -111,8 +136,26 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       root.style.setProperty('--color-text-secondary', adminTokens.textSecondary);
       root.style.setProperty('--radius-card', adminTokens.cardRadius);
       root.style.setProperty('--radius-button', adminTokens.buttonRadius);
+      root.style.setProperty('--font-sans', adminTokens.fontFamily);
+      
+      // Default Spacing/Header/Sidebar variables for admin
+      root.style.setProperty('--theme-spacing-base', '1rem');
+      root.style.setProperty('--theme-sidebar-placement', 'left');
+      root.style.setProperty('--theme-header-style', 'fixed');
+
       root.classList.remove('dark-theme');
+      root.classList.remove('sidebar-right');
+      
+      // Clean up all theme slug classes and overrides
+      themes.forEach((t) => root.classList.remove(`theme-${t.slug}`));
       root.classList.add('admin-isolated');
+      if (styleTag) styleTag.remove();
+
+      // Reset Favicon in Admin Panel to default
+      const faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (faviconLink) {
+        faviconLink.href = '/favicon.ico';
+      }
     } else {
       // Apply active Frontend theme tokens across public & user portals
       try {
@@ -120,7 +163,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const settings = effectiveTheme.settings || DEFAULT_THEMES[0].settings;
 
         root.style.setProperty('--color-primary', tokens.primary);
-        root.style.setProperty('--color-primary-hover', tokens.primaryHover);
+        root.style.setProperty('--color-primary-hover', tokens.primaryHover || tokens.primary);
         root.style.setProperty('--color-soft-primary', tokens.softPrimary);
         root.style.setProperty('--color-light-primary', tokens.lightPrimary);
         root.style.setProperty('--color-accent', tokens.accent);
@@ -132,17 +175,91 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         root.style.setProperty('--color-text-secondary', tokens.textSecondary);
         root.style.setProperty('--radius-card', tokens.cardRadius);
         root.style.setProperty('--radius-button', tokens.buttonRadius);
+        root.style.setProperty('--font-sans', tokens.fontFamily || 'Plus Jakarta Sans, sans-serif');
 
-        // Layout & Animation Geometry Settings
+        // Spacing Variable
+        const spacingMap = {
+          compact: '0.75rem',
+          standard: '1rem',
+          cozy: '1.25rem',
+          spacious: '1.5rem'
+        };
+        const spacingBase = settings.spacing ? spacingMap[settings.spacing] || '1rem' : '1rem';
+        root.style.setProperty('--theme-spacing-base', spacingBase);
+
+        // Sidebar & Header & Button style settings
+        root.style.setProperty('--theme-sidebar-placement', settings.sidebarPlacement || 'left');
+        if (settings.sidebarPlacement === 'right') {
+          root.classList.add('sidebar-right');
+        } else {
+          root.classList.remove('sidebar-right');
+        }
+        root.style.setProperty('--theme-header-style', settings.headerStyle || 'fixed');
         root.style.setProperty('--theme-container-width', settings.containerWidth || 'max-w-7xl');
         root.style.setProperty('--theme-button-style', settings.buttonStyle || 'gradient-glow');
         root.style.setProperty('--theme-animation-intensity', settings.animationIntensity || 'normal');
 
         root.classList.remove('admin-isolated');
+        
+        // Update theme-specific classes on root
+        themes.forEach((t) => root.classList.remove(`theme-${t.slug}`));
+        root.classList.add(`theme-${effectiveTheme.slug}`);
+
         if (tokens.isDark) {
           root.classList.add('dark-theme');
         } else {
           root.classList.remove('dark-theme');
+        }
+
+        // Apply Favicon dynamically
+        if (settings.faviconUrl) {
+          let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+          if (!faviconLink) {
+            faviconLink = document.createElement('link');
+            faviconLink.rel = 'shortcut icon';
+            document.getElementsByTagName('head')[0].appendChild(faviconLink);
+          }
+          faviconLink.href = settings.faviconUrl;
+        } else {
+          const faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+          if (faviconLink) {
+            faviconLink.href = '/favicon.ico';
+          }
+        }
+
+        // Load fonts dynamically from Google Fonts if specified
+        if (tokens.fontFamily) {
+          const fontId = 'dynamic-theme-font';
+          let link = document.getElementById(fontId) as HTMLLinkElement;
+          const fontName = tokens.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+          
+          if (fontName && fontName !== 'system-ui' && fontName !== '-apple-system') {
+            if (!link) {
+              link = document.createElement('link');
+              link.id = fontId;
+              link.rel = 'stylesheet';
+              document.head.appendChild(link);
+            }
+            const encodedFont = fontName.replace(/\s+/g, '+');
+            link.href = `https://fonts.googleapis.com/css2?family=${encodedFont}:wght@300;400;500;600;700;800;900&display=swap`;
+          } else if (link) {
+            link.remove();
+          }
+        }
+
+        // Apply theme-specific CSS Overrides
+        const overrides = effectiveTheme.assets?.cssOverrides;
+        if (overrides) {
+          if (!styleTag) {
+            const newStyleTag = document.createElement('style');
+            newStyleTag.id = 'theme-assets-overrides';
+            document.head.appendChild(newStyleTag);
+            newStyleTag.innerHTML = overrides;
+          } else {
+            styleTag.innerHTML = overrides;
+          }
+        } else {
+          if (styleTag) styleTag.remove();
         }
       } catch (err) {
         console.error('Error applying theme tokens, safely falling back to Blush Core', err);
@@ -150,9 +267,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         root.style.setProperty('--color-primary', fallback.primary);
         root.style.setProperty('--color-bg', fallback.background);
         root.style.setProperty('--color-surface', fallback.surface);
+        themes.forEach((t) => root.classList.remove(`theme-${t.slug}`));
+        if (styleTag) styleTag.remove();
       }
     }
-  }, [effectiveTheme, pathname]);
+  }, [effectiveTheme, pathname, themes]);
 
   const activateTheme = (themeId: string): boolean => {
     const res = activateThemeWithLicense(themeId);
@@ -316,8 +435,15 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const catalogItem = THEME_LIBRARY_CATALOG.find((t) => t.id === themeId);
     if (!catalogItem) return false;
 
+    // Validate theme structure before installation
+    const validation = validateThemePackage(catalogItem);
+    if (!validation.valid || !validation.theme) {
+      alert(`Validation Error: ${validation.error || 'Invalid theme package structure.'}`);
+      return false;
+    }
+
     const manifest: ThemeManifest = {
-      ...catalogItem,
+      ...validation.theme,
       isActive: false,
       installedAt: new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0]
@@ -366,6 +492,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   ) => {
     const updated = themes.map((t) => {
       if (t.id === themeId) {
+        const customTokens = {
+          ...(t.customizations?.tokens || {}),
+          ...updatedTokens
+        };
+        const customSettings = {
+          ...(t.customizations?.settings || {}),
+          ...(updatedSettings || {})
+        };
         return {
           ...t,
           tokens: {
@@ -375,6 +509,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           settings: {
             ...t.settings,
             ...(updatedSettings || {})
+          },
+          customizations: {
+            tokens: customTokens,
+            settings: customSettings
           },
           updatedAt: new Date().toISOString().split('T')[0]
         };
@@ -415,6 +553,197 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return JSON.stringify(target, null, 2);
   };
 
+  // Theme Update System Methods
+  const checkForUpdates = async (): Promise<{ foundCount: number }> => {
+    setIsCheckingUpdates(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500)); // simulate check delay
+
+    let foundCount = 0;
+    const updated = themes.map((t) => {
+      const updateInfo = THEME_UPDATE_REGISTRY[t.id];
+      if (updateInfo && updateInfo.version && updateInfo.version !== t.version) {
+        foundCount++;
+        return {
+          ...t,
+          hasUpdate: true,
+          latestVersion: updateInfo.version
+        };
+      }
+      return t;
+    });
+
+    if (foundCount > 0) {
+      setThemes(updated);
+      localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updated));
+    }
+
+    const checkTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
+    setLastUpdateCheck(checkTime);
+    localStorage.setItem('creatorpulse_last_update_check', checkTime);
+    setIsCheckingUpdates(false);
+
+    logAuditEvent({
+      action: 'THEME_CUSTOMIZED',
+      entityType: 'theme',
+      entityName: 'Theme Update System',
+      details: `Checked for updates. Found ${foundCount} updates available.`,
+      severity: 'info'
+    });
+
+    return { foundCount };
+  };
+
+  const updateThemeWithBackup = async (themeId: string): Promise<{ success: boolean; error?: string }> => {
+    const target = themes.find((t) => t.id === themeId);
+    if (!target) return { success: false, error: 'Theme not found.' };
+
+    const updateInfo = THEME_UPDATE_REGISTRY[themeId];
+    if (!updateInfo || !updateInfo.version) {
+      return { success: false, error: 'No update available for this theme.' };
+    }
+
+    // 1. Compatibility Validation Check
+    if (updateInfo.minAppVersion && updateInfo.minAppVersion > CURRENT_APP_VERSION) {
+      return {
+        success: false,
+        error: `Incompatible update: Requires CreatorPulse v${updateInfo.minAppVersion} or higher (current: v${CURRENT_APP_VERSION}).`
+      };
+    }
+
+    try {
+      // 2. Create restore point (Backup)
+      const backupId = `backup-${themeId}-${Date.now()}`;
+      const newBackup: ThemeBackup = {
+        id: backupId,
+        themeId: target.id,
+        themeName: target.name,
+        version: target.version,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        tokens: { ...target.tokens },
+        settings: { ...(target.settings || DEFAULT_THEMES[0].settings) },
+        manifest: JSON.parse(JSON.stringify(target)) // deep copy
+      };
+
+      const updatedBackups = [newBackup, ...backups];
+      setBackups(updatedBackups);
+      localStorage.setItem('creatorpulse_theme_backups', JSON.stringify(updatedBackups));
+
+      // 3. Merge update manifest while preserving customizations
+      const customTokens = target.customizations?.tokens || {};
+      const customSettings = target.customizations?.settings || {};
+
+      const updatedManifest: ThemeManifest = {
+        ...target,
+        version: updateInfo.version,
+        description: updateInfo.description || target.description,
+        minAppVersion: updateInfo.minAppVersion || target.minAppVersion || '1.0.0',
+        hasUpdate: false,
+        updatedAt: new Date().toISOString().split('T')[0],
+        changelog: updateInfo.changelog as any || [
+          {
+            version: updateInfo.version,
+            date: new Date().toISOString().split('T')[0],
+            changes: ['Automatic design tokens and responsive rules upgrade']
+          },
+          ...target.changelog
+        ],
+        // Preserved tokens (override update default tokens with customizations)
+        tokens: {
+          ...(updateInfo.tokens || target.tokens),
+          ...customTokens
+        },
+        // Preserved settings (override update default settings with customizations)
+        settings: {
+          ...(updateInfo.settings || target.settings || DEFAULT_THEMES[0].settings),
+          ...customSettings
+        },
+        // Preserve customizations history
+        customizations: {
+          tokens: customTokens,
+          settings: customSettings
+        }
+      };
+
+      // 4. If the updated theme is active, attempt to safely apply it. If it fails, revert!
+      if (target.id === activeThemeId) {
+        try {
+          if (!updatedManifest.tokens.primary || !updatedManifest.tokens.background || !updatedManifest.tokens.surface) {
+            throw new Error("Malformatted update tokens");
+          }
+        } catch (stylingErr) {
+          // Revert backup immediately
+          const rolledBackBackups = updatedBackups.filter(b => b.id !== backupId);
+          setBackups(rolledBackBackups);
+          localStorage.setItem('creatorpulse_theme_backups', JSON.stringify(rolledBackBackups));
+          return {
+            success: false,
+            error: `Update failed during layout binding safety check: ${stylingErr instanceof Error ? stylingErr.message : String(stylingErr)}. Safe rollback performed.`
+          };
+        }
+      }
+
+      // 5. Save updated themes
+      const updatedThemes = themes.map((t) => (t.id === themeId ? updatedManifest : t));
+      setThemes(updatedThemes);
+      localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updatedThemes));
+
+      logAuditEvent({
+        action: 'THEME_INSTALLED',
+        entityType: 'theme',
+        entityName: target.name,
+        details: `Updated from v${target.version} to v${updateInfo.version} (Settings preserved. Restore point ${backupId} created).`,
+        severity: 'success'
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error('Theme update execution failed:', err);
+      return { success: false, error: `Theme update execution failed: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  };
+
+  const rollbackToBackup = (backupId: string): { success: boolean; error?: string } => {
+    const backup = backups.find((b) => b.id === backupId);
+    if (!backup) return { success: false, error: 'Backup restore point not found.' };
+
+    try {
+      const targetThemeExists = themes.some((t) => t.id === backup.themeId);
+      
+      let updatedThemes: ThemeManifest[];
+      if (targetThemeExists) {
+        updatedThemes = themes.map((t) => (t.id === backup.themeId ? backup.manifest : t));
+      } else {
+        updatedThemes = [...themes, backup.manifest];
+      }
+
+      setThemes(updatedThemes);
+      localStorage.setItem(STORAGE_THEMES_KEY, JSON.stringify(updatedThemes));
+
+      const remainingBackups = backups.filter((b) => b.id !== backupId);
+      setBackups(remainingBackups);
+      localStorage.setItem('creatorpulse_theme_backups', JSON.stringify(remainingBackups));
+
+      logAuditEvent({
+        action: 'THEME_ROLLBACK',
+        entityType: 'theme',
+        entityName: backup.themeName,
+        details: `Rolled back to v${backup.version} using restore point ${backupId}.`,
+        severity: 'info'
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error('Backup rollback failed:', err);
+      return { success: false, error: `Rollback failed: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  };
+
+  const deleteBackup = (backupId: string) => {
+    const updated = backups.filter((b) => b.id !== backupId);
+    setBackups(updated);
+    localStorage.setItem('creatorpulse_theme_backups', JSON.stringify(updated));
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -433,7 +762,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         rollbackTheme,
         exportTheme,
         previewTheme,
-        setPreviewTheme
+        setPreviewTheme,
+        checkForUpdates,
+        isCheckingUpdates,
+        lastUpdateCheck,
+        updateThemeWithBackup,
+        rollbackToBackup,
+        backups,
+        deleteBackup
       }}
     >
       {children}

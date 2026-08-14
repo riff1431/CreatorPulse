@@ -13,9 +13,11 @@ import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
 import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
+import { useTheme } from '@/lib/extensions/theme-engine';
 import gsap from 'gsap';
 
 export default function LandingPage() {
+  const { activeTheme } = useTheme();
   const [subscriberCount, setSubscriberCount] = useState(350);
   const [tierPrice, setTierPrice] = useState(15);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -57,15 +59,27 @@ export default function LandingPage() {
       <RoleSwitcher />
 
       {/* Navigation Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-[#F3DCE8] px-6 py-4">
+      <header className={`bg-white/80 backdrop-blur-xl border-b border-[#F3DCE8] px-6 py-4 ${
+        activeTheme.settings?.headerStyle === 'floating'
+          ? 'theme-header-floating'
+          : activeTheme.settings?.headerStyle === 'simple'
+          ? 'theme-header-simple'
+          : 'theme-header-fixed'
+      }`}>
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25">
-              <Sparkles className="text-white" size={20} />
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-[#18181B]">
-              Creator<span className="gradient-text">Pulse</span>
-            </span>
+            {activeTheme.settings?.logoUrl ? (
+              <img src={activeTheme.settings.logoUrl} alt="Logo" className="h-9 w-auto max-w-[150px] object-contain rounded-xl" />
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25">
+                  <Sparkles className="text-white" size={20} />
+                </div>
+                <span className="text-xl font-extrabold tracking-tight text-[#18181B]">
+                  Creator<span className="gradient-text">Pulse</span>
+                </span>
+              </>
+            )}
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm text-[#71717A] font-semibold">

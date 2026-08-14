@@ -78,6 +78,9 @@ export interface PluginManifest {
   hasError?: boolean;
   errorMessage?: string;
   isLibraryItem?: boolean;
+  requiresLicense?: boolean;
+  licenseKey?: string;
+  licenseStatus?: 'licensed' | 'unlicensed' | 'exempt';
 }
 
 export interface AuditLogEntry {

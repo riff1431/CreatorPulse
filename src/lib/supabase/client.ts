@@ -11,6 +11,8 @@ export function createClient() {
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
+export const getSupabaseBrowserClient = createClient;
+
 export const isSupabaseConfigured = () => {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return Boolean(

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   Sparkles, Search, Bell, Shield, LayoutDashboard, 
   User, LogOut, PlusSquare, Compass, LogIn 
@@ -12,9 +12,12 @@ import { Button } from '../ui/Button';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
+import { useTheme } from '@/lib/extensions/theme-engine';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const { activeTheme } = useTheme();
   const { user, role, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -70,22 +73,37 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const isAdminRoute = pathname?.startsWith('/admin');
+  const logoUrl = activeTheme?.settings?.logoUrl;
+  const headerStyle = activeTheme?.settings?.headerStyle || 'fixed';
+  const headerStyleClass = !isAdminRoute && headerStyle === 'floating'
+    ? 'theme-header-floating'
+    : !isAdminRoute && headerStyle === 'simple'
+    ? 'theme-header-simple'
+    : 'theme-header-fixed';
+
   return (
-    <header className={`bg-white/85 backdrop-blur-xl border-b border-[#F3DCE8] sticky top-0 z-40 px-4 lg:px-8 py-3 transition-all duration-300 ${
+    <header className={`bg-white/85 backdrop-blur-xl border-b border-[#F3DCE8] ${headerStyleClass} z-40 px-4 lg:px-8 py-3 transition-all duration-300 ${
       isScrolled ? 'shadow-md shadow-[#EC4899]/5 py-2.5 bg-white/95' : ''
     }`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand Logo */}
         <Link href="/feed" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
-            <Sparkles className="text-white" size={20} />
-          </div>
-          <div>
-            <span className="text-lg font-black tracking-tight text-[#18181B] flex items-center gap-1">
-              Creator<span className="gradient-text">Pulse</span>
-            </span>
-            <span className="text-[10px] text-[#71717A] block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
-          </div>
+          {!isAdminRoute && logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-9 w-auto max-w-[150px] object-contain rounded-xl" />
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center shadow-md shadow-[#EC4899]/25 group-hover:scale-105 transition-transform">
+                <Sparkles className="text-white" size={20} />
+              </div>
+              <div>
+                <span className="text-lg font-black tracking-tight text-[#18181B] flex items-center gap-1">
+                  Creator<span className="gradient-text">Pulse</span>
+                </span>
+                <span className="text-[10px] text-[#71717A] block -mt-1 font-medium tracking-wide">Creator SaaS Platform</span>
+              </div>
+            </>
+          )}
         </Link>
 
         {/* Global Search Bar */}

@@ -18,6 +18,7 @@ interface PluginContextType {
   deletePlugin: (pluginId: string) => boolean;
   isHookActive: (hookName: PluginHookType) => boolean;
   getHookPlugins: (hookName: PluginHookType) => PluginManifest[];
+  activatePluginWithLicense: (pluginId: string, licenseKey?: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const PluginContext = createContext<PluginContextType | undefined>(undefined);
@@ -27,14 +28,45 @@ const STORAGE_PLUGINS_KEY = 'creatorpulse_plugins';
 export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [plugins, setPlugins] = useState<PluginManifest[]>(DEFAULT_PLUGINS);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and sync server licenses
   useEffect(() => {
-    const initPlugins = () => {
+    const initPlugins = async () => {
       try {
         const storedPluginsRaw = localStorage.getItem(STORAGE_PLUGINS_KEY);
-        if (storedPluginsRaw) {
-          setPlugins(JSON.parse(storedPluginsRaw));
+        let loadedPlugins = storedPluginsRaw ? JSON.parse(storedPluginsRaw) : DEFAULT_PLUGINS;
+
+        // Fetch secure licenses from server
+        try {
+          const res = await fetch('/api/plugins/license');
+          const data = await res.json();
+          if (data.success && data.licenses) {
+            loadedPlugins = loadedPlugins.map((p: PluginManifest) => {
+              const secureLicense = data.licenses[p.id];
+              if (secureLicense) {
+                return {
+                  ...p,
+                  licenseKey: secureLicense.licenseKey,
+                  licenseStatus: secureLicense.licenseStatus,
+                  hasError: false,
+                  errorMessage: undefined
+                };
+              }
+              // If it requires license but server doesn't have it, ensure it's unlicensed and disabled
+              if (p.requiresLicense && p.licenseStatus === 'licensed') {
+                return {
+                  ...p,
+                  licenseStatus: 'unlicensed' as const,
+                  isEnabled: false
+                };
+              }
+              return p;
+            });
+          }
+        } catch (err) {
+          console.error('Failed to sync plugin licenses from server vault:', err);
         }
+
+        setPlugins(loadedPlugins);
       } catch (e) {
         console.error('Failed to load plugins from storage', e);
       }
@@ -43,7 +75,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => clearTimeout(timer);
   }, []);
 
-  const activePlugins = plugins.filter((p) => p.isEnabled);
+  const activePlugins = plugins.filter((p) => p.isEnabled && (!p.requiresLicense || p.licenseStatus === 'licensed'));
 
   const CORE_VERSION = '1.2.0';
 
@@ -67,8 +99,13 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const target = plugins.find((p) => p.id === pluginId);
     if (!target) return;
 
-    // Enforce compatibility check upon activation
+    // Enforce compatibility and licensing checks upon activation
     if (enabled) {
+      if (target.requiresLicense && target.licenseStatus !== 'licensed') {
+        alert(`Cannot activate "${target.name}": This plugin requires a valid license key. Please activate it with a license first.`);
+        return;
+      }
+
       const minVersion = target.minAppVersion || '1.0.0';
       if (!isVersionCompatible(minVersion)) {
         alert(`Cannot activate "${target.name}": requires core app version v${minVersion} (you have v${CORE_VERSION}).`);
@@ -309,6 +346,12 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       body: JSON.stringify({ gatewayId: pluginId })
     }).catch(err => console.error('[Engine] Failed to clean vault secrets', err));
 
+    fetch('/api/plugins/license', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pluginId })
+    }).catch(err => console.error('[Engine] Failed to clean secure license', err));
+
     const filtered = plugins.filter((p) => p.id !== pluginId);
     setPlugins(filtered);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(filtered));
@@ -321,6 +364,45 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       severity: 'warning'
     });
     return true;
+  };
+
+  const activatePluginWithLicense = async (pluginId: string, licenseKey?: string): Promise<{ success: boolean; error?: string }> => {
+    const target = plugins.find((p) => p.id === pluginId);
+    if (!target) return { success: false, error: 'Plugin not found' };
+
+    try {
+      const res = await fetch('/api/plugins/license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pluginId, licenseKey })
+      });
+      const data = await res.json();
+      if (data.error) {
+        return { success: false, error: data.error };
+      }
+
+      // Update state and storage
+      const updated = plugins.map((p) => {
+        if (p.id === pluginId) {
+          return {
+            ...p,
+            licenseKey,
+            licenseStatus: 'licensed' as const,
+            isEnabled: true, // auto enable after successful activation
+            hasError: false,
+            errorMessage: undefined
+          };
+        }
+        return p;
+      });
+
+      setPlugins(updated);
+      localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
   };
 
   const isHookActive = (hookName: PluginHookType): boolean => {
@@ -345,7 +427,8 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         installFromLibrary,
         deletePlugin,
         isHookActive,
-        getHookPlugins
+        getHookPlugins,
+        activatePluginWithLicense
       }}
     >
       {children}

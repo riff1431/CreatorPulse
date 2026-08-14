@@ -15,6 +15,7 @@ import { validateThemePackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { THEME_UPDATE_REGISTRY } from '@/lib/extensions/default-extensions';
 
 export default function AdminThemesPage() {
   const {
@@ -31,7 +32,14 @@ export default function AdminThemesPage() {
     deleteTheme,
     customizeTheme,
     rollbackTheme,
-    exportTheme
+    exportTheme,
+    checkForUpdates,
+    isCheckingUpdates,
+    lastUpdateCheck,
+    updateThemeWithBackup,
+    rollbackToBackup,
+    backups,
+    deleteBackup
   } = useTheme();
 
   // Navigation Tabs: 'installed' | 'activation' | 'updates' | 'library'
@@ -59,6 +67,26 @@ export default function AdminThemesPage() {
   // Delete Confirmation Modal
   const [themeToDelete, setThemeToDelete] = useState<ThemeManifest | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+
+  // Theme Update System States
+  const [updatingThemeId, setUpdatingThemeId] = useState<string | null>(null);
+  const [updateProgress, setUpdateProgress] = useState<string>('');
+  const [expandedChangelogs, setExpandedChangelogs] = useState<Record<string, boolean>>({});
+
+  const toggleChangelog = (themeId: string) => {
+    setExpandedChangelogs(prev => ({
+      ...prev,
+      [themeId]: !prev[themeId]
+    }));
+  };
+
+  // Confirmation Overlay Modal
+  const [confirmThemeAction, setConfirmThemeAction] = useState<{
+    type: 'activate' | 'deactivate' | 'update' | 'install';
+    themeId: string;
+    themeName: string;
+    targetVersion?: string;
+  } | null>(null);
 
   // Upload state
   const [uploadText, setUploadText] = useState('');
@@ -157,6 +185,52 @@ export default function AdminThemesPage() {
     }, 1200);
   };
 
+  const handleCheckForUpdates = async () => {
+    try {
+      const res = await checkForUpdates();
+      triggerNotice(`Checked for updates! Found ${res.foundCount} updates.`);
+    } catch (err) {
+      triggerNotice(`Failed to check updates.`);
+    }
+  };
+
+  const handleUpdateTheme = async (themeId: string) => {
+    setUpdatingThemeId(themeId);
+    setUpdateProgress('Creating rollback restore point...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    setUpdateProgress('Validating package compatibility...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    setUpdateProgress('Merging core assets & preserving customizations...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    try {
+      const res = await updateThemeWithBackup(themeId);
+      if (res.success) {
+        setUpdateProgress('Theme updated successfully!');
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        triggerNotice(`Theme updated to v${THEME_UPDATE_REGISTRY[themeId]?.version}!`);
+      } else {
+        alert(`Update failed: ${res.error}`);
+      }
+    } catch (err) {
+      alert(`Error during update: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setUpdatingThemeId(null);
+      setUpdateProgress('');
+    }
+  };
+
+  const handleRollback = (backupId: string, themeName: string, version: string) => {
+    const res = rollbackToBackup(backupId);
+    if (res.success) {
+      triggerNotice(`Successfully restored "${themeName}" to v${version}!`);
+    } else {
+      alert(`Restore failed: ${res.error}`);
+    }
+  };
+
   const handleConfirmDelete = () => {
     if (!themeToDelete) return;
     setDeleteErrorMessage('');
@@ -169,6 +243,52 @@ export default function AdminThemesPage() {
 
     triggerNotice(`Theme "${themeToDelete.name}" deleted successfully.`);
     setThemeToDelete(null);
+  };
+
+  const handleThemeDeactivateClick = (theme: ThemeManifest) => {
+    setConfirmThemeAction({
+      type: 'deactivate',
+      themeId: theme.id,
+      themeName: theme.name
+    });
+  };
+
+  const handleThemeUpdateClick = (theme: ThemeManifest) => {
+    setConfirmThemeAction({
+      type: 'update',
+      themeId: theme.id,
+      themeName: theme.name,
+      targetVersion: theme.latestVersion
+    });
+  };
+
+  const handleThemeInstallClick = (theme: ThemeManifest) => {
+    setConfirmThemeAction({
+      type: 'install',
+      themeId: theme.id,
+      themeName: theme.name
+    });
+  };
+
+  const executeThemeAction = () => {
+    if (!confirmThemeAction) return;
+
+    const { type, themeId, themeName } = confirmThemeAction;
+
+    if (type === 'deactivate') {
+      deactivateTheme(themeId);
+      triggerNotice(`Deactivated "${themeName}", rolled back to Blush Core.`);
+    } else if (type === 'update') {
+      handleUpdateTheme(themeId);
+    } else if (type === 'install') {
+      const res = installFromLibrary(themeId);
+      if (res) {
+        triggerNotice(`Installed theme "${themeName}" successfully!`);
+        setActiveTab('activation');
+      }
+    }
+
+    setConfirmThemeAction(null);
   };
 
   const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -338,7 +458,6 @@ export default function AdminThemesPage() {
 
   const filteredLibraryThemes = sortThemes(
     libraryThemes.filter((t) => {
-      const isAlreadyInstalled = themes.some((installed) => installed.id === t.id);
       const matchesSearch =
         t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -346,7 +465,7 @@ export default function AdminThemesPage() {
 
       const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
 
-      return !isAlreadyInstalled && matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory;
     })
   );
 
@@ -525,6 +644,16 @@ export default function AdminThemesPage() {
             <option value="newest">Newest First</option>
             <option value="category">By Category</option>
           </select>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCheckForUpdates}
+            disabled={isCheckingUpdates}
+            leftIcon={<RefreshCw size={13} className={isCheckingUpdates ? 'animate-spin' : ''} />}
+          >
+            {isCheckingUpdates ? 'Checking...' : 'Check Updates'}
+          </Button>
         </div>
       </div>
 
@@ -577,6 +706,11 @@ export default function AdminThemesPage() {
                           {theme.isCustom && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
                               Custom
+                            </span>
+                          )}
+                          {theme.hasUpdate && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F43F5E] text-white flex items-center gap-1 animate-pulse">
+                              <RefreshCw size={9} className="animate-spin" /> Update Available
                             </span>
                           )}
                         </div>
@@ -661,7 +795,16 @@ export default function AdminThemesPage() {
                           </button>
                         </div>
 
-                        {!isActive ? (
+                        {theme.hasUpdate ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleThemeUpdateClick(theme)}
+                            leftIcon={<RefreshCw size={12} />}
+                          >
+                            Update to v{theme.latestVersion}
+                          </Button>
+                        ) : !isActive ? (
                           <Button
                             variant="primary"
                             size="sm"
@@ -673,10 +816,7 @@ export default function AdminThemesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              deactivateTheme(theme.id);
-                              triggerNotice(`Deactivated "${theme.name}", rolled back to Blush Core.`);
-                            }}
+                            onClick={() => handleThemeDeactivateClick(theme)}
                             disabled={theme.id === 'theme-blush-core'}
                           >
                             Deactivate
@@ -763,10 +903,7 @@ export default function AdminThemesPage() {
                           variant="outline"
                           size="sm"
                           disabled={theme.id === 'theme-blush-core'}
-                          onClick={() => {
-                            deactivateTheme(theme.id);
-                            triggerNotice(`Reverted to Blush Core default theme.`);
-                          }}
+                          onClick={() => handleThemeDeactivateClick(theme)}
                         >
                           Deactivate
                         </Button>
@@ -816,64 +953,71 @@ export default function AdminThemesPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLibraryThemes.map((theme) => (
-              <Card
-                key={theme.id}
-                className="p-0 overflow-hidden flex flex-col justify-between border-[#F3DCE8] bg-white transition-all duration-300 hover:shadow-xl hover:border-[#F472B6]/50"
-              >
-                <div>
-                  <div className="relative h-36 w-full overflow-hidden bg-slate-900 group">
-                    <img
-                      src={theme.previewImageUrl}
-                      alt={theme.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    <div className="absolute top-3 left-3">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
-                        {theme.category}
-                      </span>
+            {filteredLibraryThemes.map((theme) => {
+              const isInstalled = themes.some((installed) => installed.id === theme.id);
+              return (
+                <Card
+                  key={theme.id}
+                  className={`p-0 overflow-hidden flex flex-col justify-between border-[#F3DCE8] bg-white transition-all duration-300 hover:shadow-xl hover:border-[#F472B6]/50 ${
+                    isInstalled ? 'bg-slate-50/50 opacity-90' : ''
+                  }`}
+                >
+                  <div>
+                    <div className="relative h-36 w-full overflow-hidden bg-slate-900 group">
+                      <img
+                        src={theme.previewImageUrl}
+                        alt={theme.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                      <div className="absolute top-3 left-3 flex items-center gap-1">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                          {theme.category}
+                        </span>
+                        {isInstalled && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                            <Check size={9} strokeWidth={3} /> Installed
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <h4 className="font-extrabold text-sm drop-shadow-sm">{theme.name}</h4>
+                        <p className="text-[10px] text-white/80">By {theme.author}</p>
+                      </div>
                     </div>
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <h4 className="font-extrabold text-sm drop-shadow-sm">{theme.name}</h4>
-                      <p className="text-[10px] text-white/80">By {theme.author}</p>
+
+                    <div className="p-4 space-y-3">
+                      <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.primary }} />
+                        <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.accent }} />
+                        <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} />
+                        <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-3">
-                    <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2 font-medium">{theme.description}</p>
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.primary }} />
-                      <div className="h-3 flex-1 rounded" style={{ backgroundColor: theme.tokens.accent }} />
-                      <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.background }} />
-                      <div className="h-3 flex-1 rounded border border-[#F3DCE8]" style={{ backgroundColor: theme.tokens.surface }} />
-                    </div>
+                  <div className="p-4 pt-0 flex items-center justify-between gap-2 border-t border-[#F3DCE8] mt-2 pt-3">
+                    <button
+                      onClick={() => setLivePreviewTheme(theme)}
+                      className="text-xs font-bold text-[#EC4899] hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Eye size={13} /> Live Preview
+                    </button>
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleThemeInstallClick(theme)}
+                      disabled={isInstalled}
+                      leftIcon={isInstalled ? <Check size={13} /> : <Plus size={13} />}
+                    >
+                      {isInstalled ? 'Installed' : 'Install Theme'}
+                    </Button>
                   </div>
-                </div>
-
-                <div className="p-4 pt-0 flex items-center justify-between gap-2 border-t border-[#F3DCE8] mt-2 pt-3">
-                  <button
-                    onClick={() => setLivePreviewTheme(theme)}
-                    className="text-xs font-bold text-[#EC4899] hover:underline cursor-pointer flex items-center gap-1"
-                  >
-                    <Eye size={13} /> Live Preview
-                  </button>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      installFromLibrary(theme.id);
-                      triggerNotice(`Installed theme "${theme.name}"! Opening Activation...`);
-                      setActiveTab('activation');
-                    }}
-                    leftIcon={<Plus size={13} />}
-                  >
-                    Install Theme
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1711,6 +1855,56 @@ export default function AdminThemesPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => setIsDocsOpen(false)}>
                 Close Docs
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL 8: THEME ACTION CONFIRMATION MODAL */}
+      {confirmThemeAction && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-[#F3DCE8] shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-200">
+                <AlertTriangle size={20} className="text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#18181B]">
+                  Confirm Theme {confirmThemeAction.type.charAt(0).toUpperCase() + confirmThemeAction.type.slice(1)}
+                </h3>
+                <p className="text-xs text-[#71717A]">Please confirm your action below</p>
+              </div>
+            </div>
+
+            <div className="text-xs text-[#71717A] leading-relaxed space-y-2 font-medium">
+              {confirmThemeAction.type === 'deactivate' && (
+                <p>
+                  Are you sure you want to deactivate <strong className="text-[#18181B]">{confirmThemeAction.themeName}</strong>?
+                  The system will automatically roll back to the default <strong className="text-[#BE185D]">Blush Core</strong> theme.
+                </p>
+              )}
+
+              {confirmThemeAction.type === 'update' && (
+                <p>
+                  Are you sure you want to update <strong className="text-[#18181B]">{confirmThemeAction.themeName}</strong> to v{confirmThemeAction.targetVersion}?
+                  This will register newly compiled tokens and geometry layout settings.
+                </p>
+              )}
+
+              {confirmThemeAction.type === 'install' && (
+                <p>
+                  Are you sure you want to install <strong className="text-[#18181B]">{confirmThemeAction.themeName}</strong> from the official library?
+                  The theme package structure will be verified for tokens and colors before installation.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmThemeAction(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={executeThemeAction}>
+                Confirm
               </Button>
             </div>
           </div>
