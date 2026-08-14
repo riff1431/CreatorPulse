@@ -1,11 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { PluginManifest, PluginHookType } from './plugin-types';
-import { DEFAULT_PLUGINS, PLUGIN_LIBRARY_CATALOG } from './default-extensions';
+import { PluginManifest, PluginHookType, PluginBackup } from './plugin-types';
+import { PLUGIN_LIBRARY_CATALOG } from './default-extensions';
 import { logAuditEvent } from './package-installer';
 import { PluginLoader } from '@/lib/loaders/plugin-loader';
 import { DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
+import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
 
 interface PluginContextType {
   plugins: PluginManifest[];
@@ -21,6 +22,10 @@ interface PluginContextType {
   isHookActive: (hookName: PluginHookType) => boolean;
   getHookPlugins: (hookName: PluginHookType) => PluginManifest[];
   activatePluginWithLicense: (pluginId: string, licenseKey?: string) => Promise<{ success: boolean; error?: string }>;
+  updatePluginWithBackup: (pluginId: string) => Promise<{ success: boolean; error?: string }>;
+  rollbackToPluginBackup: (backupId: string) => { success: boolean; error?: string };
+  backups: PluginBackup[];
+  deleteBackup: (backupId: string) => void;
 }
 
 const PluginContext = createContext<PluginContextType | undefined>(undefined);
@@ -29,6 +34,17 @@ const STORAGE_PLUGINS_KEY = 'creatorpulse_plugins';
 
 export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [plugins, setPlugins] = useState<PluginManifest[]>(DISCOVERED_PLUGIN_MANIFESTS);
+  const [backups, setBackups] = useState<PluginBackup[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('creatorpulse_plugin_backups');
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.error('Failed to load plugin backups from localStorage', e);
+      }
+    }
+    return [];
+  });
 
   // Load dynamically from /api/admin/plugins and filesystem on mount
   useEffect(() => {
@@ -52,7 +68,9 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (storedPluginsRaw) {
           try {
             storedCustom = JSON.parse(storedPluginsRaw);
-          } catch (e) {}
+          } catch {
+            // ignore error
+          }
         }
 
         let loadedPlugins = PluginLoader.discoverPlugins(
@@ -118,7 +136,7 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (m > c) return false;
       }
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -468,9 +486,132 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
 
       return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e: unknown) {
+      return { success: false, error: (e as Error).message };
     }
+  };
+
+  const updatePluginWithBackup = async (pluginId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const target = plugins.find((p) => p.id === pluginId);
+      if (!target || !target.latestVersion) {
+        return { success: false, error: 'Plugin or update version not found.' };
+      }
+
+      // Create restore point (Backup)
+      const backupId = `backup-${pluginId}-${Date.now()}`;
+      const newBackup: PluginBackup = {
+        id: backupId,
+        pluginId,
+        pluginName: target.name,
+        version: target.version,
+        backupDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        manifest: { ...target }
+      };
+
+      const updatedBackups = [newBackup, ...backups];
+      setBackups(updatedBackups);
+      localStorage.setItem('creatorpulse_plugin_backups', JSON.stringify(updatedBackups));
+
+      // Simulate download & check integrity
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Run compatibility checker (simulating standard next manifest check)
+      const simulatedNextManifest = {
+        ...target,
+        version: target.latestVersion,
+        minAppVersion: '1.2.0'
+      };
+
+      const report = CompatibilityChecker.checkPlugin(
+        simulatedNextManifest,
+        [], // folder structures are verified on upload
+        plugins,
+        []
+      );
+
+      if (!report.isValid) {
+        const firstError = report.issues.find(i => i.type === 'error')?.message || 'Plugin compatibility check failed.';
+        // Revert backup immediately
+        const rolledBackBackups = updatedBackups.filter(b => b.id !== backupId);
+        setBackups(rolledBackBackups);
+        localStorage.setItem('creatorpulse_plugin_backups', JSON.stringify(rolledBackBackups));
+        return { success: false, error: `Compatibility check failed: ${firstError}` };
+      }
+
+      // Perform update version
+      const updated = plugins.map((p) => {
+        if (p.id === pluginId) {
+          return {
+            ...p,
+            version: p.latestVersion!,
+            hasUpdate: false,
+            updatedAt: new Date().toISOString().split('T')[0]
+          };
+        }
+        return p;
+      });
+
+      setPlugins(updated);
+      localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+      // Execute onUpdate lifecycle hook
+      PluginLoader.executeLifecycle(pluginId, 'onUpdate', target.version);
+
+      logAuditEvent({
+        action: 'PLUGIN_UPDATED',
+        entityType: 'plugin',
+        entityName: target.name,
+        details: `Updated from v${target.version} to v${target.latestVersion} (Settings preserved. Restore point ${backupId} created).`,
+        severity: 'success'
+      });
+
+      return { success: true };
+    } catch (e: unknown) {
+      return { success: false, error: (e as Error).message };
+    }
+  };
+
+  const rollbackToPluginBackup = (backupId: string): { success: boolean; error?: string } => {
+    try {
+      const backup = backups.find((b) => b.id === backupId);
+      if (!backup) return { success: false, error: 'Backup restore point not found.' };
+
+      const targetPluginExists = plugins.some((p) => p.id === backup.pluginId);
+      let updatedPlugins: PluginManifest[];
+
+      if (targetPluginExists) {
+        updatedPlugins = plugins.map((p) => (p.id === backup.pluginId ? backup.manifest : p));
+      } else {
+        updatedPlugins = [...plugins, backup.manifest];
+      }
+
+      setPlugins(updatedPlugins);
+      localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updatedPlugins));
+
+      const remainingBackups = backups.filter((b) => b.id !== backupId);
+      setBackups(remainingBackups);
+      localStorage.setItem('creatorpulse_plugin_backups', JSON.stringify(remainingBackups));
+
+      logAuditEvent({
+        action: 'PLUGIN_UPDATED',
+        entityType: 'plugin',
+        entityName: backup.pluginName,
+        details: `Rolled back to v${backup.version} using restore point ${backupId}.`,
+        severity: 'info'
+      });
+
+      return { success: true };
+    } catch (err: unknown) {
+      console.error('Backup rollback failed:', err);
+      return { success: false, error: (err as Error).message };
+    }
+  };
+
+  const deleteBackup = (backupId: string) => {
+    const updated = backups.filter((b) => b.id !== backupId);
+    setBackups(updated);
+    localStorage.setItem('creatorpulse_plugin_backups', JSON.stringify(updated));
   };
 
   const isHookActive = (hookName: PluginHookType): boolean => {
@@ -496,7 +637,11 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         deletePlugin,
         isHookActive,
         getHookPlugins,
-        activatePluginWithLicense
+        activatePluginWithLicense,
+        updatePluginWithBackup,
+        rollbackToPluginBackup,
+        backups,
+        deleteBackup
       }}
     >
       {children}
@@ -678,7 +823,7 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
               </span>
             </div>
           );
-        } catch (err) {
+        } catch (err: unknown) {
           console.error(`[Plugin Engine] Error executing hook "${name}" in plugin "${plugin.id}":`, err);
           return null;
         }

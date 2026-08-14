@@ -1,0 +1,7 @@
+/* Default Theme Layout Rules */
+.default-theme-layout-shell {
+  min-height: 100vh;
+  background-color: var(--theme-bg);
+  color: var(--theme-text-primary);
+  font-family: var(--theme-font);
+}

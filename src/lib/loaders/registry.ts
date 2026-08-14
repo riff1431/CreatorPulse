@@ -4,6 +4,7 @@ import { PluginManifest } from '@/lib/extensions/plugin-types';
 // Static discovery imports from root /themes and /plugins directories
 import blushCore from '@themes/blush-core/theme.config';
 import cyberGlow from '@themes/cyber-glow/theme.config';
+import defaultTheme from '@themes/default-theme/theme.config';
 import frostedGlass from '@themes/frosted-glass/theme.config';
 import roseFlow from '@themes/rose-flow/theme.config';
 import starterTheme from '@themes/starter-theme/theme.config';
@@ -21,6 +22,7 @@ import virtualGifts from '@plugins/virtual-gifts/plugin.config';
 export const DISCOVERED_THEMES: ThemeManifest[] = [
   blushCore,
   cyberGlow,
+  defaultTheme,
   frostedGlass,
   roseFlow,
   starterTheme,

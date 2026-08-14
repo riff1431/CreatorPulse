@@ -1,0 +1,61 @@
+{
+  "id": "theme-default-theme",
+  "name": "Official Default Theme",
+  "slug": "default-theme",
+  "description": "The official built-in creator-platform default theme featuring radiant blush hues, editorial typography, full responsive layouts, and rich interactive components.",
+  "version": "1.0.0",
+  "author": "CreatorPulse Core Team",
+  "authorUrl": "https://creatorpulse.com",
+  "previewImageUrl": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
+  "category": "Modern Light",
+  "tags": [
+    "Official",
+    "Default Theme",
+    "Blush Core",
+    "Built-in",
+    "Responsive"
+  ],
+  "minAppVersion": "1.0.0",
+  "isDefault": true,
+  "isActive": true,
+  "installedAt": "2026-08-01",
+  "updatedAt": "2026-08-15",
+  "tokens": {
+    "primary": "#EC4899",
+    "primaryHover": "#DB2777",
+    "softPrimary": "#FCE7F3",
+    "lightPrimary": "#FDF2F8",
+    "accent": "#F43F5E",
+    "background": "#FFF9FC",
+    "surface": "#FFFFFF",
+    "surfaceSecondary": "#FFF1F7",
+    "border": "#F3DCE8",
+    "textPrimary": "#18181B",
+    "textSecondary": "#71717A",
+    "textMuted": "#A1A1AA",
+    "cardRadius": "20px",
+    "buttonRadius": "14px",
+    "fontFamily": "Plus Jakarta Sans, sans-serif",
+    "fontHeading": "Plus Jakarta Sans, sans-serif",
+    "isDark": false
+  },
+  "settings": {
+    "logoUrl": "",
+    "faviconUrl": "",
+    "containerWidth": "max-w-7xl",
+    "buttonStyle": "gradient-glow",
+    "animationIntensity": "normal",
+    "cardShadow": "soft-pink"
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-15",
+      "changes": [
+        "Official default theme release housing the entire platform frontend UI",
+        "Full support for 17 standard Theme SDK directories",
+        "Integrated dynamic layouts, page templates, and design token system"
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import {
   AlertTriangle, CreditCard, Star, Receipt, TrendingUp, Wallet,
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
-  Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive
+  Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive, RefreshCw
 } from 'lucide-react';
 import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 
@@ -70,6 +70,7 @@ const allAdminNavGroups: NavGroup[] = [
     items: [
       { label: 'Frontend Themes', href: '/admin/themes', icon: Palette, badge: 'Blush Core', badgeVariant: 'indigo' },
       { label: 'Plugins & Add-ons', href: '/admin/plugins', icon: Puzzle, badge: '5 Active', badgeVariant: 'emerald' },
+      { label: 'Update Center', href: '/admin/updates', icon: RefreshCw }
     ],
   },
   {

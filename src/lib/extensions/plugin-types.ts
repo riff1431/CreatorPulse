@@ -96,3 +96,12 @@ export interface AuditLogEntry {
   timestamp: string;
   severity: 'info' | 'success' | 'warning' | 'error';
 }
+
+export interface PluginBackup {
+  id: string;
+  pluginId: string;
+  pluginName: string;
+  version: string;
+  backupDate: string;
+  manifest: PluginManifest;
+}
