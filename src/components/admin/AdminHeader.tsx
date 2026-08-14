@@ -12,6 +12,8 @@ import {
 import { Avatar } from '@/components/admin/ui/Avatar';
 import { useAuth } from '@/lib/auth/auth-context';
 import { MOCK_USERS } from '@/lib/supabase/store';
+import { AdminIcon } from '@/components/admin/ui/AdminIcon';
+import { IconButton } from '@/components/admin/ui/IconButton';
 
 export interface AdminNotification {
   id: string;
@@ -260,16 +262,16 @@ export const AdminHeader: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-[#F3DCE8] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 shadow-2xs">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 shadow-2xs">
       {/* Left: Brand & Dashboard Link */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-[#EC4899] to-[#F43F5E] flex items-center justify-center shadow-sm shadow-[#EC4899]/20 group-hover:scale-105 transition-transform">
-            <Shield className="text-white" size={15} />
+          <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0">
+            <AdminIcon icon={Shield} size="sm" className="text-white" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-xs font-black text-[#18181B] leading-none tracking-tight">CreatorPulse</h1>
-            <span className="text-[9px] text-[#BE185D] font-extrabold uppercase tracking-wider block mt-0.5">Admin Console</span>
+            <h1 className="text-xs font-black text-slate-800 leading-none tracking-tight">CreatorPulse</h1>
+            <span className="text-[9px] text-indigo-600 font-extrabold uppercase tracking-wider block mt-0.5">Admin Console</span>
           </div>
         </Link>
 
@@ -277,9 +279,9 @@ export const AdminHeader: React.FC = () => {
         <Link
           href="/feed"
           target="_blank"
-          className="hidden xl:flex items-center gap-1.5 text-xs font-semibold text-[#71717A] hover:text-[#EC4899] transition-colors px-2.5 py-1.5 rounded-xl hover:bg-[#FFF1F7] ml-2 border border-transparent hover:border-[#F3DCE8]"
+          className="hidden xl:flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors px-2.5 py-1.5 rounded-xl ml-2 border border-transparent hover:border-slate-200 group"
         >
-          <ArrowLeft size={13} />
+          <AdminIcon icon={ArrowLeft} size="xs" variant="slate" className="group-hover:text-indigo-600 transition-colors" />
           <span>View Frontend</span>
         </Link>
       </div>
@@ -287,7 +289,7 @@ export const AdminHeader: React.FC = () => {
       {/* Center: Command Palette Global Search */}
       <div className="flex-1 max-w-md mx-4 hidden md:block relative" ref={searchRef}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
+          <AdminIcon icon={Search} size="xs" variant="neutral" className="absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search routes, creators, payouts, themes... (⌘K)"
@@ -297,22 +299,22 @@ export const AdminHeader: React.FC = () => {
               setShowSearchDropdown(true);
             }}
             onFocus={() => setShowSearchDropdown(true)}
-            className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-8.5 pr-14 py-1.5 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-all font-medium"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8.5 pr-14 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-medium"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-[#A1A1AA] bg-white px-1.5 py-0.5 rounded border border-[#F3DCE8]">
-            <Command size={10} />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+            <AdminIcon icon={Command} size="xs" variant="neutral" className="opacity-70" />
             <span>K</span>
           </div>
         </div>
 
         {/* Search Results Dropdown */}
         {showSearchDropdown && (
-          <div className="absolute left-0 right-0 mt-2 bg-white border border-[#F3DCE8] rounded-2xl shadow-xl p-3 space-y-2 z-50 animate-in fade-in slide-in-from-top-2 max-h-96 overflow-y-auto">
-            <div className="flex items-center justify-between px-1 pb-1 border-b border-[#F3DCE8]">
-              <span className="text-[10px] font-extrabold uppercase text-[#A1A1AA] tracking-wider">
+          <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 space-y-2 z-50 animate-in fade-in slide-in-from-top-2 max-h-96 overflow-y-auto">
+            <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-100">
+              <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
                 {searchQuery ? `Results for "${searchQuery}"` : 'Quick Navigation Suggestions'}
               </span>
-              <span className="text-[10px] text-[#71717A]">{filteredResults.length} matches</span>
+              <span className="text-[10px] text-slate-500">{filteredResults.length} matches</span>
             </div>
 
             <div className="space-y-1">
@@ -332,15 +334,15 @@ export const AdminHeader: React.FC = () => {
                       setSearchQuery('');
                     }}
                   >
-                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#FFF1F7] border border-transparent hover:border-[#F3DCE8] cursor-pointer transition-all">
-                      <div className="p-1.5 rounded-lg bg-[#FCE7F3] text-[#EC4899] shrink-0">
-                        <Icon size={13} />
+                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-indigo-50/40 border border-transparent hover:border-indigo-100/30 cursor-pointer transition-all">
+                      <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 shrink-0">
+                        <AdminIcon icon={Icon} size="xs" variant="indigo" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-[#18181B] truncate">{item.title}</p>
-                        <p className="text-[10px] text-[#71717A] truncate font-medium">{item.subtitle}</p>
+                        <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                        <p className="text-[10px] text-slate-500 truncate font-medium">{item.subtitle}</p>
                       </div>
-                      <span className="text-[9px] font-bold text-[#A1A1AA] bg-[#FFF9FC] px-2 py-0.5 rounded border border-[#F3DCE8]">
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                         {item.category}
                       </span>
                     </div>
@@ -349,9 +351,9 @@ export const AdminHeader: React.FC = () => {
               })}
 
               {filteredResults.length === 0 && (
-                <div className="py-6 text-center text-xs text-[#71717A] space-y-1">
+                <div className="py-6 text-center text-xs text-slate-500 space-y-1">
                   <p className="font-bold">No admin records found</p>
-                  <p className="text-[11px] text-[#A1A1AA]">Try searching for &quot;Themes&quot;, &quot;Payouts&quot;, or &quot;Users&quot;</p>
+                  <p className="text-[11px] text-slate-400">Try searching for &quot;Themes&quot;, &quot;Payouts&quot;, or &quot;Users&quot;</p>
                 </div>
               )}
             </div>
@@ -365,57 +367,57 @@ export const AdminHeader: React.FC = () => {
         <div className="relative" ref={quickActionsRef}>
           <button
             onClick={() => setShowQuickActions(!showQuickActions)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFF1F7] text-[#BE185D] hover:bg-[#FCE7F3] border border-[#FBCFE8] text-xs font-bold transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/50 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 active:scale-[0.98]"
             title="Admin Quick Actions"
           >
-            <Plus size={13} strokeWidth={2.5} />
+            <AdminIcon icon={Plus} size="xs" variant="indigo" strokeWidth={2.5} />
             <span className="hidden sm:inline">Quick Actions</span>
-            <ChevronDown size={11} className={`transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+            <AdminIcon icon={ChevronDown} size="xs" variant="indigo" className={`transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
           </button>
 
           {showQuickActions && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-[#F3DCE8] rounded-2xl shadow-xl p-2 space-y-1 z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase text-[#A1A1AA] tracking-wider border-b border-[#F3DCE8] mb-1">
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 space-y-1 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider border-b border-slate-100 mb-1">
                 Frequent Tasks
               </div>
               <Link
                 href="/admin/payouts"
                 onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-[#18181B] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all"
               >
-                <DollarSign size={14} className="text-[#EC4899]" />
+                <AdminIcon icon={DollarSign} size="xs" variant="indigo" />
                 <span>Review Payouts</span>
               </Link>
               <Link
                 href="/admin/applications"
                 onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-[#18181B] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all"
               >
-                <Users size={14} className="text-[#EC4899]" />
+                <AdminIcon icon={Users} size="xs" variant="indigo" />
                 <span>Review Applications</span>
               </Link>
               <Link
                 href="/admin/themes"
                 onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-[#18181B] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all"
               >
-                <Palette size={14} className="text-[#EC4899]" />
+                <AdminIcon icon={Palette} size="xs" variant="indigo" />
                 <span>Customize Themes</span>
               </Link>
               <Link
                 href="/admin/plugins"
                 onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-[#18181B] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all"
               >
-                <Puzzle size={14} className="text-[#EC4899]" />
+                <AdminIcon icon={Puzzle} size="xs" variant="indigo" />
                 <span>Manage Plugins</span>
               </Link>
               <Link
                 href="/admin/categories"
                 onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-[#18181B] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all"
               >
-                <Layers size={14} className="text-[#EC4899]" />
+                <AdminIcon icon={Layers} size="xs" variant="indigo" />
                 <span>Add Category</span>
               </Link>
             </div>
@@ -424,27 +426,31 @@ export const AdminHeader: React.FC = () => {
 
         {/* Real-time Notifications Dropdown */}
         <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] rounded-xl transition-colors cursor-pointer border border-transparent hover:border-[#F3DCE8]"
-            title="Admin Notifications"
-          >
-            <Bell size={16} />
+          <div className="relative inline-block">
+            <IconButton
+              icon={Bell}
+              size="sm"
+              variant="neutral"
+              label="Notifications"
+              onClick={() => setShowNotifications(!showNotifications)}
+              active={showNotifications}
+              tooltip="Admin Notifications"
+            />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-[#EC4899] text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white select-none pointer-events-none">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </button>
+          </div>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-[#F3DCE8] rounded-3xl shadow-2xl p-4 space-y-3 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-3xl shadow-2xl p-4 space-y-3 z-50 animate-in fade-in slide-in-from-top-2">
               {/* Notifications Header */}
-              <div className="flex items-center justify-between border-b border-[#F3DCE8] pb-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-[#18181B]">Admin Notifications</h4>
+                  <h4 className="font-bold text-sm text-slate-800">Admin Notifications</h4>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] bg-[#FCE7F3] text-[#BE185D] px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
                       {unreadCount} Unread
                     </span>
                   )}
@@ -454,7 +460,7 @@ export const AdminHeader: React.FC = () => {
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="text-[11px] font-bold text-[#EC4899] hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
                     >
                       Mark all read
                     </button>
@@ -462,10 +468,10 @@ export const AdminHeader: React.FC = () => {
                   {notifications.length > 0 && (
                     <button
                       onClick={handleClearAllNotifications}
-                      className="p-1 rounded text-[#A1A1AA] hover:text-[#F43F5E] cursor-pointer"
+                      className="p-1 rounded text-slate-400 hover:text-rose-500 cursor-pointer transition-colors"
                       title="Clear all"
                     >
-                      <Trash2 size={13} />
+                      <AdminIcon icon={Trash2} size="xs" variant="slate" />
                     </button>
                   )}
                 </div>
@@ -479,8 +485,8 @@ export const AdminHeader: React.FC = () => {
                     onClick={() => setNotifFilter(tab)}
                     className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer shrink-0 capitalize ${
                       notifFilter === tab
-                        ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8]'
-                        : 'text-[#71717A] hover:bg-[#FFF9FC]'
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/50'
+                        : 'text-slate-500 hover:bg-slate-50'
                     }`}
                   >
                     {tab === 'all' ? 'All' : tab}
@@ -504,32 +510,37 @@ export const AdminHeader: React.FC = () => {
                       onClick={() => handleMarkAsRead(notif.id, notif.targetUrl)}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 relative group ${
                         notif.isRead
-                          ? 'bg-white border-[#F3DCE8]/60 hover:bg-[#FFF9FC]'
-                          : 'bg-[#FFF1F7] border-[#FBCFE8] hover:border-[#EC4899]/50 shadow-2xs'
+                          ? 'bg-white border-slate-100 hover:bg-slate-50'
+                          : 'bg-indigo-50/20 border-indigo-100 hover:border-indigo-300 shadow-3xs'
                       }`}
                     >
-                      <div className="p-2 rounded-xl bg-white text-[#EC4899] border border-[#F3DCE8] shrink-0 mt-0.5">
-                        <Icon size={14} />
-                      </div>
+                      <AdminIcon
+                        icon={Icon}
+                        size="sm"
+                        variant={notif.isRead ? 'slate' : 'primary'}
+                        container
+                        rounded="md"
+                        className="shrink-0 mt-0.5 shadow-4xs"
+                      />
 
                       <div className="min-w-0 flex-1 space-y-0.5">
                         <div className="flex items-center justify-between gap-1">
-                          <p className={`text-xs truncate ${notif.isRead ? 'font-bold text-[#18181B]' : 'font-extrabold text-[#BE185D]'}`}>
+                          <p className={`text-xs truncate ${notif.isRead ? 'font-bold text-slate-800' : 'font-extrabold text-indigo-700'}`}>
                             {notif.title}
                           </p>
-                          <span className="text-[10px] text-[#A1A1AA] shrink-0 font-medium">{notif.timeAgo}</span>
+                          <span className="text-[10px] text-slate-400 shrink-0 font-medium">{notif.timeAgo}</span>
                         </div>
-                        <p className="text-[11px] text-[#71717A] leading-relaxed line-clamp-2 font-medium">
+                        <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 font-medium">
                           {notif.message}
                         </p>
                       </div>
 
                       <button
                         onClick={(e) => handleDeleteNotification(notif.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-[#A1A1AA] hover:text-[#F43F5E] transition-opacity cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 transition-opacity cursor-pointer"
                         title="Dismiss"
                       >
-                        <X size={12} />
+                        <AdminIcon icon={X} size="xs" variant="slate" />
                       </button>
                     </div>
                   );
@@ -537,28 +548,28 @@ export const AdminHeader: React.FC = () => {
 
                 {filteredNotifications.length === 0 && (
                   <div className="py-8 text-center space-y-2">
-                    <div className="w-10 h-10 rounded-2xl bg-[#FFF1F7] text-[#EC4899] flex items-center justify-center mx-auto">
-                      <CheckCircle2 size={20} />
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-4xs">
+                      <AdminIcon icon={CheckCircle2} size="md" variant="indigo" />
                     </div>
-                    <p className="text-xs font-bold text-[#18181B]">All caught up!</p>
-                    <p className="text-[10px] text-[#71717A]">No notifications match the active filter tab.</p>
+                    <p className="text-xs font-bold text-slate-800">All caught up!</p>
+                    <p className="text-[10px] text-slate-500">No notifications match the active filter tab.</p>
                   </div>
                 )}
               </div>
 
               {/* View All Links Footer */}
-              <div className="border-t border-[#F3DCE8] pt-2 flex items-center justify-between text-[11px] font-bold">
+              <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[11px] font-bold">
                 <Link
                   href="/admin/audit-logs"
                   onClick={() => setShowNotifications(false)}
-                  className="text-[#EC4899] hover:underline"
+                  className="text-indigo-600 hover:underline"
                 >
                   System Audit Logs →
                 </Link>
                 <Link
                   href="/admin/reports"
                   onClick={() => setShowNotifications(false)}
-                  className="text-[#71717A] hover:text-[#18181B]"
+                  className="text-slate-500 hover:text-slate-800"
                 >
                   Flagged Content →
                 </Link>
@@ -571,7 +582,7 @@ export const AdminHeader: React.FC = () => {
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-2xl hover:bg-[#FFF1F7] transition-all cursor-pointer border border-transparent hover:border-[#F3DCE8]"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-200"
           >
             <Avatar
               src={adminUser.avatarUrl}
@@ -579,18 +590,18 @@ export const AdminHeader: React.FC = () => {
               size="sm"
             />
             <div className="hidden sm:block text-left ml-1">
-              <p className="text-xs font-bold text-[#18181B] leading-none">{adminUser.fullName}</p>
-              <p className="text-[9px] text-[#BE185D] font-extrabold uppercase mt-1">Super Admin</p>
+              <p className="text-xs font-bold text-slate-800 leading-none">{adminUser.fullName}</p>
+              <p className="text-[9px] text-indigo-600 font-extrabold uppercase mt-1">Super Admin</p>
             </div>
-            <ChevronDown size={11} className={`text-[#A1A1AA] ml-1 hidden sm:block transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+            <AdminIcon icon={ChevronDown} size="xs" variant="slate" className={`ml-1 hidden sm:block transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-60 bg-white border border-[#F3DCE8] rounded-3xl shadow-2xl p-3 space-y-2 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-3xl shadow-2xl p-3 space-y-2 z-50 animate-in fade-in slide-in-from-top-2">
               {/* Profile Card Header */}
-              <div className="px-3 py-2 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] space-y-1">
-                <p className="text-xs font-bold text-[#18181B]">{adminUser.fullName}</p>
-                <p className="text-[10px] text-[#71717A] truncate font-medium">{adminUser.email}</p>
+              <div className="px-3 py-2 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-1">
+                <p className="text-xs font-bold text-slate-800">{adminUser.fullName}</p>
+                <p className="text-[10px] text-slate-500 truncate font-medium">{adminUser.email}</p>
                 <div className="flex items-center gap-1.5 pt-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   <span className="text-[10px] font-bold text-emerald-700">Authenticated (Full Access)</span>
@@ -600,62 +611,62 @@ export const AdminHeader: React.FC = () => {
               {/* Navigation Links */}
               <div className="space-y-0.5 text-xs font-semibold">
                 <Link href="/admin/settings" onClick={() => setShowProfileMenu(false)}>
-                  <div className="px-3 py-2 text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2.5">
-                    <Settings size={14} className="text-[#EC4899]" />
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={Settings} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
                     <span>Platform Settings</span>
                   </div>
                 </Link>
 
                 <Link href="/admin/roles" onClick={() => setShowProfileMenu(false)}>
-                  <div className="px-3 py-2 text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2.5">
-                    <Shield size={14} className="text-[#EC4899]" />
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={Shield} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
                     <span>Roles & Permissions</span>
                   </div>
                 </Link>
 
                 <Link href="/admin/themes" onClick={() => setShowProfileMenu(false)}>
-                  <div className="px-3 py-2 text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2.5">
-                    <Palette size={14} className="text-[#EC4899]" />
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={Palette} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
                     <span>Frontend Themes</span>
                   </div>
                 </Link>
 
                 <Link href="/admin/plugins" onClick={() => setShowProfileMenu(false)}>
-                  <div className="px-3 py-2 text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2.5">
-                    <Puzzle size={14} className="text-[#EC4899]" />
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={Puzzle} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
                     <span>Plugins & Add-ons</span>
                   </div>
                 </Link>
 
                 <Link href="/admin/audit-logs" onClick={() => setShowProfileMenu(false)}>
-                  <div className="px-3 py-2 text-[#71717A] hover:text-[#BE185D] hover:bg-[#FFF1F7] rounded-xl transition-all cursor-pointer flex items-center gap-2.5">
-                    <Clock size={14} className="text-[#EC4899]" />
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={Clock} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
                     <span>System Audit Logs</span>
                   </div>
                 </Link>
               </div>
 
               {/* Portal Links & Logout */}
-              <div className="border-t border-[#F3DCE8] pt-2 space-y-1">
+              <div className="border-t border-slate-100 pt-2 space-y-1">
                 <Link href="/feed" target="_blank">
-                  <div className="px-3 py-1.5 text-xs font-bold text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF9FC] rounded-xl transition-all flex items-center justify-between cursor-pointer">
+                  <div className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-all flex items-center justify-between cursor-pointer">
                     <span>Public Home Feed</span>
-                    <ExternalLink size={12} />
+                    <AdminIcon icon={ExternalLink} size="xs" variant="neutral" className="opacity-60" />
                   </div>
                 </Link>
 
                 <Link href="/creator/dashboard">
-                  <div className="px-3 py-1.5 text-xs font-bold text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF9FC] rounded-xl transition-all flex items-center justify-between cursor-pointer">
+                  <div className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-all flex items-center justify-between cursor-pointer">
                     <span>Creator Studio</span>
-                    <ExternalLink size={12} />
+                    <AdminIcon icon={ExternalLink} size="xs" variant="neutral" className="opacity-60" />
                   </div>
                 </Link>
 
                 <button
                   onClick={handleLogout}
-                  className="w-full px-3 py-2 text-xs font-bold text-[#F43F5E] hover:bg-[#FFE4E6] rounded-xl transition-all cursor-pointer flex items-center gap-2 text-left mt-1"
+                  className="w-full px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-xl transition-all cursor-pointer flex items-center gap-2 text-left mt-1"
                 >
-                  <LogOut size={14} />
+                  <AdminIcon icon={LogOut} size="xs" variant="rose" />
                   <span>Log Out</span>
                 </button>
               </div>

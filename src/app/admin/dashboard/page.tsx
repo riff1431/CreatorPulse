@@ -4,10 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Users, UserCheck, CreditCard, DollarSign, TrendingUp,
-  Receipt, Wallet, AlertTriangle, FileText, Shield, ArrowRight
+  Receipt, Wallet, AlertTriangle, FileText, Shield, ArrowRight,
+  Palette, Puzzle
 } from 'lucide-react';
 import { Card } from '@/components/admin/ui/Card';
 import { Sparkline } from '@/components/admin/ui/Sparkline';
+import { AdminIcon } from '@/components/admin/ui/AdminIcon';
+import { IconButton } from '@/components/admin/ui/IconButton';
 import gsap from 'gsap';
 
 const recentActivity = [
@@ -109,23 +112,25 @@ export default function AdminDashboardPage() {
     <div ref={containerRef} className="max-w-7xl mx-auto space-y-6 opacity-0">
       {/* Page Header */}
       <div>
-        <div className="flex items-center gap-2">
-          <Shield className="text-indigo-600" size={22} />
-          <h1 className="text-xl font-black text-slate-800 tracking-tight font-sans">Admin Dashboard</h1>
+        <div className="flex items-center gap-2.5">
+          <AdminIcon icon={Shield} size="lg" variant="primary" container gradientAccent glow rounded="lg" />
+          <div>
+            <h1 className="text-xl font-black text-slate-800 tracking-tight font-sans leading-none">Admin Dashboard</h1>
+            <p className="text-[11px] text-slate-500 mt-1 font-medium">Platform overview, metrics, and quick actions.</p>
+          </div>
         </div>
-        <p className="text-xs text-slate-500 mt-1 font-medium">Platform overview, metrics, and quick actions.</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Members</span>
-              <Users size={14} className="text-indigo-600" />
+              <AdminIcon icon={Users} size="sm" variant="indigo" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="48920">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="48920">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-indigo-700">+1,240 this week</span>
@@ -134,13 +139,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Total Creators */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Creators</span>
-              <UserCheck size={14} className="text-indigo-600" />
+              <AdminIcon icon={UserCheck} size="sm" variant="indigo" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="1480">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="1480">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-indigo-700">+32 applications</span>
@@ -149,13 +154,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Active Subscriptions */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Active Subscriptions</span>
-              <CreditCard size={14} className="text-emerald-600" />
+              <AdminIcon icon={CreditCard} size="sm" variant="emerald" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="24150">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="24150">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-emerald-600">+840 this month</span>
@@ -164,13 +169,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Platform Revenue */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Platform Revenue</span>
-              <DollarSign size={14} className="text-indigo-600" />
+              <AdminIcon icon={DollarSign} size="sm" variant="indigo" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="241.5" data-type="currency" data-suffix="k">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="241.5" data-type="currency" data-suffix="k">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-indigo-700">+18.2% vs last month</span>
@@ -179,13 +184,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Creator Earnings */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Creator Earnings</span>
-              <TrendingUp size={14} className="text-indigo-600" />
+              <AdminIcon icon={TrendingUp} size="sm" variant="indigo" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="198.4" data-type="currency" data-suffix="k">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="198.4" data-type="currency" data-suffix="k">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-medium text-slate-500">82.1% of revenue</span>
@@ -194,13 +199,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Total Transactions */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Total Transactions</span>
-              <Receipt size={14} className="text-indigo-600" />
+              <AdminIcon icon={Receipt} size="sm" variant="indigo" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="156320">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="156320">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-indigo-700">+4,280 this week</span>
@@ -209,13 +214,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Pending Payouts */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Pending Payouts</span>
-              <Wallet size={14} className="text-amber-600" />
+              <AdminIcon icon={Wallet} size="sm" variant="amber" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="12450" data-type="currency">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="12450" data-type="currency">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-amber-600">3 requests awaiting</span>
@@ -224,13 +229,13 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Open Reports */}
-        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card">
+        <Card className="p-5 flex flex-col justify-between min-h-32 hoverable gsap-card transition-all duration-300 hover:shadow-md hover:border-slate-300/80">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               <span>Open Reports</span>
-              <AlertTriangle size={14} className="text-red-600" />
+              <AdminIcon icon={AlertTriangle} size="sm" variant="rose" container gradientAccent glow rounded="md" />
             </div>
-            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter" data-value="7">0</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight stat-counter mt-1.5" data-value="7">0</p>
           </div>
           <div className="flex items-end justify-between pt-1">
             <span className="text-[10px] font-bold text-red-700">2 high priority</span>
@@ -349,75 +354,65 @@ export default function AdminDashboardPage() {
             <Link href="/admin/applications">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
-                    <FileText size={15} />
-                  </div>
+                  <AdminIcon icon={FileText} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Review Applications</p>
                     <p className="text-[9px] text-slate-500 font-medium">2 pending</p>
                   </div>
                 </div>
-                <ArrowRight size={13} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                <AdminIcon icon={ArrowRight} size="xs" variant="slate" className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
 
             <Link href="/admin/payouts">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
-                    <Wallet size={15} />
-                  </div>
+                  <AdminIcon icon={Wallet} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Process Payouts</p>
                     <p className="text-[9px] text-slate-500 font-medium">$12,450 pending</p>
                   </div>
                 </div>
-                <ArrowRight size={13} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                <AdminIcon icon={ArrowRight} size="xs" variant="slate" className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
 
             <Link href="/admin/themes">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
-                    <span className="text-xs">🎨</span>
-                  </div>
+                  <AdminIcon icon={Palette} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Frontend Themes</p>
                     <p className="text-[9px] text-slate-500 font-medium">Blush Core active</p>
                   </div>
                 </div>
-                <ArrowRight size={13} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                <AdminIcon icon={ArrowRight} size="xs" variant="slate" className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
 
             <Link href="/admin/plugins">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
-                    <span className="text-xs">🔌</span>
-                  </div>
+                  <AdminIcon icon={Puzzle} size="sm" variant="indigo" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Plugins & Add-ons</p>
                     <p className="text-[9px] text-slate-500 font-medium">5 modules installed</p>
                   </div>
                 </div>
-                <ArrowRight size={13} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                <AdminIcon icon={ArrowRight} size="xs" variant="slate" className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
 
             <Link href="/admin/reports">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100 transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-red-50 flex items-center justify-center text-red-600 font-bold">
-                    <AlertTriangle size={15} />
-                  </div>
+                  <AdminIcon icon={AlertTriangle} size="sm" variant="rose" container rounded="md" className="shadow-4xs" />
                   <div>
                     <p className="text-xs font-bold text-slate-850">Moderate Reports</p>
                     <p className="text-[9px] text-slate-500 font-medium">7 open reports</p>
                   </div>
                 </div>
-                <ArrowRight size={13} className="text-slate-400 group-hover:text-red-600 transition-colors" />
+                <AdminIcon icon={ArrowRight} size="xs" variant="slate" className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
           </div>

@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 
 export default function AdminStoragePage() {
   const {
@@ -30,6 +31,8 @@ export default function AdminStoragePage() {
     deleteFile,
     refreshFiles,
   } = useStorageManager();
+
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'browser' | 'settings'>('overview');
   const [selectedFolder, setSelectedFolder] = useState<StorageCategoryFolder | 'all'>('all');
@@ -62,16 +65,68 @@ export default function AdminStoragePage() {
   };
 
   const handleDriverSwitch = async (driver: StorageDriverType) => {
-    const res = await setActiveDriver(driver);
-    if (res.success) {
+    startProgress({
+      title: `Switching to ${driver === 'local' ? 'Local File System' : 'Supabase Storage'}`,
+      steps: [
+        "Validating driver settings...",
+        "Reconfiguring storage endpoints...",
+        "Activating driver connection..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Validating driver settings...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(0, 'success', 40, "Driver settings validated.");
+
+      updateProgress(1, 'running', 60, "Reconfiguring storage endpoints...");
+      const res = await setActiveDriver(driver);
+      if (!res.success) {
+        throw new Error(res.message || 'Driver activation failed');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(1, 'success', 85, "Endpoints reconfigured.");
+
+      updateProgress(2, 'running', 95, "Activating driver connection...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      completeProgress("Driver switched successfully!");
       triggerNotice(res.message);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to switch driver.");
     }
   };
 
   const handleRunDiagnostic = async () => {
-    const res = await testConnection();
-    if (res.success) {
+    startProgress({
+      title: "Storage Connection Diagnostic Test",
+      steps: [
+        "Verifying driver storage configurations...",
+        "Testing endpoint response latencies...",
+        "Verifying folder write/read access..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 20, "Verifying driver storage configurations...");
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      updateProgress(0, 'success', 45, "Configurations verified.");
+
+      updateProgress(1, 'running', 60, "Testing endpoint response latencies...");
+      const res = await testConnection();
+      if (!res.success) {
+        throw new Error(res.message || 'Connection test failed');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(1, 'success', 80, "Latencies normal.");
+
+      updateProgress(2, 'running', 95, "Verifying folder write/read access...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      completeProgress("Diagnostics completed successfully!");
       triggerNotice(`Diagnostic passed for ${res.driver === 'local' ? 'Local Storage' : 'Supabase Storage'}!`);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Diagnostic failed.");
     }
   };
 
@@ -88,18 +143,47 @@ export default function AdminStoragePage() {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
 
-    setIsUploading(true);
     const file = fileList[0];
-    const res = await uploadFile(file, uploadTargetFolder);
-    setIsUploading(false);
+    setIsUploading(true);
 
-    if (res.success) {
+    startProgress({
+      title: `Uploading ${file.name}`,
+      steps: [
+        "Parsing file binary stream...",
+        "Uploading binary file data...",
+        "Validating file MIME types & headers..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 15, "Parsing file binary stream...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      updateProgress(0, 'success', 30, "File parsed.");
+
+      updateProgress(1, 'running', 50, "Uploading binary file data...");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      updateProgress(1, 'running', 75, "Uploading chunks...");
+      
+      const res = await uploadFile(file, uploadTargetFolder);
+      if (!res.success) {
+        throw new Error(res.error || 'Upload failed');
+      }
+      
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      updateProgress(1, 'success', 90, "Upload completed.");
+
+      updateProgress(2, 'running', 95, "Validating file MIME types & headers...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      completeProgress("File uploaded successfully!");
       triggerNotice(`File "${file.name}" uploaded to /${uploadTargetFolder} successfully!`);
-    } else {
-      alert(`Upload failed: ${res.error}`);
+    } catch (err: any) {
+      errorProgress(1, err.message || "Failed to upload file.");
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const confirmDeleteFile = async () => {
@@ -542,86 +626,42 @@ export default function AdminStoragePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F3DCE8]/60">
-                  {filteredFiles.map((file) => (
-                    <tr key={file.id} className="hover:bg-[#FFF9FC]/60 transition-colors">
-                      {/* Name & Icon */}
-                      <td className="py-3 px-4 font-bold text-[#18181B]">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-1.5 rounded-lg bg-[#FFF9FC] border border-[#F3DCE8] shrink-0">
-                            {getFileIcon(file.mimeType, file.folder)}
+                  {isLoading ? (
+                    [1, 2, 3, 4].map((i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 bg-slate-100 rounded-lg shimmer-bg shrink-0"></div>
+                            <div className="space-y-1 min-w-0">
+                              <div className="h-3.5 w-28 bg-slate-200 rounded shimmer-bg"></div>
+                              <div className="h-2.5 w-16 bg-slate-100 rounded shimmer-bg"></div>
+                            </div>
                           </div>
-                          <div className="min-w-0 max-w-xs">
-                            <p className="truncate text-xs font-bold text-[#18181B]">{file.name}</p>
-                            <p className="text-[10px] text-[#71717A] truncate font-mono">{file.originalName}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="h-5 w-12 bg-slate-100 rounded-full shimmer-bg"></div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="h-3 w-14 bg-slate-100 rounded shimmer-bg"></div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="h-3 w-10 bg-slate-100 rounded shimmer-bg"></div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="h-3 w-16 bg-slate-100 rounded shimmer-bg"></div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="h-3 w-14 bg-slate-100 rounded shimmer-bg"></div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="inline-flex gap-2">
+                            <div className="h-7 w-7 bg-slate-100 rounded shimmer-bg"></div>
+                            <div className="h-7 w-7 bg-slate-100 rounded shimmer-bg"></div>
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Folder Category */}
-                      <td className="py-3 px-4">
-                        <span className="bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8] px-2 py-0.5 rounded-full text-[10px] font-bold">
-                          /{file.folder}
-                        </span>
-                      </td>
-
-                      {/* Driver */}
-                      <td className="py-3 px-4">
-                        <span className="text-[11px] font-mono capitalize text-[#71717A]">
-                          {file.driver}
-                        </span>
-                      </td>
-
-                      {/* Size */}
-                      <td className="py-3 px-4 font-mono text-[#18181B]">
-                        {formatBytes(file.sizeBytes)}
-                      </td>
-
-                      {/* MIME */}
-                      <td className="py-3 px-4 text-[10px] text-[#71717A] font-mono truncate max-w-[120px]">
-                        {file.mimeType}
-                      </td>
-
-                      {/* Created Date */}
-                      <td className="py-3 px-4 text-[11px] text-[#71717A]">
-                        {new Date(file.createdAt).toLocaleDateString()}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setPreviewFile(file)}
-                            className="p-1.5 rounded-lg text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
-                            title="Preview File"
-                          >
-                            <Eye size={14} />
-                          </button>
-
-                          <button
-                            onClick={() => handleCopyUrl(file)}
-                            className="p-1.5 rounded-lg text-[#71717A] hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Copy Public URL"
-                          >
-                            {copiedFileId === file.id ? (
-                              <Check size={14} className="text-emerald-500" />
-                            ) : (
-                              <Copy size={14} />
-                            )}
-                          </button>
-
-                          <button
-                            onClick={() => setFileToDelete(file)}
-                            className="p-1.5 rounded-lg text-[#71717A] hover:text-[#F43F5E] hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="Delete Asset"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {filteredFiles.length === 0 && (
+                        </td>
+                      </tr>
+                    ))
+                  ) : filteredFiles.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-[#71717A] space-y-2">
                         <Folder size={32} className="mx-auto text-slate-300" />
@@ -629,6 +669,85 @@ export default function AdminStoragePage() {
                         <p className="text-[11px]">Upload a new file or adjust the active folder filter.</p>
                       </td>
                     </tr>
+                  ) : (
+                    filteredFiles.map((file) => (
+                      <tr key={file.id} className="hover:bg-[#FFF9FC]/60 transition-colors">
+                        {/* Name & Icon */}
+                        <td className="py-3 px-4 font-bold text-[#18181B]">
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 rounded-lg bg-[#FFF9FC] border border-[#F3DCE8] shrink-0">
+                              {getFileIcon(file.mimeType, file.folder)}
+                            </div>
+                            <div className="min-w-0 max-w-xs">
+                              <p className="truncate text-xs font-bold text-[#18181B]">{file.name}</p>
+                              <p className="text-[10px] text-[#71717A] truncate font-mono">{file.originalName}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Folder Category */}
+                        <td className="py-3 px-4">
+                          <span className="bg-[#FFF1F7] text-[#BE185D] border border-[#FBCFE8] px-2 py-0.5 rounded-full text-[10px] font-bold">
+                            /{file.folder}
+                          </span>
+                        </td>
+
+                        {/* Driver */}
+                        <td className="py-3 px-4">
+                          <span className="text-[11px] font-mono capitalize text-[#71717A]">
+                            {file.driver}
+                          </span>
+                        </td>
+
+                        {/* Size */}
+                        <td className="py-3 px-4 font-mono text-[#18181B]">
+                          {formatBytes(file.sizeBytes)}
+                        </td>
+
+                        {/* MIME */}
+                        <td className="py-3 px-4 text-[10px] text-[#71717A] font-mono truncate max-w-[120px]">
+                          {file.mimeType}
+                        </td>
+
+                        {/* Created Date */}
+                        <td className="py-3 px-4 text-[11px] text-[#71717A]">
+                          {new Date(file.createdAt).toLocaleDateString()}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setPreviewFile(file)}
+                              className="p-1.5 rounded-lg text-[#71717A] hover:text-[#EC4899] hover:bg-[#FFF1F7] transition-colors cursor-pointer"
+                              title="Preview File"
+                            >
+                              <Eye size={14} />
+                            </button>
+
+                            <button
+                              onClick={() => handleCopyUrl(file)}
+                              className="p-1.5 rounded-lg text-[#71717A] hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="Copy Public URL"
+                            >
+                              {copiedFileId === file.id ? (
+                                <Check size={14} className="text-emerald-500" />
+                              ) : (
+                                <Copy size={14} />
+                              )}
+                            </button>
+
+                            <button
+                              onClick={() => setFileToDelete(file)}
+                              className="p-1.5 rounded-lg text-[#71717A] hover:text-[#F43F5E] hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Delete Asset"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>

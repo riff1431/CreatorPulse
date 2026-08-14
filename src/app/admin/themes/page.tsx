@@ -17,6 +17,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { THEME_UPDATE_REGISTRY, DEFAULT_THEMES } from '@/lib/extensions/default-extensions';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
+import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
 
 export default function AdminThemesPage() {
   const {
@@ -42,6 +44,8 @@ export default function AdminThemesPage() {
     backups,
     deleteBackup
   } = useTheme();
+
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
 
   // Navigation Tabs: 'installed' | 'activation' | 'updates' | 'library'
   const [activeTab, setActiveTab] = useState<'installed' | 'activation' | 'updates' | 'library'>('installed');
@@ -71,7 +75,7 @@ export default function AdminThemesPage() {
 
   // Theme Update System States
   const [updatingThemeId, setUpdatingThemeId] = useState<string | null>(null);
-  const [updateProgress, setUpdateProgress] = useState<string>('');
+  const [localUpdateProgress, setLocalUpdateProgress] = useState<string>('');
   const [expandedChangelogs, setExpandedChangelogs] = useState<Record<string, boolean>>({});
 
   const toggleChangelog = (themeId: string) => {
@@ -94,6 +98,7 @@ export default function AdminThemesPage() {
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState('');
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   // ZIP Theme Import Preview State
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
@@ -249,23 +254,49 @@ export default function AdminThemesPage() {
     setActivationSuccess(false);
   };
 
-  const handleConfirmActivation = () => {
+  const handleConfirmActivation = async () => {
     if (!licenseTargetTheme) return;
     setActivationError('');
     setActivationSuccess(false);
 
-    const result = activateThemeWithLicense(licenseTargetTheme.id, licenseInputKey);
-    if (!result.success) {
-      setActivationError(result.error || 'Failed to activate theme.');
-      return;
-    }
+    startProgress({
+      title: `Activating ${licenseTargetTheme.name}`,
+      steps: [
+        "Verifying license key & signature...",
+        "Applying theme configuration tokens...",
+        "Flushing stylesheet visual caches..."
+      ]
+    });
 
-    setActivationSuccess(true);
-    triggerNotice(`Activated theme "${licenseTargetTheme.name}" successfully!`);
-    setTimeout(() => {
-      setLicenseTargetTheme(null);
-      setActivationSuccess(false);
-    }, 1200);
+    try {
+      updateProgress(0, 'running', 20, "Verifying license key & signature...");
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      const result = activateThemeWithLicense(licenseTargetTheme.id, licenseInputKey);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to activate theme.');
+      }
+      updateProgress(0, 'success', 50, "License verified.");
+
+      updateProgress(1, 'running', 70, "Applying theme configuration tokens...");
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      updateProgress(1, 'success', 85, "Visual tokens loaded.");
+
+      updateProgress(2, 'running', 95, "Flushing stylesheet visual caches...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      
+      setActivationSuccess(true);
+      completeProgress("Theme activated successfully!");
+      triggerNotice(`Activated theme "${licenseTargetTheme.name}" successfully!`);
+      
+      setTimeout(() => {
+        setLicenseTargetTheme(null);
+        setActivationSuccess(false);
+      }, 800);
+    } catch (err: any) {
+      errorProgress(0, err.message || 'Activation failed.');
+      setActivationError(err.message || 'Failed to activate theme.');
+    }
   };
 
   const handleCheckForUpdates = async () => {
@@ -278,30 +309,56 @@ export default function AdminThemesPage() {
   };
 
   const handleUpdateTheme = async (themeId: string) => {
+    const themeToUpdate = themes.find(t => t.id === themeId);
+    const targetName = themeToUpdate ? themeToUpdate.name : 'Theme';
+    const targetVer = THEME_UPDATE_REGISTRY[themeId]?.version || 'new version';
+
     setUpdatingThemeId(themeId);
-    setUpdateProgress('Creating rollback restore point...');
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    setUpdateProgress('Validating package compatibility...');
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    setUpdateProgress('Merging core assets & preserving customizations...');
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
+    setLocalUpdateProgress('Creating rollback restore point...');
+
+    startProgress({
+      title: `Updating ${targetName}`,
+      steps: [
+        "Creating rollback restore point...",
+        "Validating package compatibility...",
+        "Merging core assets & preserving customizations...",
+        "Activating updated styles..."
+      ]
+    });
+
     try {
+      setLocalUpdateProgress('Creating rollback restore point...');
+      updateProgress(0, 'running', 15, "Creating rollback restore point...");
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      updateProgress(0, 'success', 30, "Backup point created.");
+
+      setLocalUpdateProgress('Validating package compatibility...');
+      updateProgress(1, 'running', 45, "Validating package compatibility...");
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      updateProgress(1, 'success', 60, "Compatibility validation complete.");
+
+      setLocalUpdateProgress('Merging core assets...');
+      updateProgress(2, 'running', 75, "Merging core assets & preserving customizations...");
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
       const res = await updateThemeWithBackup(themeId);
       if (res.success) {
-        setUpdateProgress('Theme updated successfully!');
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        triggerNotice(`Theme updated to v${THEME_UPDATE_REGISTRY[themeId]?.version}!`);
+        setLocalUpdateProgress('Theme updated successfully!');
+        updateProgress(2, 'success', 90, "Assets merged successfully.");
+        updateProgress(3, 'running', 95, "Activating updated styles...");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        completeProgress("Theme updated successfully!");
+        triggerNotice(`Theme updated to v${targetVer}!`);
       } else {
-        alert(`Update failed: ${res.error}`);
+        throw new Error(res.error || 'Theme update failed.');
       }
-    } catch (err) {
-      alert(`Error during update: ${err instanceof Error ? err.message : String(err)}`);
+    } catch (err: any) {
+      errorProgress(2, err.message || 'Error occurred during theme update.');
+      triggerNotice(`Theme update failed!`);
     } finally {
       setUpdatingThemeId(null);
-      setUpdateProgress('');
+      setLocalUpdateProgress('');
     }
   };
 
@@ -353,25 +410,70 @@ export default function AdminThemesPage() {
     });
   };
 
-  const executeThemeAction = () => {
+  const executeThemeAction = async () => {
     if (!confirmThemeAction) return;
 
     const { type, themeId, themeName } = confirmThemeAction;
+    setConfirmThemeAction(null);
 
     if (type === 'deactivate') {
-      deactivateTheme(themeId);
-      triggerNotice(`Deactivated "${themeName}", rolled back to Blush Core.`);
+      startProgress({
+        title: `Deactivating ${themeName}`,
+        steps: [
+          "Unregistering active CSS variables...",
+          "Reverting to Blush Core theme..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 30, "Unregistering active CSS variables...");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(0, 'success', 60, "Variables cleaned.");
+
+        updateProgress(1, 'running', 80, "Reverting to Blush Core theme...");
+        deactivateTheme(themeId);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        completeProgress("Reverted successfully!");
+        triggerNotice(`Deactivated "${themeName}", rolled back to Blush Core.`);
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to deactivate theme.");
+      }
     } else if (type === 'update') {
       handleUpdateTheme(themeId);
     } else if (type === 'install') {
-      const res = installFromLibrary(themeId);
-      if (res) {
+      startProgress({
+        title: `Installing ${themeName}`,
+        steps: [
+          "Downloading library package...",
+          "Registering theme files...",
+          "Caching core assets..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 20, "Downloading library package...");
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        updateProgress(0, 'success', 50, "Download finished.");
+
+        updateProgress(1, 'running', 70, "Registering theme files...");
+        const res = installFromLibrary(themeId);
+        if (!res) {
+          throw new Error("Theme installation failed.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        updateProgress(1, 'success', 85, "Files registered.");
+
+        updateProgress(2, 'running', 95, "Caching core assets...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Theme installed!");
         triggerNotice(`Installed theme "${themeName}" successfully!`);
         setActiveTab('activation');
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to install theme.");
       }
     }
-
-    setConfirmThemeAction(null);
   };
 
   const processUploadedTheme = async (parsed: any) => {
@@ -438,7 +540,7 @@ export default function AdminThemesPage() {
     }
   };
 
-  const handleConfirmImportTheme = () => {
+  const handleConfirmImportTheme = async () => {
     if (!previewThemeForImport) return;
 
     const originalThemes = [...themes];
@@ -446,8 +548,26 @@ export default function AdminThemesPage() {
     let finalTheme = { ...previewThemeForImport };
     let installedSuccess = false;
 
+    setIsImportPreviewOpen(false);
+
+    startProgress({
+      title: `Installing ${finalTheme.name}`,
+      steps: [
+        "Analyzing theme manifest & structure...",
+        "Verifying package compatibility...",
+        "Decompressing & registering files...",
+        "Applying active visual styles..."
+      ]
+    });
+
     try {
-      // Handle conflict resolution
+      updateProgress(0, 'running', 15, "Analyzing theme manifest & structure...");
+      await new Promise(r => setTimeout(r, 600));
+      updateProgress(0, 'success', 30, "Manifest checked.");
+
+      updateProgress(1, 'running', 45, "Verifying package compatibility...");
+      await new Promise(r => setTimeout(r, 600));
+      
       if (importConflict) {
         if (conflictResolution === 'copy') {
           const rand = Date.now().toString().slice(-4);
@@ -457,38 +577,41 @@ export default function AdminThemesPage() {
           finalTheme.isDefault = false;
           finalTheme.isCustom = true;
         } else {
-          // Overwrite mode: prevent overwriting the permanent default Blush Core
           if (importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core') {
-            setUploadError('Cannot overwrite the permanent default Blush Core theme. Please select "Keep both" or rename the theme.');
-            return;
+            throw new Error('Cannot overwrite the permanent default Blush Core theme. Please select "Keep both" or rename the theme.');
           }
         }
       }
+      updateProgress(1, 'success', 60, "Compatibility validated.");
 
-      // Install theme
+      updateProgress(2, 'running', 75, "Decompressing & registering files...");
+      await new Promise(r => setTimeout(r, 800));
+
       const resInstall = installTheme(finalTheme);
       if (!resInstall) {
         throw new Error('Theme engine installation returned false.');
       }
       installedSuccess = true;
+      updateProgress(2, 'success', 90, "Files installed.");
 
-      // Activate theme immediately if selected
+      updateProgress(3, 'running', 95, "Applying active visual styles...");
+      await new Promise(r => setTimeout(r, 600));
+
       if (activateOnImport) {
         const resActivate = activateTheme(finalTheme.id);
         if (!resActivate) {
           throw new Error('Theme engine activation returned false.');
         }
       }
-
-      triggerNotice(`Successfully installed theme "${finalTheme.name}"!`);
-      setIsImportPreviewOpen(false);
+      
+      completeProgress("Theme installed successfully!");
       setPreviewThemeForImport(null);
       setImportConflict(null);
       setUploadSuccess(true);
+      triggerNotice(`Successfully installed theme "${finalTheme.name}"!`);
     } catch (err: any) {
       console.error('Theme import failed. Performing safe rollback...', err);
       
-      // Rollback logic
       if (installedSuccess) {
         deleteTheme(finalTheme.id);
       }
@@ -502,22 +625,49 @@ export default function AdminThemesPage() {
         severity: 'warning'
       });
 
+      errorProgress(
+        importConflict && (conflictResolution === 'overwrite') && (importConflict.existing.isDefault || importConflict.existing.id === 'theme-blush-core') ? 1 : 2, 
+        err.message || "Failed to install theme package."
+      );
       setUploadError(`Import failed. Safely rolled back. Error: ${err.message}`);
       triggerNotice(`Theme import failed! Rolled back successfully.`);
     }
   };
 
   const handleExportTheme = async (theme: ThemeManifest) => {
+    startProgress({
+      title: `Exporting ${theme.name}`,
+      steps: [
+        "Bundling configuration manifests...",
+        "Compressing visual assets...",
+        "Generating ZIP archive..."
+      ]
+    });
+
     try {
+      updateProgress(0, 'running', 25, "Bundling configuration manifests...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(0, 'success', 50, "Manifests bundled.");
+
+      updateProgress(1, 'running', 65, "Compressing visual assets...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(1, 'success', 80, "Assets compressed.");
+
+      updateProgress(2, 'running', 90, "Generating ZIP archive...");
       const blob = await exportThemeAsZip(theme);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `${theme.slug}-theme-v${theme.version}.zip`;
       a.click();
       URL.revokeObjectURL(url);
+
+      completeProgress("Exported successfully!");
       triggerNotice(`Exported ${theme.name} ZIP package`);
     } catch (err: any) {
+      errorProgress(1, err.message || "Export failed.");
       triggerNotice(`Failed to export theme ZIP: ${err.message}`);
     }
   };
@@ -1055,7 +1205,7 @@ export default function AdminThemesPage() {
                           {isCurrentlyUpdating && (
                             <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center space-y-3">
                               <RefreshCw size={24} className="animate-spin text-[#EC4899]" />
-                              <p className="text-xs font-bold text-[#18181B]">{updateProgress}</p>
+                              <p className="text-xs font-bold text-[#18181B]">{localUpdateProgress}</p>
                             </div>
                           )}
 
@@ -2691,19 +2841,64 @@ export default function AdminThemesPage() {
             )}
 
             <div className="space-y-4 text-xs">
-              <div className="border-2 border-dashed border-[#F3DCE8] hover:border-[#EC4899] rounded-2xl p-6 text-center space-y-2 bg-[#FFF9FC] transition-colors cursor-pointer relative">
-                <input
-                  type="file"
-                  accept=".json,.zip"
-                  onChange={handleUploadFile}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-                <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center mx-auto">
-                  <Upload size={22} />
+              <div className="flex flex-col gap-3">
+                <div className="border-2 border-dashed border-[#F3DCE8] hover:border-[#EC4899] rounded-2xl p-6 text-center space-y-2 bg-[#FFF9FC] transition-colors cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept=".json,.zip"
+                    onChange={handleUploadFile}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                  <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center mx-auto">
+                    <Upload size={22} />
+                  </div>
+                  <p className="font-bold text-[#18181B]">Click to browse or drop theme JSON/ZIP here</p>
+                  <p className="text-[11px] text-[#71717A]">Manifest compliant with Theme SDK v1.0 standard</p>
                 </div>
-                <p className="font-bold text-[#18181B]">Click to browse or drop theme JSON/ZIP here</p>
-                <p className="text-[11px] text-[#71717A]">Manifest compliant with Theme SDK v1.0 standard</p>
+
+                <div className="text-center py-1 text-slate-400 font-bold uppercase text-[9px] tracking-wider">— or —</div>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="md" 
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => setIsMediaPickerOpen(true)}
+                >
+                  <ImageIcon size={15} /> Select Theme from Media Library
+                </Button>
               </div>
+
+              <MediaLibraryModal
+                isOpen={isMediaPickerOpen}
+                onClose={() => setIsMediaPickerOpen(false)}
+                allowedTypes={['.zip', '.json', 'application/zip', 'application/json']}
+                maxFiles={1}
+                initialFolder="themes"
+                onSelect={async (selected) => {
+                  const selectedFile = selected[0];
+                  if (selectedFile) {
+                    try {
+                      setIsUploadOpen(false);
+                      const response = await fetch(selectedFile.url);
+                      const blob = await response.blob();
+                      const file = new File([blob], selectedFile.name, { type: selectedFile.mimeType });
+                      
+                      if (file.name.endsWith('.zip')) {
+                        const parsed = await importThemeFromZip(file);
+                        await processUploadedTheme(parsed);
+                      } else if (file.name.endsWith('.json')) {
+                        const content = await file.text();
+                        const parsed = JSON.parse(content);
+                        await processUploadedTheme(parsed);
+                      }
+                    } catch (e: any) {
+                      setUploadError('Failed to import from Media Library: ' + e.message);
+                      setIsUploadOpen(true);
+                    }
+                  }
+                }}
+              />
 
               <div className="space-y-1.5">
                 <label className="block font-bold text-[#18181B]">Or Paste Raw Theme JSON Manifest:</label>

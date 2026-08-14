@@ -10,6 +10,7 @@ import {
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
   Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive
 } from 'lucide-react';
+import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 
 interface NavItem {
   label: string;
@@ -117,7 +118,7 @@ export const AdminSidebar: React.FC = () => {
       {!collapsed && (
         <div className="p-3 border-b border-slate-100 shrink-0 bg-slate-50/50">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <AdminIcon icon={Search} size="xs" variant="neutral" className="absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Filter menu items..."
@@ -150,23 +151,26 @@ export const AdminSidebar: React.FC = () => {
                     target={item.isExternal ? '_blank' : undefined}
                     onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all relative group ${
+                    className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative group ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700 shadow-xs border border-indigo-100/30'
+                        ? 'bg-indigo-50/60 text-indigo-700 shadow-3xs border border-indigo-100/30'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 z-10 min-w-0">
-                      <Icon
-                        size={15}
-                        className={`shrink-0 transition-colors duration-200 ${
-                          isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'
-                        }`}
+                      <AdminIcon
+                        icon={Icon as any}
+                        size="xs"
+                        variant={isActive ? 'primary' : 'neutral'}
+                        active={isActive}
+                        container
+                        rounded="sm"
+                        className="shrink-0 transition-transform duration-200 shadow-4xs group-hover:scale-105"
                       />
                       {!collapsed && (
                         <span className="font-semibold truncate flex items-center gap-1.5">
                           {item.label}
-                          {item.isExternal && <ExternalLink size={10} className="text-slate-400 shrink-0" />}
+                          {item.isExternal && <AdminIcon icon={ExternalLink} size="xs" variant="neutral" className="opacity-60" />}
                         </span>
                       )}
                     </div>
@@ -207,12 +211,17 @@ export const AdminSidebar: React.FC = () => {
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 py-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer shadow-2xs"
         >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          {collapsed ? (
+            <AdminIcon icon={ChevronRight} size="xs" variant="slate" />
+          ) : (
+            <AdminIcon icon={ChevronLeft} size="xs" variant="slate" />
+          )}
           {!collapsed && <span>Collapse Menu</span>}
         </button>
       </div>
     </div>
   );
+
 
   return (
     <>
@@ -222,7 +231,7 @@ export const AdminSidebar: React.FC = () => {
         className="lg:hidden fixed bottom-4 right-4 z-50 w-11 h-11 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all hover:bg-indigo-700"
         aria-label="Open Admin Menu"
       >
-        <Menu size={18} />
+        <AdminIcon icon={Menu} size="sm" className="text-white" />
       </button>
 
       {/* Mobile Overlay */}
@@ -246,8 +255,8 @@ export const AdminSidebar: React.FC = () => {
             </div>
             <span className="text-xs font-extrabold text-slate-800 tracking-tight">Admin Console</span>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
-            <ChevronLeft size={16} />
+          <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer">
+            <AdminIcon icon={ChevronLeft} size="sm" variant="slate" />
           </button>
         </div>
         {sidebarContent}

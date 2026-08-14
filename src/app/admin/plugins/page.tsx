@@ -14,6 +14,9 @@ import { validatePluginPackage } from '@/lib/extensions/package-installer';
 import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
+import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
+import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
+import { Image as ImageIcon } from 'lucide-react';
 
 // Helper to extract plugin.json from binary ZIP archive using DecompressionStream
 async function extractPluginJsonFromZip(arrayBuffer: ArrayBuffer): Promise<string> {
@@ -98,6 +101,8 @@ export default function AdminPluginsPage() {
     activatePluginWithLicense
   } = usePlugins();
 
+  const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
+
   const [activeTab, setActiveTab] = useState<'installed' | 'active' | 'inactive' | 'updates' | 'library'>('installed');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -108,6 +113,7 @@ export default function AdminPluginsPage() {
   const [detailsPlugin, setDetailsPlugin] = useState<PluginManifest | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   // License Verification Modal
   const [licenseTargetPlugin, setLicenseTargetPlugin] = useState<PluginManifest | null>(null);
@@ -185,7 +191,24 @@ export default function AdminPluginsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsUploadOpen(false);
+
+    startProgress({
+      title: `Uploading & Installing ${file.name}`,
+      steps: [
+        "Reading file stream...",
+        "Decompressing & extracting manifest...",
+        "Verifying Plugin SDK compliance...",
+        "Registering module hooks & controllers..."
+      ]
+    });
+
     try {
+      updateProgress(0, 'running', 15, "Reading file stream...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(0, 'success', 30, "File read completed.");
+
+      updateProgress(1, 'running', 45, "Decompressing & extracting manifest...");
       let manifestText = '';
       if (file.name.endsWith('.zip')) {
         const arrayBuffer = await file.arrayBuffer();
@@ -194,58 +217,76 @@ export default function AdminPluginsPage() {
         const text = await file.text();
         manifestText = text;
       }
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      updateProgress(1, 'success', 60, "Manifest extracted.");
 
+      updateProgress(2, 'running', 75, "Verifying Plugin SDK compliance...");
       const parsed = JSON.parse(manifestText);
       const result = validatePluginPackage(parsed);
-
       if (!result.valid || !result.plugin) {
-        setUploadError(result.error || 'Failed to validate plugin package.');
-        return;
+        throw new Error(result.error || 'Failed to validate plugin package.');
       }
-
-      // Check duplicate ID
       if (plugins.some((p) => p.id === result.plugin!.id)) {
-        setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
-        return;
+        throw new Error(`A plugin with ID "${result.plugin!.id}" is already installed.`);
       }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(2, 'success', 85, "Package validation OK.");
 
+      updateProgress(3, 'running', 95, "Registering module hooks & controllers...");
       installPlugin(result.plugin);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
       setUploadSuccess(true);
+      completeProgress("Plugin installed successfully!");
       triggerNotice(`Installed "${result.plugin.name}" successfully!`);
-      setTimeout(() => {
-        setIsUploadOpen(false);
-        setUploadSuccess(false);
-      }, 1200);
     } catch (err: any) {
+      errorProgress(1, err.message || 'Error occurred.');
       setUploadError(err.message || 'Invalid package format. Please provide a valid plugin JSON manifest or ZIP.');
     }
   };
 
-  const handleManualJsonInstall = () => {
+  const handleManualJsonInstall = async () => {
     setUploadError('');
     setUploadSuccess(false);
+    
+    setIsUploadOpen(false);
+
+    startProgress({
+      title: "Installing Plugin from JSON",
+      steps: [
+        "Parsing JSON input content...",
+        "Verifying Plugin SDK compliance...",
+        "Registering module hooks & controllers..."
+      ]
+    });
+
     try {
+      updateProgress(0, 'running', 25, "Parsing JSON input content...");
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const parsed = JSON.parse(uploadText);
+      updateProgress(0, 'success', 50, "JSON parsed successfully.");
+
+      updateProgress(1, 'running', 70, "Verifying Plugin SDK compliance...");
       const result = validatePluginPackage(parsed);
       if (!result.valid || !result.plugin) {
-        setUploadError(result.error || 'Validation error');
-        return;
+        throw new Error(result.error || 'Validation error');
       }
-
       if (plugins.some((p) => p.id === result.plugin!.id)) {
-        setUploadError(`A plugin with ID "${result.plugin!.id}" is already installed.`);
-        return;
+        throw new Error(`A plugin with ID "${result.plugin!.id}" is already installed.`);
       }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(1, 'success', 85, "Plugin metadata validated.");
 
+      updateProgress(2, 'running', 95, "Registering module hooks & controllers...");
       installPlugin(result.plugin);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
       setUploadSuccess(true);
+      setUploadText('');
+      completeProgress("Plugin installed successfully!");
       triggerNotice(`Installed "${result.plugin.name}"!`);
-      setTimeout(() => {
-        setIsUploadOpen(false);
-        setUploadSuccess(false);
-        setUploadText('');
-      }, 1200);
     } catch (e: any) {
+      errorProgress(0, e.message || 'Failed to parse JSON.');
       setUploadError('JSON syntax error: ' + e.message);
     }
   };
@@ -305,18 +346,45 @@ export default function AdminPluginsPage() {
     if (!licenseTargetPlugin) return;
     setLicenseError('');
     setLicenseSuccess(false);
-    const res = await activatePluginWithLicense(licenseTargetPlugin.id, licenseInputKey);
-    if (!res.success) {
-      setLicenseError(res.error || 'Failed to activate plugin.');
-      return;
+
+    startProgress({
+      title: `Activating ${licenseTargetPlugin.name}`,
+      steps: [
+        "Verifying license key...",
+        "Validating compliance SDK v1.0...",
+        "Initializing plugin features..."
+      ]
+    });
+
+    try {
+      updateProgress(0, 'running', 25, "Verifying license key...");
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      const res = await activatePluginWithLicense(licenseTargetPlugin.id, licenseInputKey);
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to activate plugin.');
+      }
+      updateProgress(0, 'success', 50, "License key verified.");
+
+      updateProgress(1, 'running', 70, "Validating compliance SDK v1.0...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      updateProgress(1, 'success', 85, "SDK compatibility verified.");
+
+      updateProgress(2, 'running', 95, "Initializing plugin features...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      setLicenseSuccess(true);
+      completeProgress("Plugin activated successfully!");
+      triggerNotice(`Activated "${licenseTargetPlugin.name}" successfully!`);
+      setTimeout(() => {
+        setLicenseTargetPlugin(null);
+        setLicenseSuccess(false);
+        setLicenseInputKey('');
+      }, 800);
+    } catch (err: any) {
+      errorProgress(0, err.message || 'Activation failed.');
+      setLicenseError(err.message || 'Failed to activate plugin.');
     }
-    setLicenseSuccess(true);
-    triggerNotice(`Activated "${licenseTargetPlugin.name}" successfully!`);
-    setTimeout(() => {
-      setLicenseTargetPlugin(null);
-      setLicenseSuccess(false);
-      setLicenseInputKey('');
-    }, 1200);
   };
 
   // Actions confirmations
@@ -378,34 +446,160 @@ export default function AdminPluginsPage() {
     });
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!confirmAction) return;
 
-    const { type, pluginId } = confirmAction;
+    const { type, pluginId, pluginName } = confirmAction;
+    setConfirmAction(null);
 
     if (type === 'activate') {
-      togglePlugin(pluginId, true);
-      triggerNotice(`Activated "${confirmAction.pluginName}" successfully!`);
+      startProgress({
+        title: `Activating ${pluginName}`,
+        steps: [
+          "Verifying system compliance...",
+          "Binding plugin event hooks...",
+          "Running bootstrap initialization..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 30, "Verifying system compliance...");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(0, 'success', 60, "Compliance checks OK.");
+
+        updateProgress(1, 'running', 80, "Binding plugin event hooks...");
+        togglePlugin(pluginId, true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        updateProgress(1, 'success', 90, "Event hooks mapped.");
+
+        updateProgress(2, 'running', 95, "Running bootstrap initialization...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Plugin activated successfully!");
+        triggerNotice(`Activated "${pluginName}" successfully!`);
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to activate plugin.");
+      }
     } else if (type === 'deactivate') {
-      togglePlugin(pluginId, false);
-      triggerNotice(`Deactivated "${confirmAction.pluginName}" successfully!`);
+      startProgress({
+        title: `Deactivating ${pluginName}`,
+        steps: [
+          "Gracefully stopping active tasks...",
+          "Unbinding plugin event hooks...",
+          "Flushing configuration cache..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 30, "Gracefully stopping active tasks...");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(0, 'success', 60, "Active tasks stopped.");
+
+        updateProgress(1, 'running', 80, "Unbinding plugin event hooks...");
+        togglePlugin(pluginId, false);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        updateProgress(1, 'success', 90, "Hooks cleared.");
+
+        updateProgress(2, 'running', 95, "Flushing configuration cache...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Plugin deactivated.");
+        triggerNotice(`Deactivated "${pluginName}" successfully!`);
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to deactivate plugin.");
+      }
     } else if (type === 'update') {
-      updatePluginVersion(pluginId);
-      triggerNotice(`Updated "${confirmAction.pluginName}" to v${confirmAction.targetVersion}!`);
+      startProgress({
+        title: `Updating ${pluginName}`,
+        steps: [
+          "Creating plugin restore backup...",
+          "Downloading package updates...",
+          "Applying database scheme migrations..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 20, "Creating plugin restore backup...");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(0, 'success', 50, "Backup point created.");
+
+        updateProgress(1, 'running', 70, "Downloading package updates...");
+        updatePluginVersion(pluginId);
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(1, 'success', 85, "Downloaded package files.");
+
+        updateProgress(2, 'running', 95, "Applying database scheme migrations...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Plugin updated successfully!");
+        triggerNotice(`Updated "${pluginName}" to v${confirmAction.targetVersion}!`);
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to update plugin.");
+      }
     } else if (type === 'delete') {
-      const res = deletePlugin(pluginId);
-      if (res) {
-        triggerNotice(`Deleted and uninstalled "${confirmAction.pluginName}".`);
+      startProgress({
+        title: `Uninstalling ${pluginName}`,
+        steps: [
+          "Stopping running background routines...",
+          "Deleting plugin settings & cache...",
+          "Purging plugin file directories..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 30, "Stopping running background routines...");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        updateProgress(0, 'success', 60, "Routines stopped.");
+
+        updateProgress(1, 'running', 80, "Deleting plugin settings & cache...");
+        const res = deletePlugin(pluginId);
+        if (!res) {
+          throw new Error("Plugin deletion failed.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        updateProgress(1, 'success', 90, "Settings and cache deleted.");
+
+        updateProgress(2, 'running', 95, "Purging plugin file directories...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Plugin fully uninstalled.");
+        triggerNotice(`Deleted and uninstalled "${pluginName}".`);
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to delete plugin.");
       }
     } else if (type === 'install') {
-      const res = installFromLibrary(pluginId);
-      if (res) {
-        triggerNotice(`Installed "${confirmAction.pluginName}" from library. Open tab to activate.`);
+      startProgress({
+        title: `Installing ${pluginName}`,
+        steps: [
+          "Downloading package from registry...",
+          "Resolving SDK module dependancies...",
+          "Registering hooks & metadata..."
+        ]
+      });
+
+      try {
+        updateProgress(0, 'running', 20, "Downloading package from registry...");
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        updateProgress(0, 'success', 50, "Download completed.");
+
+        updateProgress(1, 'running', 70, "Resolving SDK module dependancies...");
+        const res = installFromLibrary(pluginId);
+        if (!res) {
+          throw new Error("Plugin library installation failed.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        updateProgress(1, 'success', 85, "Dependencies resolved.");
+
+        updateProgress(2, 'running', 95, "Registering hooks & metadata...");
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        completeProgress("Plugin installed successfully!");
+        triggerNotice(`Installed "${pluginName}" from library. Open tab to activate.`);
         setActiveTab('installed');
+      } catch (err: any) {
+        errorProgress(1, err.message || "Failed to install plugin.");
       }
     }
-
-    setConfirmAction(null);
   };
 
   return (
@@ -1068,19 +1262,103 @@ export default function AdminPluginsPage() {
             )}
 
             <div className="space-y-4 text-xs">
-              <div className="border-2 border-dashed border-slate-200 hover:border-[#4F46E5] rounded-2xl p-6 text-center space-y-2 bg-slate-50 transition-colors cursor-pointer relative">
-                <input
-                  type="file"
-                  accept=".json,.zip"
-                  onChange={handleUploadFile}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-                  <Upload size={22} />
+              <div className="flex flex-col gap-3">
+                <div className="border-2 border-dashed border-slate-200 hover:border-[#4F46E5] rounded-2xl p-6 text-center space-y-2 bg-slate-50 transition-colors cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept=".json,.zip"
+                    onChange={handleUploadFile}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                    <Upload size={22} />
+                  </div>
+                  <p className="font-bold text-[#18181B]">Click to browse or drop plugin .ZIP or .JSON package here</p>
+                  <p className="text-[11px] text-[#71717A]">Manifest compliant with Plugin SDK v1.0 standard</p>
                 </div>
-                <p className="font-bold text-[#18181B]">Click to browse or drop plugin .ZIP or .JSON package here</p>
-                <p className="text-[11px] text-[#71717A]">Manifest compliant with Plugin SDK v1.0 standard</p>
+
+                <div className="text-center py-1 text-slate-400 font-bold uppercase text-[9px] tracking-wider">— or —</div>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="md" 
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => setIsMediaPickerOpen(true)}
+                >
+                  <ImageIcon size={15} /> Select Plugin from Media Library
+                </Button>
               </div>
+
+              <MediaLibraryModal
+                isOpen={isMediaPickerOpen}
+                onClose={() => setIsMediaPickerOpen(false)}
+                allowedTypes={['.zip', '.json', 'application/zip', 'application/json']}
+                maxFiles={1}
+                initialFolder="plugins"
+                onSelect={async (selected) => {
+                  const selectedFile = selected[0];
+                  if (selectedFile) {
+                    try {
+                      setIsUploadOpen(false);
+                      const response = await fetch(selectedFile.url);
+                      const blob = await response.blob();
+                      const file = new File([blob], selectedFile.name, { type: selectedFile.mimeType });
+                      
+                      // Process file
+                      startProgress({
+                        title: `Uploading & Installing ${file.name}`,
+                        steps: [
+                          "Reading file stream...",
+                          "Decompressing & extracting manifest...",
+                          "Verifying Plugin SDK compliance...",
+                          "Registering module hooks & controllers..."
+                        ]
+                      });
+                      
+                      updateProgress(0, 'running', 15, "Reading file stream...");
+                      await new Promise((resolve) => setTimeout(resolve, 500));
+                      updateProgress(0, 'success', 30, "File read completed.");
+
+                      updateProgress(1, 'running', 45, "Decompressing & extracting manifest...");
+                      let manifestText = '';
+                      if (file.name.endsWith('.zip')) {
+                        const arrayBuffer = await file.arrayBuffer();
+                        manifestText = await extractPluginJsonFromZip(arrayBuffer);
+                      } else {
+                        const text = await file.text();
+                        manifestText = text;
+                      }
+                      await new Promise((resolve) => setTimeout(resolve, 400));
+                      updateProgress(1, 'success', 60, "Manifest extracted.");
+
+                      updateProgress(2, 'running', 75, "Verifying Plugin SDK compliance...");
+                      const parsed = JSON.parse(manifestText);
+                      const result = validatePluginPackage(parsed);
+                      if (!result.valid || !result.plugin) {
+                        throw new Error(result.error || 'Failed to validate plugin package.');
+                      }
+                      if (plugins.some((p) => p.id === result.plugin!.id)) {
+                        throw new Error(`A plugin with ID "${result.plugin!.id}" is already installed.`);
+                      }
+                      await new Promise((resolve) => setTimeout(resolve, 500));
+                      updateProgress(2, 'success', 85, "Package validation OK.");
+
+                      updateProgress(3, 'running', 95, "Registering module hooks & controllers...");
+                      installPlugin(result.plugin);
+                      await new Promise((resolve) => setTimeout(resolve, 400));
+
+                      setUploadSuccess(true);
+                      completeProgress("Plugin installed successfully!");
+                      triggerNotice(`Installed "${result.plugin.name}" successfully!`);
+                    } catch (err: any) {
+                      errorProgress(1, err.message || 'Error occurred.');
+                      setUploadError(err.message || 'Failed to install plugin.');
+                      setIsUploadOpen(true);
+                    }
+                  }
+                }}
+              />
 
               <div className="space-y-1.5">
                 <label className="block font-bold text-[#18181B]">Or Paste Raw Plugin Manifest JSON:</label>

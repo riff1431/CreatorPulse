@@ -5,17 +5,11 @@ import {
   Image as ImageIcon, Search, Filter, Trash2, Eye, Grid, List, 
   Copy, Check, ShieldAlert, AlertTriangle, HardDrive, RefreshCw, 
   ExternalLink, FileText, Film, Music, File, Link2, CheckSquare, 
-  Square, Info, Download
+  Square, Info, Download, Upload, Plus, X, Move
 } from 'lucide-react';
-import { 
-  getMediaAssets, 
-  saveMediaAssets, 
-  deleteMediaAssets, 
-  formatBytes, 
-  MediaAsset, 
-  MediaType, 
-  MediaCategory 
-} from '@/lib/media/media-store';
+import { useStorageManager } from '@/lib/storage/storage-context';
+import { StoredFile, StorageCategoryFolder } from '@/lib/storage/storage-types';
+import { formatBytes } from '@/lib/storage/storage-service';
 import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
@@ -25,60 +19,102 @@ import { useToast } from '@/components/ui/Toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export default function AdminMediaManagerPage() {
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const { 
+    files, 
+    stats, 
+    isLoading, 
+    config, 
+    deleteMultipleFiles, 
+    renameFile, 
+    uploadFile,
+    refreshFiles 
+  } = useStorageManager();
+
+  const { showToast } = useToast();
+
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   
   // Filters
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [usageFilter, setUsageFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'size'>('newest');
+
+  // Inline uploader panel toggle
+  const [showUploader, setShowUploader] = useState(false);
+  const [uploadFolder, setUploadFolder] = useState<StorageCategoryFolder>('posts');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const mediaFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Modals and selection
-  const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<StoredFile | null>(null);
   const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
-  const [assetToDelete, setAssetToDelete] = useState<MediaAsset | null>(null);
+  const [assetToDelete, setAssetToDelete] = useState<StoredFile | null>(null);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
   const [copiedUrlId, setCopiedUrlId] = useState<string | null>(null);
 
-  const { showToast } = useToast();
+  // Rename/Move modal states
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [assetToRename, setAssetToRename] = useState<StoredFile | null>(null);
+  const [renameInput, setRenameInput] = useState('');
+  const [folderInput, setFolderInput] = useState<StorageCategoryFolder>('posts');
 
-  const loadData = () => {
-    setAssets(getMediaAssets());
+  // Trigger manual refresh
+  const handleSyncData = async () => {
+    await refreshFiles();
+    showToast('Media library refreshed from storage.', 'success');
   };
 
-  useEffect(() => {
-    loadData();
-    const handleUpdate = () => loadData();
-    window.addEventListener('creatorpulse_media_updated', handleUpdate);
-    return () => {
-      window.removeEventListener('creatorpulse_media_updated', handleUpdate);
-    };
-  }, []);
+  const handleFilesUpload = async (fileList: FileList | File[]) => {
+    if (!fileList || fileList.length === 0) return;
+    setIsUploading(true);
+    const filesArray = Array.from(fileList);
+    let count = 0;
+    for (const f of filesArray) {
+      const res = await uploadFile(f, uploadFolder);
+      if (res.success) count++;
+    }
+    setIsUploading(false);
+    showToast(`Successfully uploaded ${count} file(s) to /${uploadFolder}`, 'success');
+    refreshFiles();
+  };
 
-  // Calculate storage metrics
-  const totalSizeBytes = assets.reduce((acc, curr) => acc + curr.sizeBytes, 0);
-  const imageSizeBytes = assets.filter(a => a.type === 'image').reduce((acc, curr) => acc + curr.sizeBytes, 0);
-  const videoSizeBytes = assets.filter(a => a.type === 'video').reduce((acc, curr) => acc + curr.sizeBytes, 0);
-  const audioSizeBytes = assets.filter(a => a.type === 'audio').reduce((acc, curr) => acc + curr.sizeBytes, 0);
-  const docSizeBytes = assets.filter(a => a.type === 'document').reduce((acc, curr) => acc + curr.sizeBytes, 0);
-  const totalQuotaBytes = 100 * 1024 * 1024 * 1024; // 100 GB limit demo
+  // Storage Stats from API
+  const totalQuotaBytes = 100 * 1024 * 1024 * 1024; // 100 GB platform quota
+  const totalSizeBytes = stats.totalSizeBytes;
   const usedPercentage = Math.min(100, Math.max(1, (totalSizeBytes / totalQuotaBytes) * 100));
 
-  const filteredAssets = assets.filter((asset) => {
-    if (typeFilter !== 'all' && asset.type !== typeFilter) return false;
-    if (categoryFilter !== 'all' && asset.category !== categoryFilter) return false;
-    if (usageFilter === 'linked' && !asset.isLinked) return false;
-    if (usageFilter === 'unused' && asset.isLinked) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchName = asset.filename.toLowerCase().includes(q);
-      const matchUploader = asset.uploadedBy.name.toLowerCase().includes(q) || asset.uploadedBy.username.toLowerCase().includes(q);
-      const matchId = asset.id.toLowerCase().includes(q);
-      return matchName || matchUploader || matchId;
-    }
-    return true;
-  });
+  // Filter & Sort
+  const filteredAssets = files
+    .filter((asset) => {
+      if (categoryFilter !== 'all' && asset.folder !== categoryFilter) return false;
+      
+      let matchesType = true;
+      if (typeFilter !== 'all') {
+        if (typeFilter === 'image') matchesType = asset.mimeType.startsWith('image/');
+        else if (typeFilter === 'video') matchesType = asset.mimeType.startsWith('video/');
+        else if (typeFilter === 'audio') matchesType = asset.mimeType.startsWith('audio/');
+        else if (typeFilter === 'document') matchesType = asset.mimeType.startsWith('application/pdf') || asset.mimeType.startsWith('text/');
+      }
+      if (!matchesType) return false;
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchName = asset.name.toLowerCase().includes(q) || asset.originalName.toLowerCase().includes(q);
+        const matchUploader = asset.uploadedBy?.name.toLowerCase().includes(q) || asset.uploadedBy?.username.toLowerCase().includes(q);
+        const matchId = asset.id.toLowerCase().includes(q);
+        return matchName || matchUploader || matchId;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'size') return b.sizeBytes - a.sizeBytes;
+      return 0;
+    });
 
   const handleToggleSelect = (id: string) => {
     setSelectedAssetIds(prev =>
@@ -97,46 +133,76 @@ export default function AdminMediaManagerPage() {
   };
 
   const handleCopyUrl = (url: string, id: string) => {
-    navigator.clipboard.writeText(url);
+    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
     setCopiedUrlId(id);
     showToast('Media URL copied to clipboard!', 'success');
     setTimeout(() => setCopiedUrlId(null), 2000);
   };
 
-  const handleRequestDeleteSingle = (asset: MediaAsset) => {
+  const handleRequestDeleteSingle = (asset: StoredFile) => {
     setAssetToDelete(asset);
   };
 
-  const executeDeleteSingle = () => {
+  const executeDeleteSingle = async () => {
     if (!assetToDelete) return;
-    deleteMediaAssets([assetToDelete.id]);
-    showToast(`Media file "${assetToDelete.filename}" deleted safely.`, 'info');
-    setAssetToDelete(null);
-    if (selectedAsset && selectedAsset.id === assetToDelete.id) {
-      setSelectedAsset(null);
+    const res = await deleteMultipleFiles([assetToDelete.id]);
+    if (res.success) {
+      showToast(`Media file "${assetToDelete.name}" deleted safely.`, 'info');
+      if (selectedAsset && selectedAsset.id === assetToDelete.id) {
+        setSelectedAsset(null);
+      }
+    } else {
+      showToast(res.error || 'Failed to delete file', 'error');
     }
-    loadData();
+    setAssetToDelete(null);
   };
 
-  const executeBulkDelete = () => {
-    const res = deleteMediaAssets(selectedAssetIds);
-    showToast(`Deleted ${res.deletedCount} selected media assets.`, 'info');
+  const executeBulkDelete = async () => {
+    const res = await deleteMultipleFiles(selectedAssetIds);
+    if (res.success) {
+      showToast(`Deleted ${selectedAssetIds.length} selected media assets.`, 'info');
+    } else {
+      showToast(res.error || 'Failed to delete selected assets', 'error');
+    }
     setSelectedAssetIds([]);
     setIsBulkDeleteConfirmOpen(false);
-    loadData();
   };
 
-  const renderMediaTypeIcon = (type: MediaType) => {
-    switch (type) {
-      case 'image':
-        return <ImageIcon size={14} className="text-indigo-600" />;
-      case 'video':
-        return <Film size={14} className="text-rose-600" />;
-      case 'audio':
-        return <Music size={14} className="text-amber-600" />;
-      case 'document':
-        return <FileText size={14} className="text-emerald-600" />;
+  // Open Rename / Move Dialog
+  const handleOpenRename = (asset: StoredFile) => {
+    setAssetToRename(asset);
+    setRenameInput(asset.name);
+    setFolderInput(asset.folder);
+    setIsRenameOpen(true);
+  };
+
+  const executeRename = async () => {
+    if (!assetToRename) return;
+    const res = await renameFile(assetToRename.id, renameInput, folderInput);
+    if (res.success) {
+      showToast('Media asset moved/renamed successfully!', 'success');
+      setIsRenameOpen(false);
+      setAssetToRename(null);
+      if (selectedAsset?.id === assetToRename.id) {
+        setSelectedAsset(null);
+      }
+    } else {
+      showToast(res.error || 'Failed to rename asset', 'error');
     }
+  };
+
+  const renderMediaTypeIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) {
+      return <ImageIcon size={14} className="text-indigo-600" />;
+    }
+    if (mimeType.startsWith('video/')) {
+      return <Film size={14} className="text-rose-600" />;
+    }
+    if (mimeType.startsWith('audio/')) {
+      return <Music size={14} className="text-amber-600" />;
+    }
+    return <FileText size={14} className="text-emerald-600" />;
   };
 
   return (
@@ -154,12 +220,20 @@ export default function AdminMediaManagerPage() {
               <h1 className="text-xl font-black text-[#18181B] tracking-tight">Dynamic Media Manager</h1>
             </div>
             <p className="text-xs text-[#71717A] mt-1 font-medium">
-              Browse platform uploaded images, videos, audio, and documents with storage usage metrics and linked content safeguards.
+              Browse platform uploaded images, videos, audio, and documents with storage usage metrics and live drivers.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" leftIcon={<RefreshCw size={13} />} onClick={loadData}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<Upload size={13} />} 
+              onClick={() => setShowUploader(!showUploader)}
+            >
+              {showUploader ? 'Close Uploader' : 'Add New File'}
+            </Button>
+            <Button variant="ghost" size="sm" leftIcon={<RefreshCw size={13} />} onClick={handleSyncData}>
               Sync Media
             </Button>
             {selectedAssetIds.length > 0 && (
@@ -175,69 +249,121 @@ export default function AdminMediaManagerPage() {
           </div>
         </div>
 
+        {/* Collapsible Inline Uppy Uploader */}
+        {showUploader && (
+          <Card className="p-5 border-[#EC4899]/30 bg-[#FFF9FC]/50 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 border border-slate-200 rounded-2xl">
+              <div className="space-y-0.5">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase">Uppy Folder Organizer</span>
+                <p className="text-xs text-slate-700 font-extrabold flex items-center gap-1">
+                  <Plus size={14} className="text-[#EC4899]" />
+                  Select Default Target Category Folder:
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <select 
+                  value={uploadFolder}
+                  onChange={(e) => setUploadFolder(e.target.value as StorageCategoryFolder)}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-bold focus:outline-none"
+                >
+                  <option value="avatars">avatars</option>
+                  <option value="covers">covers</option>
+                  <option value="posts">posts</option>
+                  <option value="reels">reels</option>
+                  <option value="stories">stories</option>
+                  <option value="messages">messages</option>
+                  <option value="themes">themes</option>
+                  <option value="plugins">plugins</option>
+                  <option value="documents">documents</option>
+                </select>
+                <button onClick={() => setShowUploader(false)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  handleFilesUpload(e.dataTransfer.files);
+                }
+              }}
+              onClick={() => mediaFileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-2xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center gap-3 ${
+                isDragging ? 'border-[#EC4899] bg-[#FFF1F7]/60' : 'border-slate-300 hover:border-[#EC4899] bg-white'
+              }`}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#FCE7F3] text-[#EC4899] flex items-center justify-center">
+                <Upload size={24} className={isUploading ? 'animate-bounce' : ''} />
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-bold text-slate-800">
+                  {isUploading ? 'Uploading selected assets...' : 'Click to browse or drag & drop files here'}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Uploading to /{uploadFolder} • Storage: {config.activeDriver.toUpperCase()}
+                </p>
+              </div>
+              <input
+                type="file"
+                ref={mediaFileInputRef}
+                multiple
+                onChange={(e) => e.target.files && handleFilesUpload(e.target.files)}
+                className="hidden"
+              />
+            </div>
+          </Card>
+        )}
+
         {/* Storage Usage Progress Bar */}
         <Card className="p-4 space-y-3 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-slate-800 shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
               <HardDrive className="text-indigo-400" size={18} />
-              <span className="font-extrabold text-sm tracking-tight">Platform Storage Capacity</span>
+              <span className="font-extrabold text-sm tracking-tight">Platform Storage Capacity ({config.activeDriver.toUpperCase()})</span>
               <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold border border-indigo-500/30">
-                {formatBytes(totalSizeBytes)} / 100 GB Used
+                {stats.formattedTotalSize} / 100 GB Used
               </span>
             </div>
             <span className="text-[11px] text-slate-300 font-bold">
-              {assets.length} Total Uploaded Files
+              {files.length} Total Registered Files
             </span>
           </div>
 
           {/* Progress Bar Track */}
           <div className="h-2.5 w-full bg-slate-800 rounded-full overflow-hidden flex">
-            <div 
-              style={{ width: `${(imageSizeBytes / totalQuotaBytes) * 100}%` }} 
-              className="bg-indigo-500 transition-all duration-500" 
-              title={`Images: ${formatBytes(imageSizeBytes)}`}
-            />
-            <div 
-              style={{ width: `${(videoSizeBytes / totalQuotaBytes) * 100}%` }} 
-              className="bg-rose-500 transition-all duration-500" 
-              title={`Videos: ${formatBytes(videoSizeBytes)}`}
-            />
-            <div 
-              style={{ width: `${(audioSizeBytes / totalQuotaBytes) * 100}%` }} 
-              className="bg-amber-500 transition-all duration-500" 
-              title={`Audio: ${formatBytes(audioSizeBytes)}`}
-            />
-            <div 
-              style={{ width: `${(docSizeBytes / totalQuotaBytes) * 100}%` }} 
-              className="bg-emerald-500 transition-all duration-500" 
-              title={`Documents: ${formatBytes(docSizeBytes)}`}
-            />
+            {stats.categories.map((cat) => (
+              <div 
+                key={cat.folder}
+                className="transition-all duration-500" 
+                style={{
+                  width: `${(cat.totalSizeBytes / totalQuotaBytes) * 100}%`,
+                  backgroundColor: cat.color
+                }}
+                title={`${cat.label}: ${formatBytes(cat.totalSizeBytes)}`}
+              />
+            ))}
           </div>
 
           {/* Metric Legend */}
           <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold text-slate-300 pt-1">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-              <span>Images ({formatBytes(imageSizeBytes)})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-              <span>Videos ({formatBytes(videoSizeBytes)})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              <span>Audio ({formatBytes(audioSizeBytes)})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Documents ({formatBytes(docSizeBytes)})</span>
-            </div>
+            {stats.categories.map((cat) => (
+              <div key={cat.folder} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                <span>{cat.label} ({formatBytes(cat.totalSizeBytes)})</span>
+              </div>
+            ))}
           </div>
         </Card>
 
         {/* Filters and Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 p-4 border border-slate-200 rounded-2xl">
           <div className="flex flex-wrap items-center gap-3 flex-1">
+            {/* Search query */}
             <div className="relative flex-1 min-w-[240px] max-w-sm">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={13} />
               <input
@@ -249,28 +375,49 @@ export default function AdminMediaManagerPage() {
               />
             </div>
             
+            {/* Folder / Category filter */}
             <div className="flex items-center gap-2">
               <Filter size={13} className="text-[#A1A1AA]" />
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold shadow-xs cursor-pointer"
+              >
+                <option value="all">All Folders</option>
+                <option value="avatars">avatars</option>
+                <option value="covers">covers</option>
+                <option value="posts">posts</option>
+                <option value="reels">reels</option>
+                <option value="stories">stories</option>
+                <option value="messages">messages</option>
+                <option value="themes">themes</option>
+                <option value="plugins">plugins</option>
+                <option value="documents">documents</option>
+              </select>
+              
+              {/* Type Filter */}
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold shadow-xs cursor-pointer"
               >
-                <option value="all">All File Types</option>
+                <option value="all">All Media Types</option>
                 <option value="image">Images</option>
                 <option value="video">Videos</option>
                 <option value="audio">Audio</option>
                 <option value="document">Documents</option>
               </select>
-              
+
+              {/* Sort by */}
               <select
-                value={usageFilter}
-                onChange={(e) => setUsageFilter(e.target.value)}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-bold shadow-xs cursor-pointer"
               >
-                <option value="all">All Usage</option>
-                <option value="linked">Linked Content Only</option>
-                <option value="unused">Unused / Orphaned</option>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="size">Size (Large)</option>
               </select>
             </div>
           </div>
@@ -310,68 +457,65 @@ export default function AdminMediaManagerPage() {
                 >
                   {/* Thumbnail / Media Container */}
                   <div className="relative aspect-video bg-slate-900 flex items-center justify-center overflow-hidden">
-                    {asset.type === 'image' ? (
+                    {asset.mimeType.startsWith('image/') ? (
                       <img 
-                        src={asset.thumbnailUrl || asset.url} 
-                        alt={asset.filename} 
+                        src={asset.url} 
+                        alt={asset.name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400';
+                        }}
                       />
-                    ) : asset.type === 'video' ? (
-                      <div className="relative w-full h-full">
-                        <img 
-                          src={asset.thumbnailUrl} 
-                          alt={asset.filename} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    ) : asset.mimeType.startsWith('video/') ? (
+                      <div className="relative w-full h-full bg-slate-950 flex items-center justify-center">
+                        <video src={asset.url} className="w-full h-full object-cover opacity-60" muted />
+                        <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
                           <Film size={28} className="text-white drop-shadow-md" />
                         </div>
                       </div>
                     ) : (
                       <div className="p-4 text-center space-y-2">
-                        {renderMediaTypeIcon(asset.type)}
-                        <p className="text-[10px] font-mono text-slate-300 truncate max-w-[150px]">{asset.filename}</p>
+                        {renderMediaTypeIcon(asset.mimeType)}
+                        <p className="text-[10px] font-mono text-slate-300 truncate max-w-[150px]">{asset.name}</p>
                       </div>
                     )}
 
                     {/* Selection Checkbox Overlay */}
                     <button
                       onClick={() => handleToggleSelect(asset.id)}
-                      className="absolute top-2.5 left-2.5 bg-slate-900/70 backdrop-blur-xs text-white p-1 rounded-lg hover:bg-indigo-600 transition-colors cursor-pointer"
+                      className="absolute top-2.5 left-2.5 bg-slate-900/70 backdrop-blur-xs text-white p-1 rounded-lg hover:bg-indigo-600 transition-colors cursor-pointer border-none"
                     >
                       {isSelected ? <CheckSquare size={16} className="text-indigo-400" /> : <Square size={16} />}
                     </button>
 
-                    {/* Linked Status Badge Overlay */}
+                    {/* Folder Category Badge Overlay */}
                     <div className="absolute top-2.5 right-2.5">
-                      {asset.isLinked ? (
-                        <Badge variant="blue" size="sm" className="bg-blue-900/80 text-blue-200 border-blue-700/80 backdrop-blur-xs">
-                          Linked
-                        </Badge>
-                      ) : (
-                        <Badge variant="amber" size="sm" className="bg-amber-900/80 text-amber-200 border-amber-700/80 backdrop-blur-xs">
-                          Unused
-                        </Badge>
-                      )}
+                      <Badge variant="pink" size="sm" className="bg-pink-900/80 text-pink-200 border-pink-700/80 backdrop-blur-xs">
+                        /{asset.folder}
+                      </Badge>
                     </div>
                   </div>
 
                   {/* Body Content */}
                   <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                     <div>
-                      <p className="text-xs font-bold text-slate-900 truncate" title={asset.filename}>
-                        {asset.filename}
+                      <p className="text-xs font-bold text-slate-900 truncate" title={asset.name}>
+                        {asset.name}
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium mt-1">
                         <span>{formatBytes(asset.sizeBytes)}</span>
-                        <span>{asset.dimensions || (asset.durationSeconds ? `${asset.durationSeconds}s` : 'Doc')}</span>
+                        <span>{asset.mimeType.split('/').pop()?.toUpperCase()}</span>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <Avatar src={asset.uploadedBy.avatar} alt={asset.uploadedBy.name} size="sm" />
-                        <span className="text-[10px] font-extrabold text-slate-700 truncate">@{asset.uploadedBy.username}</span>
+                        {asset.uploadedBy && (
+                          <>
+                            <Avatar src={asset.uploadedBy.avatar} alt={asset.uploadedBy.name} size="sm" />
+                            <span className="text-[10px] font-extrabold text-slate-700 truncate">@{asset.uploadedBy.username}</span>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -383,6 +527,15 @@ export default function AdminMediaManagerPage() {
                           title="Inspect Metadata"
                         >
                           <Eye size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="px-1.5 py-1 text-slate-500 hover:text-indigo-600"
+                          onClick={() => handleOpenRename(asset)}
+                          title="Rename or Move File"
+                        >
+                          <Move size={14} />
                         </Button>
                         <Button
                           variant="ghost"
@@ -402,7 +555,7 @@ export default function AdminMediaManagerPage() {
 
             {filteredAssets.length === 0 && (
               <div className="col-span-full py-16 text-center text-slate-500 font-bold bg-white border border-slate-200 rounded-2xl">
-                No media assets match your active category and type filters.
+                No storage media assets found matching the selected filters.
               </div>
             )}
           </div>
@@ -410,13 +563,13 @@ export default function AdminMediaManagerPage() {
 
         {/* View Mode 2: Compact Data Table */}
         {viewMode === 'table' && (
-          <Card className="overflow-hidden p-0 border-slate-200/80 shadow-sm">
+          <Card className="overflow-hidden p-0 border-slate-200/80 shadow-sm bg-white">
             <div className="overflow-x-auto relative">
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-[#71717A] font-bold">
                     <th className="py-3.5 px-4 w-10">
-                      <button onClick={handleSelectAll} className="text-indigo-600 hover:opacity-80">
+                      <button onClick={handleSelectAll} className="text-indigo-600 hover:opacity-80 bg-transparent border-none cursor-pointer">
                         {filteredAssets.length > 0 && filteredAssets.every(a => selectedAssetIds.includes(a.id)) ? (
                           <CheckSquare size={15} />
                         ) : (
@@ -425,10 +578,11 @@ export default function AdminMediaManagerPage() {
                       </button>
                     </th>
                     <th className="py-3.5 px-4">Filename & Asset</th>
-                    <th className="py-3.5 px-4">Type</th>
+                    <th className="py-3.5 px-4">Folder</th>
+                    <th className="py-3.5 px-4">Driver</th>
                     <th className="py-3.5 px-4">File Size</th>
+                    <th className="py-3.5 px-4">Mime Type</th>
                     <th className="py-3.5 px-4">Uploaded By</th>
-                    <th className="py-3.5 px-4">Linked Status</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -436,7 +590,7 @@ export default function AdminMediaManagerPage() {
                   {filteredAssets.map((asset) => (
                     <tr key={asset.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3 px-4">
-                        <button onClick={() => handleToggleSelect(asset.id)} className="text-slate-500">
+                        <button onClick={() => handleToggleSelect(asset.id)} className="text-slate-500 bg-transparent border-none cursor-pointer">
                           {selectedAssetIds.includes(asset.id) ? (
                             <CheckSquare size={15} className="text-indigo-600" />
                           ) : (
@@ -447,39 +601,45 @@ export default function AdminMediaManagerPage() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-slate-900 overflow-hidden flex items-center justify-center shrink-0">
-                            {asset.type === 'image' ? (
-                              <img src={asset.thumbnailUrl || asset.url} alt="" className="w-full h-full object-cover" />
+                            {asset.mimeType.startsWith('image/') ? (
+                              <img src={asset.url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              renderMediaTypeIcon(asset.type)
+                              renderMediaTypeIcon(asset.mimeType)
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-slate-900 truncate max-w-xs">{asset.filename}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">ID: #{asset.id}</p>
+                            <p className="font-bold text-slate-900 truncate max-w-xs">{asset.name}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">Original: {asset.originalName}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 uppercase text-[10px] font-extrabold text-slate-500">
-                        {asset.type}
+                      <td className="py-3 px-4">
+                        <Badge variant="pink" size="sm">/{asset.folder}</Badge>
+                      </td>
+                      <td className="py-3 px-4 font-mono uppercase text-[10px] text-slate-500 font-extrabold">
+                        {asset.driver}
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-slate-700">
                         {formatBytes(asset.sizeBytes)}
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-slate-900">{asset.uploadedBy.name}</span>
-                        <span className="text-[10px] text-slate-400 ml-1">(@{asset.uploadedBy.username})</span>
+                      <td className="py-3 px-4 font-mono text-[10px] text-slate-400">
+                        {asset.mimeType}
                       </td>
                       <td className="py-3 px-4">
-                        {asset.isLinked ? (
-                          <Badge variant="blue" size="sm">Linked to {asset.linkedEntity?.type || 'content'}</Badge>
-                        ) : (
-                          <Badge variant="amber" size="sm">Unused</Badge>
+                        {asset.uploadedBy && (
+                          <>
+                            <span className="font-bold text-slate-900">{asset.uploadedBy.name}</span>
+                            <span className="text-[10px] text-slate-400 ml-1">(@{asset.uploadedBy.username})</span>
+                          </>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => setSelectedAsset(asset)}>
                             Inspect
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenRename(asset)}>
+                            Move
                           </Button>
                           <Button variant="ghost" size="sm" className="text-rose-600" onClick={() => handleRequestDeleteSingle(asset)}>
                             Delete
@@ -498,17 +658,17 @@ export default function AdminMediaManagerPage() {
         <Modal
           isOpen={selectedAsset !== null}
           onClose={() => setSelectedAsset(null)}
-          title={selectedAsset ? `Media Asset: ${selectedAsset.filename}` : ''}
+          title={selectedAsset ? `Media Asset: ${selectedAsset.name}` : ''}
         >
           {selectedAsset && (
             <div className="space-y-4">
               {/* Media Preview Box */}
               <div className="bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center min-h-[220px] max-h-[350px]">
-                {selectedAsset.type === 'image' ? (
-                  <img src={selectedAsset.url} alt={selectedAsset.filename} className="max-h-[350px] object-contain" />
-                ) : selectedAsset.type === 'video' ? (
+                {selectedAsset.mimeType.startsWith('image/') ? (
+                  <img src={selectedAsset.url} alt={selectedAsset.name} className="max-h-[350px] object-contain" />
+                ) : selectedAsset.mimeType.startsWith('video/') ? (
                   <video src={selectedAsset.url} controls className="max-h-[350px] w-full" />
-                ) : selectedAsset.type === 'audio' ? (
+                ) : selectedAsset.mimeType.startsWith('audio/') ? (
                   <div className="p-6 text-center space-y-4 w-full">
                     <Music size={40} className="mx-auto text-amber-400" />
                     <audio src={selectedAsset.url} controls className="w-full" />
@@ -516,7 +676,7 @@ export default function AdminMediaManagerPage() {
                 ) : (
                   <div className="p-8 text-center space-y-3">
                     <FileText size={48} className="mx-auto text-emerald-400" />
-                    <p className="text-xs text-white font-mono">{selectedAsset.filename}</p>
+                    <p className="text-xs text-white font-mono">{selectedAsset.name}</p>
                   </div>
                 )}
               </div>
@@ -533,26 +693,15 @@ export default function AdminMediaManagerPage() {
                 </div>
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
                   <span className="text-[9px] text-slate-400 font-bold uppercase">Uploader Profile</span>
-                  <p className="font-bold text-slate-900">{selectedAsset.uploadedBy.name} (@{selectedAsset.uploadedBy.username})</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
-                  <span className="text-[9px] text-slate-400 font-bold uppercase">Upload Timestamp</span>
-                  <p className="font-mono font-bold text-slate-900">{selectedAsset.uploadedAt}</p>
-                </div>
-              </div>
-
-              {/* Linked Entity Details */}
-              {selectedAsset.isLinked && selectedAsset.linkedEntity && (
-                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs space-y-1">
-                  <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider flex items-center gap-1">
-                    <Link2 size={13} />
-                    Linked Platform Content
-                  </span>
-                  <p className="font-extrabold text-slate-900">
-                    {selectedAsset.linkedEntity.title} <span className="text-[10px] font-mono text-blue-600">({selectedAsset.linkedEntity.type} #{selectedAsset.linkedEntity.id})</span>
+                  <p className="font-bold text-slate-900">
+                    {selectedAsset.uploadedBy?.name} (@{selectedAsset.uploadedBy?.username})
                   </p>
                 </div>
-              )}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase">Storage Folder</span>
+                  <p className="font-mono font-bold text-slate-900">/{selectedAsset.folder}</p>
+                </div>
+              </div>
 
               {/* Direct Copy URL */}
               <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl">
@@ -584,7 +733,7 @@ export default function AdminMediaManagerPage() {
           )}
         </Modal>
 
-        {/* Modal: Safety Warning when Deleting Linked Content */}
+        {/* Modal: Safety Warning when Deleting Content */}
         <Modal
           isOpen={assetToDelete !== null}
           onClose={() => setAssetToDelete(null)}
@@ -592,34 +741,22 @@ export default function AdminMediaManagerPage() {
         >
           {assetToDelete && (
             <div className="space-y-4">
-              {assetToDelete.isLinked ? (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-rose-900 text-xs">
-                  <ShieldAlert className="shrink-0 mt-0.5 text-rose-600" size={20} />
-                  <div>
-                    <p className="font-extrabold text-rose-950">Safety Safeguard Triggered: Linked Media File</p>
-                    <p className="mt-1 leading-snug">
-                      This file (<strong>{assetToDelete.filename}</strong>) is currently linked to live content: <strong>"{assetToDelete.linkedEntity?.title}"</strong>. Deleting it will cause broken image links on user feeds.
-                    </p>
-                  </div>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-800 text-xs">
+                <AlertTriangle className="shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="font-extrabold">Confirm Permanent Deletion</p>
+                  <p className="mt-1 leading-snug">
+                    Are you sure you want to permanently delete <strong>"{assetToDelete.name}"</strong> ({formatBytes(assetToDelete.sizeBytes)}) from {config.activeDriver} storage?
+                  </p>
                 </div>
-              ) : (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-800 text-xs">
-                  <AlertTriangle className="shrink-0 mt-0.5" size={18} />
-                  <div>
-                    <p className="font-extrabold">Confirm Unused Media Purge</p>
-                    <p className="mt-1 leading-snug">
-                      Are you sure you want to permanently delete <strong>"{assetToDelete.filename}"</strong> ({formatBytes(assetToDelete.sizeBytes)})?
-                    </p>
-                  </div>
-                </div>
-              )}
+              </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <Button variant="outline" size="sm" onClick={() => setAssetToDelete(null)}>
                   Cancel
                 </Button>
                 <Button variant="danger" size="sm" onClick={executeDeleteSingle}>
-                  {assetToDelete.isLinked ? 'Force Un-link & Delete' : 'Confirm Delete'}
+                  Confirm Delete
                 </Button>
               </div>
             </div>
@@ -638,7 +775,7 @@ export default function AdminMediaManagerPage() {
               <div>
                 <p className="font-extrabold">Permanent Bulk Media Purge</p>
                 <p className="mt-1 leading-snug">
-                  You are about to delete <strong>{selectedAssetIds.length} media files</strong> from platform storage.
+                  You are about to delete <strong>{selectedAssetIds.length} media files</strong> from {config.activeDriver} storage.
                 </p>
               </div>
             </div>
@@ -652,6 +789,55 @@ export default function AdminMediaManagerPage() {
               </Button>
             </div>
           </div>
+        </Modal>
+
+        {/* Modal: Rename and Move Media Asset */}
+        <Modal
+          isOpen={isRenameOpen}
+          onClose={() => setIsRenameOpen(false)}
+          title="Rename or Move Media File"
+        >
+          {assetToRename && (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-800">New Filename:</label>
+                <input 
+                  type="text"
+                  value={renameInput}
+                  onChange={(e) => setRenameInput(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-800">Move to Folder Location:</label>
+                <select 
+                  value={folderInput}
+                  onChange={(e) => setFolderInput(e.target.value as StorageCategoryFolder)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:outline-none font-bold"
+                >
+                  <option value="avatars">/avatars</option>
+                  <option value="covers">/covers</option>
+                  <option value="posts">/posts</option>
+                  <option value="reels">/reels</option>
+                  <option value="stories">/stories</option>
+                  <option value="messages">/messages</option>
+                  <option value="themes">/themes</option>
+                  <option value="plugins">/plugins</option>
+                  <option value="documents">/documents</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                <Button variant="outline" size="sm" onClick={() => setIsRenameOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" onClick={executeRename}>
+                  Apply Changes
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </RoleGuard>

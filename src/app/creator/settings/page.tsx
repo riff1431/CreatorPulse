@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
+import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
 
 export default function CreatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'payouts' | 'privacy'>('profile');
@@ -21,6 +22,10 @@ export default function CreatorSettingsPage() {
   const [whoCanMessage, setWhoCanMessage] = useState('subscribers');
   const [whoCanFollow, setWhoCanFollow] = useState('everyone');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Media picker states
+  const [avatarUrl, setAvatarUrl] = useState('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150');
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -81,12 +86,27 @@ export default function CreatorSettingsPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" alt="Sarah Jenkins" size="lg" isVerified={true} />
+            <Avatar src={avatarUrl} alt="Sarah Jenkins" size="lg" isVerified={true} />
             <div className="space-y-1 text-xs">
-              <Button variant="outline" size="sm">Change Avatar</Button>
+              <Button variant="outline" size="sm" onClick={() => setIsAvatarPickerOpen(true)}>Change Avatar</Button>
               <p className="text-[10px] text-[#A1A1AA] font-bold">JPG, PNG or WebP. Max size limit 2MB.</p>
             </div>
           </div>
+
+          <MediaLibraryModal
+            isOpen={isAvatarPickerOpen}
+            onClose={() => setIsAvatarPickerOpen(false)}
+            allowedTypes={['image/*']}
+            maxFiles={1}
+            initialFolder="avatars"
+            onSelect={(selected) => {
+              const file = selected[0];
+              if (file) {
+                setAvatarUrl(file.url);
+                showToast('Avatar selected from media library!', 'success');
+              }
+            }}
+          />
 
           <div className="space-y-4 text-xs font-semibold">
             <div>

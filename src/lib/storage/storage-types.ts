@@ -43,6 +43,13 @@ export interface StoredFile {
   mimeType: string;
   createdAt: string;
   updatedAt: string;
+  uploadedBy?: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string;
+  };
+  isLinked?: boolean;
 }
 
 export interface CategoryUsageStat {
