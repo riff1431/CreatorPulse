@@ -15,17 +15,17 @@ export async function GET() {
       return NextResponse.json({ success: true, modules: INITIAL_FEATURE_MODULES });
     }
 
-    const formatted = data.map((m) => {
-      const matchInitial = INITIAL_FEATURE_MODULES.find((i) => i.id === m.id);
-      return {
-        id: m.id,
-        name: m.name || (matchInitial ? matchInitial.name : m.id),
-        description: m.description || (matchInitial ? matchInitial.description : ''),
-        isEnabled: m.is_enabled,
-        dependencies: m.dependencies || (matchInitial ? matchInitial.dependencies : []),
-        settings: m.settings || (matchInitial ? matchInitial.settings : {}),
-        icon: matchInitial ? matchInitial.icon : 'Puzzle',
-      };
+    // Merge DB state with initial definitions to ensure all new fields are present
+    const formatted = INITIAL_FEATURE_MODULES.map((initial) => {
+      const dbRow = data.find((m) => m.id === initial.id);
+      if (dbRow) {
+        return {
+          ...initial,
+          isEnabled: dbRow.is_enabled ?? initial.isEnabled,
+          settings: { ...initial.settings, ...(dbRow.settings || {}) },
+        };
+      }
+      return initial;
     });
 
     return NextResponse.json({ success: true, modules: formatted });

@@ -3,7 +3,7 @@
   "name": "Starter Theme Template",
   "slug": "starter-theme",
   "description": "Clean, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Your Studio / Developer Name",
   "authorUrl": "https://yourwebsite.com",
   "previewImageUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600",
@@ -11,6 +11,9 @@
   "tags": ["Starter", "Developer", "Template", "SDK"],
   "minAppVersion": "1.0.0",
   "isActive": false,
+  "requiresLicense": true,
+  "licenseKey": "CP-THEME-FREE-STRT-2026",
+  "licenseStatus": "licensed",
   "installedAt": "2026-08-15",
   "updatedAt": "2026-08-15",
   "tokens": {
@@ -36,9 +39,13 @@
     "containerWidth": "max-w-7xl",
     "buttonStyle": "gradient-glow",
     "animationIntensity": "normal",
-    "cardShadow": "elevated"
+    "cardShadow": "elevated",
+    "spacing": "standard",
+    "sidebarPlacement": "left",
+    "headerStyle": "fixed"
   },
   "changelog": [
+    { "version": "1.0.1", "date": "2026-08-15", "changes": ["Added pre-bundled license key for immediate activation"] },
     { "version": "1.0.0", "date": "2026-08-15", "changes": ["Initial starter theme template"] }
   ]
 }

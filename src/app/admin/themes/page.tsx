@@ -280,6 +280,18 @@ export default function AdminThemesPage() {
       updateProgress(0, 'running', 20, "Verifying license key & signature...");
       await new Promise((resolve) => setTimeout(resolve, 600));
 
+      // Persist license key to server-side vault (fire-and-forget, non-blocking)
+      if (licenseInputKey.trim()) {
+        fetch('/api/admin/themes/license', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeId: licenseTargetTheme.id, licenseKey: licenseInputKey.trim() })
+        }).catch((vaultErr) =>
+          console.warn('[ThemeActivation] Could not persist license to vault:', vaultErr)
+        );
+      }
+
+
       // Run compatibility diagnostics on activation
       const compatibilityReport = CompatibilityChecker.checkTheme(
         licenseTargetTheme,
@@ -799,61 +811,15 @@ export default function AdminThemesPage() {
     }
   };
 
-  const handleDownloadStarter = () => {
-    const starterTheme = {
-      id: 'theme-starter-template',
-      name: 'CreatorPulse Starter Theme',
-      slug: 'starter-template',
-      description: 'Official template demonstrating Theme SDK v1.0 with color tokens, corner geometry, container layout, and component styling.',
-      version: '1.0.0',
-      author: 'Your Design Studio',
-      authorUrl: 'https://yourdesignstudio.com',
-      previewImageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600',
-      category: 'Modern Light',
-      tags: ['Starter', 'SDK v1.0', 'Template'],
-      minAppVersion: '1.0.0',
-      requiresLicense: true,
-      licenseKey: 'CP-THEME-DEMO-2026-OK',
-      tokens: {
-        primary: '#EC4899',
-        primaryHover: '#DB2777',
-        softPrimary: '#FCE7F3',
-        lightPrimary: '#FDF2F8',
-        accent: '#F43F5E',
-        background: '#FFF9FC',
-        surface: '#FFFFFF',
-        surfaceSecondary: '#FFF1F7',
-        border: '#F3DCE8',
-        textPrimary: '#18181B',
-        textSecondary: '#71717A',
-        textMuted: '#A1A1AA',
-        cardRadius: '20px',
-        buttonRadius: '14px',
-        fontFamily: 'Plus Jakarta Sans, sans-serif',
-        fontHeading: 'Plus Jakarta Sans, sans-serif',
-        isDark: false
-      },
-      settings: {
-        logoUrl: '',
-        faviconUrl: '',
-        containerWidth: 'max-w-7xl',
-        buttonStyle: 'gradient-glow',
-        animationIntensity: 'normal',
-        cardShadow: 'soft-pink'
-      },
-      changelog: [
-        { version: '1.0.0', date: new Date().toISOString().split('T')[0], changes: ['Initial starter release'] }
-      ]
+  const handleDownloadStarter = async () => {
+    const starterManifest = themes.find((t) => t.slug === 'starter-theme' || t.id === 'theme-starter-theme') || {
+      id: 'theme-starter-theme',
+      name: 'Starter Theme Template',
+      slug: 'starter-theme',
+      version: '1.0.0'
     };
 
-    const blob = new Blob([JSON.stringify(starterTheme, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'creatorpulse-theme-starter-v1.0.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    triggerNotice('Downloaded CreatorPulse Theme SDK v1.0 Starter Template!');
+    await handleExportTheme(starterManifest as any);
   };
 
   // Sort helper
@@ -1816,7 +1782,14 @@ export default function AdminThemesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block font-bold text-[#18181B]">License Key / Purchase Code</label>
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-[#18181B]">License Key / Purchase Code</label>
+                  {licenseTargetTheme.licenseKey && licenseTargetTheme.licenseStatus === 'licensed' && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                      <CheckCircle size={10} /> Pre-licensed
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="e.g. CP-THEME-7X89-KL22-901B"
@@ -1824,9 +1797,20 @@ export default function AdminThemesPage() {
                   onChange={(e) => setLicenseInputKey(e.target.value)}
                   className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 font-mono text-xs text-[#18181B] focus:outline-none focus:border-[#EC4899]"
                 />
-                <p className="text-[10px] text-[#A1A1AA]">
-                  Required for premium and custom third-party themes. Enter any valid license code to activate.
-                </p>
+                {licenseTargetTheme.licenseKey && licenseTargetTheme.licenseStatus === 'licensed' ? (
+                  <p className="text-[10px] text-emerald-700 font-medium">
+                    ✓ This theme ships with a pre-bundled license key. You can click Verify & Activate directly.
+                  </p>
+                ) : !licenseTargetTheme.requiresLicense ? (
+                  <p className="text-[10px] text-[#A1A1AA]">
+                    This theme does not require a license key. Click Verify & Activate to continue.
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-[#A1A1AA]">
+                    Required for premium and custom third-party themes. Enter your CreatorPulse license key
+                    (e.g. <span className="font-mono text-[#EC4899]">CP-THEME-XXXX-XXXX-XXXX</span>) or Envato purchase code.
+                  </p>
+                )}
               </div>
             </div>
 
