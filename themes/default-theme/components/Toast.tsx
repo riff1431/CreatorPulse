@@ -1,20 +1,29 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Info, X, Sparkles } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export interface ToastMessage {
   id: string;
+  title?: string;
   message: string;
   type: ToastType;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export interface ToastOptions {
   title?: string;
   message: string;
   type?: ToastType;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 interface ToastContextType {
@@ -41,13 +50,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+    }, 3500);
   }, []);
 
-  const addToast = useCallback(({ title, message, type = 'success' }: ToastOptions) => {
-    const fullMessage = title ? `${title}: ${message}` : message;
-    showToast(fullMessage, type);
-  }, [showToast]);
+  const addToast = useCallback(({ title, message, type = 'success', action }: ToastOptions) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, title, message, type, action }]);
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -56,8 +69,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast, addToast }}>
       {children}
-      {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0">
+
+      {/* Toast Notification Container */}
+      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none">
         {toasts.map((toast) => {
           const Icon = {
             success: CheckCircle2,
@@ -67,29 +81,51 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }[toast.type];
 
           const bgClasses = {
-            success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-            error: 'bg-rose-50 border-rose-200 text-rose-800',
-            warning: 'bg-amber-50 border-amber-200 text-amber-800',
-            info: 'bg-pink-50 border-pink-200 text-pink-800',
+            success:
+              'bg-emerald-50 dark:bg-emerald-950/85 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100',
+            error:
+              'bg-rose-50 dark:bg-rose-950/85 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100',
+            warning:
+              'bg-amber-50 dark:bg-amber-950/85 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100',
+            info:
+              'bg-white/95 dark:bg-[#1A1222]/95 border-[#F3DCE8] dark:border-[#3A2A4C] text-[#18181B] dark:text-[#FDF2F8]',
           }[toast.type];
 
           const iconClasses = {
             success: 'text-emerald-500',
             error: 'text-rose-500',
             warning: 'text-amber-500',
-            info: 'text-pink-500',
+            info: 'text-[#EC4899]',
           }[toast.type];
 
           return (
             <div
               key={toast.id}
-              className={`flex items-start gap-3 p-3.5 rounded-2xl border shadow-lg backdrop-blur-md transition-all duration-300 animate-toast-slide-in ${bgClasses}`}
+              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border shadow-xl backdrop-blur-xl transition-all duration-300 animate-in slide-in-from-bottom-3 ${bgClasses}`}
             >
-              <Icon size={16} className={`shrink-0 mt-0.5 ${iconClasses}`} />
-              <p className="text-xs font-bold flex-1 leading-normal">{toast.message}</p>
+              <Icon size={18} className={`shrink-0 mt-0.5 ${iconClasses}`} />
+
+              <div className="flex-1 min-w-0 text-xs">
+                {toast.title && <h5 className="font-black mb-0.5 tracking-tight">{toast.title}</h5>}
+                <p className="leading-relaxed font-medium">{toast.message}</p>
+
+                {toast.action && (
+                  <button
+                    onClick={() => {
+                      toast.action?.onClick();
+                      removeToast(toast.id);
+                    }}
+                    className="mt-2 text-[11px] font-black text-[#EC4899] hover:underline cursor-pointer"
+                  >
+                    {toast.action.label} →
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-slate-600 transition-colors p-0.5 cursor-pointer"
+                className="opacity-50 hover:opacity-100 transition-opacity p-0.5 cursor-pointer -mr-1 -mt-1"
+                aria-label="Dismiss toast"
               >
                 <X size={14} />
               </button>
@@ -97,24 +133,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           );
         })}
       </div>
-
-      <style jsx global>{`
-        @keyframes toastSlideIn {
-          from {
-            transform: translateY(1rem) scale(0.95);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-          }
-        }
-        .animate-toast-slide-in {
-          animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      `}</style>
     </ToastContext.Provider>
   );
 };
 
 export const Toast: React.FC = () => null;
+export default Toast;

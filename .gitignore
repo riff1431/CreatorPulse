@@ -43,3 +43,8 @@ next-env.d.ts
 # payment vault secrets
 /src/lib/payments/vault.json
 
+# temporary & scratch files
+/scratch/
+skill_instructions.txt
+
+

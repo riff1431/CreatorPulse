@@ -136,8 +136,8 @@ export async function GET(req: Request) {
         </head>
         <body>
           <div class="container">
-            <div class="logo">${gateway === 'stripe' ? '💳' : '🅿️'}</div>
-            <h2 class="title">Authorize ${gateway === 'stripe' ? 'Stripe' : 'PayPal'} Payment</h2>
+            <div class="logo">${gateway === 'stripe' ? '💳' : gateway === 'piprapay' ? '🇧🇩' : '🅿️'}</div>
+            <h2 class="title">Authorize ${gateway === 'stripe' ? 'Stripe' : gateway === 'piprapay' ? 'PipraPay Multi-Gateway' : 'PayPal'} Payment</h2>
             <p class="subtitle">Secure Developer Checkout Sandbox</p>
 
             <div class="details-card">
@@ -145,6 +145,12 @@ export async function GET(req: Request) {
                 <span>Charge Intent:</span>
                 <span class="badge">${isSubscription ? 'Subscription Plan' : isFunding ? 'Wallet Deposit' : 'One-time purchase'}</span>
               </div>
+              ${gateway === 'piprapay' ? `
+                <div class="details-row">
+                  <span>Payment Channels:</span>
+                  <span style="font-weight: 700; color: #059669;">bKash • Nagad • Rocket • Upay • Cards</span>
+                </div>
+              ` : ''}
               ${isSubscription ? `
                 <div class="details-row">
                   <span>Plan:</span>
@@ -165,7 +171,7 @@ export async function GET(req: Request) {
               </div>
               <div class="details-row">
                 <span>Total Due:</span>
-                <span style="color: #059669; font-size: 15px; font-weight: 800;">$${parseFloat(amount).toFixed(2)} ${currency}</span>
+                <span style="color: #059669; font-size: 15px; font-weight: 800;">${currency === 'BDT' ? '৳' : '$'}${parseFloat(amount).toFixed(2)} ${currency}</span>
               </div>
             </div>
 
@@ -184,10 +190,10 @@ export async function GET(req: Request) {
               <input type="hidden" name="actionType" id="actionType" value="success">
               
               <button type="submit" class="btn btn-primary" onclick="document.getElementById('actionType').value='success'">
-                Simulate Successful Payment ($${parseFloat(amount).toFixed(2)})
+                Simulate Successful Payment (${currency === 'BDT' ? '৳' : '$'}${parseFloat(amount).toFixed(2)})
               </button>
               <button type="submit" class="btn btn-danger" onclick="document.getElementById('actionType').value='fail'">
-                Simulate Declined Credit Card / Error
+                Simulate Declined / Payment Error
               </button>
               <button type="submit" class="btn btn-secondary" onclick="document.getElementById('actionType').value='cancel'">
                 Cancel Checkout
@@ -227,26 +233,57 @@ export async function POST(req: Request) {
 
     if (actionType === 'cancel') {
       const redirectUrl = isFunding 
-        ? `${origin}/balance?cancelled=true` 
-        : `${origin}/balance?cancelled=true`;
+        ? `${origin}/balance?cancelled=true&gateway=${gateway}` 
+        : `${origin}/balance?cancelled=true&gateway=${gateway}`;
       return NextResponse.redirect(redirectUrl);
     }
 
     if (actionType === 'fail') {
       const redirectUrl = isFunding 
-        ? `${origin}/balance?error=Simulated+Card+Declined` 
-        : `${origin}/balance?error=Simulated+Payment+Declined`;
+        ? `${origin}/balance?error=Simulated+Payment+Declined&gateway=${gateway}` 
+        : `${origin}/balance?error=Simulated+Payment+Declined&gateway=${gateway}`;
       return NextResponse.redirect(redirectUrl);
     }
 
     // Load secret keys
-    const webhookSecret = getSecret(`plugin-${gateway}`, 'webhookSecret') || 'default_secret';
+    const webhookSecret = getSecret(`plugin-${gateway}`, 'secretKey') || getSecret(`plugin-${gateway}`, 'webhookSecret') || 'whsec_piprapay_demo_secret';
 
     let webhookPayload: any = {};
     let signatureHeader = '';
     const timestamp = Math.floor(Date.now() / 1000);
 
-    if (gateway === 'stripe') {
+    if (gateway === 'piprapay') {
+      webhookPayload = {
+        event: isSubscription ? 'subscription.paid' : 'charge.completed',
+        status: 'completed',
+        payment_status: 'paid',
+        transaction_id: sessionId,
+        order_id: sessionId,
+        pp_id: sessionId,
+        amount: parseFloat(amount),
+        currency,
+        created_at: new Date().toISOString(),
+        customer: {
+          user_id: userId,
+          creator_id: creatorId
+        },
+        metadata: {
+          userId,
+          creatorId,
+          isSubscription: String(isSubscription),
+          isFunding: String(isFunding),
+          planId,
+          planName,
+          durationMonths
+        }
+      };
+
+      const bodyStr = JSON.stringify(webhookPayload);
+      signatureHeader = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(bodyStr)
+        .digest('hex');
+    } else if (gateway === 'stripe') {
       webhookPayload = {
         id: `evt_${crypto.randomBytes(8).toString('hex')}`,
         object: 'event',
@@ -313,7 +350,9 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json'
       };
 
-      if (gateway === 'stripe') {
+      if (gateway === 'piprapay') {
+        headers['x-piprapay-signature'] = signatureHeader;
+      } else if (gateway === 'stripe') {
         headers['stripe-signature'] = signatureHeader;
       } else if (gateway === 'paypal') {
         headers['paypal-transmission-sig'] = signatureHeader;
@@ -331,7 +370,7 @@ export async function POST(req: Request) {
     // Redirect user back with success query params
     let finalRedirectUrl = `${origin}/balance?success=true&amount=${amount}&gateway=${gateway}`;
     if (isSubscription) {
-      finalRedirectUrl = `${origin}/balance?subscribed=true&amount=${amount}&planName=${encodeURIComponent(planName)}`;
+      finalRedirectUrl = `${origin}/balance?subscribed=true&amount=${amount}&planName=${encodeURIComponent(planName)}&gateway=${gateway}`;
     }
     
     return NextResponse.redirect(finalRedirectUrl);
@@ -340,3 +379,4 @@ export async function POST(req: Request) {
     return new Response(`Simulation crashed: ${e.message}`, { status: 500 });
   }
 }
+

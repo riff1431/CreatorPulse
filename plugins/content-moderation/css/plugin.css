@@ -1,0 +1,4 @@
+/* Content Moderation Styles */
+.moderation-flagged {
+  filter: blur(4px);
+}

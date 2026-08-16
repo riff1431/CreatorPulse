@@ -7,6 +7,7 @@ import { logAuditEvent } from './package-installer';
 import { PluginLoader } from '@/lib/loaders/plugin-loader';
 import { DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
 import { CompatibilityChecker } from '@/lib/loaders/compatibility-checker';
+import { useI18n } from '@/lib/i18n/i18n-context';
 
 interface PluginContextType {
   plugins: PluginManifest[];
@@ -14,6 +15,8 @@ interface PluginContextType {
   libraryPlugins: PluginManifest[];
   togglePlugin: (pluginId: string, enabled: boolean) => void;
   updatePluginSettings: (pluginId: string, values: Record<string, unknown>) => void;
+  resetPluginSettings: (pluginId: string) => void;
+  getPluginSettingsPageUrl: (plugin: PluginManifest) => string;
   toggleAutoUpdate: (pluginId: string, autoUpdate: boolean) => void;
   updatePluginVersion: (pluginId: string) => void;
   installPlugin: (manifest: PluginManifest) => boolean;
@@ -122,6 +125,16 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const activePlugins = plugins.filter((p) => p.isEnabled && (!p.requiresLicense || p.licenseStatus === 'licensed'));
+
+  const { registerPluginTranslations } = useI18n();
+
+  useEffect(() => {
+    activePlugins.forEach((plugin) => {
+      if (plugin.translations) {
+        registerPluginTranslations(plugin.id, plugin.translations);
+      }
+    });
+  }, [activePlugins, registerPluginTranslations]);
 
   const CORE_VERSION = '1.2.0';
 
@@ -395,12 +408,19 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setPlugins(updated);
     localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
 
-    // Sync settings to server
+    // Sync settings to server legacy endpoint
     fetch('/api/admin/plugins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'settings', pluginId, settingsValues: values })
     }).catch(err => console.warn('[PluginEngine] Server sync warning:', err));
+
+    // Persist settings to disk via dedicated settings API
+    fetch('/api/admin/plugins/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pluginId, settingsValues: values })
+    }).catch(err => console.warn('[PluginEngine] Disk settings persist warning:', err));
 
     logAuditEvent({
       action: 'PLUGIN_CONFIG_SAVED',
@@ -409,6 +429,44 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       details: `Saved updated configuration parameters`,
       severity: 'info'
     });
+  };
+
+  const resetPluginSettings = (pluginId: string) => {
+    const target = plugins.find((p) => p.id === pluginId);
+    if (!target) return;
+
+    // Build defaults from schema
+    const defaultValues: Record<string, unknown> = {};
+    for (const field of target.settingsSchema) {
+      defaultValues[field.id] = field.defaultValue;
+    }
+
+    const updated = plugins.map((p) =>
+      p.id === pluginId
+        ? { ...p, settingsValues: defaultValues, updatedAt: new Date().toISOString().split('T')[0] }
+        : p
+    );
+    setPlugins(updated);
+    localStorage.setItem(STORAGE_PLUGINS_KEY, JSON.stringify(updated));
+
+    // Reset on disk too
+    fetch(`/api/admin/plugins/settings?pluginId=${encodeURIComponent(pluginId)}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn('[PluginEngine] Reset to defaults disk sync warning:', err));
+
+    logAuditEvent({
+      action: 'PLUGIN_CONFIG_SAVED',
+      entityType: 'plugin',
+      entityName: target.name,
+      details: `Reset all settings to default values`,
+      severity: 'info'
+    });
+  };
+
+  const getPluginSettingsPageUrl = (plugin: PluginManifest): string => {
+    const customHref = plugin.adminSettingsPage?.sidebarItem?.href;
+    if (customHref) return customHref;
+    return `/admin/plugins/${plugin.slug}/settings`;
   };
 
   const toggleAutoUpdate = (pluginId: string, autoUpdate: boolean) => {
@@ -725,6 +783,8 @@ export const PluginProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         libraryPlugins: PLUGIN_LIBRARY_CATALOG,
         togglePlugin,
         updatePluginSettings,
+        resetPluginSettings,
+        getPluginSettingsPageUrl,
         toggleAutoUpdate,
         updatePluginVersion,
         installPlugin,
@@ -771,17 +831,35 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
     <div className={`plugin-hook-point plugin-hook-${name} ${className}`}>
       {registeredPlugins.map((plugin) => {
         try {
-          // 1. Post Card Footer Hooks
+          // 1. Post Card Header Hooks
+          if (name === 'post_card_header') {
+            if (plugin.id === 'plugin-creator-verification') {
+              return (
+                <div key={plugin.id} className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span>✅ Verified Creator</span>
+                </div>
+              );
+            }
+            if (plugin.id === 'plugin-seo-social') {
+              return (
+                <span key={plugin.id} className="text-[10px] text-blue-600 font-semibold">
+                  📈 OpenGraph
+                </span>
+              );
+            }
+          }
+
+          // 2. Post Card Footer Hooks
           if (name === 'post_card_footer') {
             if (plugin.id === 'plugin-drm-watermark') {
-              const watermarkText = String(plugin.settingsValues.watermarkText || '© CreatorPulse Protected');
+              const watermarkText = String(plugin.settingsValues?.watermarkText || '© CreatorPulse Protected');
               const postAuthor = String(((context as Record<string, unknown>)?.post as Record<string, unknown>)?.authorUsername || 'public');
               return (
                 <div key={plugin.id} className="pt-2 border-t border-[#F3DCE8]/60 flex items-center justify-between text-[10px] text-[#A1A1AA] select-none">
                   <span className="flex items-center gap-1 font-semibold">
                     <span className="text-[#EC4899]">🛡️ DRM</span> {watermarkText}
                   </span>
-                  {Boolean(plugin.settingsValues.includeViewerUsername) && (
+                  {Boolean(plugin.settingsValues?.includeViewerUsername) && (
                     <span className="font-mono bg-[#FFF1F7] px-1.5 py-0.5 rounded text-[#BE185D]">
                       ID: #{postAuthor}
                     </span>
@@ -807,41 +885,16 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
               );
             }
 
-            if (plugin.id === 'plugin-podcast-audio') {
+            if (plugin.id === 'plugin-seo-social') {
               return (
-                <div key={plugin.id} className="p-2.5 bg-[#FFF9FC] rounded-xl border border-[#F3DCE8] flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🎙️</span>
-                    <div className="text-left">
-                      <p className="font-bold text-[#18181B] text-[11px]">Creator Podcast Episode Preview</p>
-                      <p className="text-[9px] text-[#71717A]">SonicWave Hi-Res Audio Stream</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => alert('Playing Hi-Res Audio stream via SonicWave plugin.')}
-                    className="px-2.5 py-1 rounded-lg bg-[#EC4899] text-white text-[10px] font-bold shadow-xs hover:bg-[#DB2777]"
-                  >
-                    ▶ Listen
-                  </button>
-                </div>
-              );
-            }
-
-            if (plugin.id === 'plugin-crypto-tips') {
-              return (
-                <div key={plugin.id} className="pt-1.5 flex items-center justify-end">
-                  <button
-                    onClick={() => alert('Opening USDC Web3 instant tip checkout.')}
-                    className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>🪙 Tip USDC</span>
-                  </button>
+                <div key={plugin.id} className="pt-1.5 flex items-center gap-2 text-[10px] text-slate-500">
+                  <span>✨ Social Share Cards Active</span>
                 </div>
               );
             }
           }
 
-          // 2. Navbar Action Hooks
+          // 3. Navbar Action Hooks
           if (name === 'navbar_actions') {
             if (plugin.id === 'plugin-virtual-gifts') {
               return (
@@ -855,56 +908,139 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
                 </button>
               );
             }
+
+            if (plugin.id === 'plugin-creator-stories') {
+              return (
+                <button
+                  key={plugin.id}
+                  onClick={() => alert('Creator 24h Stories Feed — Powered by Creator Stories plugin.')}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-700 border border-indigo-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  title="24h Ephemeral Stories"
+                >
+                  <span>✨ Stories</span>
+                </button>
+              );
+            }
+
+            if (plugin.id === 'plugin-creator-verification') {
+              return (
+                <button
+                  key={plugin.id}
+                  onClick={() => window.location.href = '/creator/verification'}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  title="Creator Verification Status"
+                >
+                  <span>✅ Verification</span>
+                </button>
+              );
+            }
           }
 
-          // 3. Creator Dashboard Widget Hooks
+          // 4. Creator Dashboard Widget Hooks
           if (name === 'creator_dashboard_widgets') {
-            if (plugin.id === 'plugin-gemini-ai') {
+            if (plugin.id === 'plugin-creator-verification') {
               return (
-                <div key={plugin.id} className="p-4 bg-gradient-to-br from-[#FFF1F7] to-white border border-[#F3DCE8] rounded-2xl space-y-2 shadow-xs">
+                <div key={plugin.id} className="p-4 bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">💬</span>
-                      <h4 className="font-bold text-xs text-[#18181B]">Gemini AI Assistant</h4>
+                      <span className="text-lg">✅</span>
+                      <h4 className="font-bold text-xs text-[#18181B]">Creator Identity Verification</h4>
                     </div>
-                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#FCE7F3] text-[#BE185D]">
-                      Active Model: {String(plugin.settingsValues.aiModel || 'gemini-1.5-flash')}
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                      Active
                     </span>
                   </div>
                   <p className="text-[11px] text-[#71717A] leading-relaxed">
-                    AI Auto-Suggest is active with {String(plugin.settingsValues.defaultTone || 'energetic')} tone. Trending hashtags will automatically attach to your new posts.
+                    Identity verification application workflow enabled. Submit government ID and selfie to earn the trusted creator badge.
                   </p>
                 </div>
               );
             }
 
-            if (plugin.id === 'plugin-discord-sync') {
+            if (plugin.id === 'plugin-content-moderation') {
+              return (
+                <div key={plugin.id} className="p-4 bg-gradient-to-br from-rose-50 to-white border border-rose-200 rounded-2xl space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🛡️</span>
+                      <h4 className="font-bold text-xs text-[#18181B]">AI Content Moderation Guard</h4>
+                    </div>
+                    <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
+                      Scanning
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#71717A] leading-relaxed">
+                    Real-time AI toxicity scanner and blocked keyword filter active. Posts are verified prior to public publishing.
+                  </p>
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-content-scheduling') {
+              return (
+                <div key={plugin.id} className="p-4 bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-2xl space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📅</span>
+                      <h4 className="font-bold text-xs text-[#18181B]">Content Scheduling Engine</h4>
+                    </div>
+                    <span className="text-[9px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300">
+                      Auto-Publish
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#71717A] leading-relaxed">
+                    Automated publication calendar active. Posts and reels trigger automatically at scheduled release timestamps.
+                  </p>
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-creator-analytics') {
+              return (
+                <div key={plugin.id} className="p-4 bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📊</span>
+                      <h4 className="font-bold text-xs text-[#18181B]">Real-Time Audience Analytics</h4>
+                    </div>
+                    <span className="text-[9px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-300">
+                      Live Stats
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#71717A] leading-relaxed">
+                    Audience retention maps, engagement funnels, and revenue metrics updating in real-time.
+                  </p>
+                </div>
+              );
+            }
+
+            if (plugin.id === 'plugin-telegram-sync') {
               return (
                 <div key={plugin.id} className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">💬</span>
-                      <h4 className="font-bold text-xs text-[#1E293B]">Discord Role Sync</h4>
+                      <span className="text-lg">✈️</span>
+                      <h4 className="font-bold text-xs text-[#1E293B]">Telegram Channel Sync</h4>
                     </div>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">
                       Connected
                     </span>
                   </div>
                   <p className="text-[11px] text-[#64748B]">
-                    Active VIP subscribers are automatically synced to your Discord Guild roles.
+                    Posts are automatically broadcasted to your private VIP Telegram subscribers.
                   </p>
                 </div>
               );
             }
           }
 
-          // 4. Sidebar Extra Links
+          // 5. Sidebar Extra Links
           if (name === 'sidebar_extra_links') {
-            if (plugin.id === 'plugin-podcast-audio') {
+            if (plugin.id === 'plugin-creator-verification') {
               return (
-                <div key={plugin.id} className="px-3 py-1.5 text-xs text-[#71717A] font-semibold flex items-center gap-2">
-                  <span>🎙️</span>
-                  <span>Audio Podcasts Active</span>
+                <div key={plugin.id} className="px-3 py-1.5 text-xs text-emerald-700 font-semibold flex items-center gap-2">
+                  <span>✅</span>
+                  <span>Verification Active</span>
                 </div>
               );
             }

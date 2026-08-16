@@ -18,15 +18,91 @@ export type PluginPermission =
   | 'security_audit'
   | 'ai_service';
 
+export type PluginSettingFieldType =
+  | 'text'
+  | 'password'
+  | 'api_key'
+  | 'number'
+  | 'boolean'
+  | 'toggle'
+  | 'select'
+  | 'radio'
+  | 'textarea'
+  | 'media'
+  | 'color'
+  | 'repeater';
+
+export type PluginSettingValidateType = 'nonempty' | 'url' | 'email' | 'domain';
+
+export interface PluginSettingOption {
+  label: string;
+  value: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface PluginRepeaterSubField {
+  id: string;
+  label: string;
+  type: 'text' | 'number' | 'boolean' | 'select' | 'color';
+  placeholder?: string;
+  options?: PluginSettingOption[];
+  defaultValue?: unknown;
+}
+
 export interface PluginSettingField {
   id: string;
   label: string;
   description?: string;
-  type: 'text' | 'password' | 'number' | 'boolean' | 'select' | 'textarea' | 'media';
+  type: PluginSettingFieldType;
   defaultValue: unknown;
-  options?: { label: string; value: string }[];
+  options?: PluginSettingOption[];
   placeholder?: string;
   required?: boolean;
+  validate?: PluginSettingValidateType;
+  min?: number;
+  max?: number;
+  step?: number;
+  maxLength?: number;
+  rows?: number;
+  /** Used only for type: 'repeater' — defines the schema for each row */
+  repeaterSchema?: PluginRepeaterSubField[];
+  /** Used only for type: 'repeater' — max number of rows allowed */
+  maxRows?: number;
+}
+
+export interface PluginSettingsGroup {
+  id: string;
+  label: string;
+  icon?: string;
+  description?: string;
+  /** Field IDs that belong to this group */
+  fieldIds: string[];
+}
+
+export interface PluginSidebarItem {
+  /** Display label in the sidebar */
+  label: string;
+  /** Lucide icon name (e.g. "Star", "Zap") or emoji */
+  icon: string;
+  /** Route href — if omitted defaults to /admin/plugins/{slug}/settings */
+  href?: string;
+  /** Badge text */
+  badge?: string;
+  badgeVariant?: 'indigo' | 'emerald' | 'amber' | 'blue' | 'rose' | 'slate';
+}
+
+export interface PluginAdminSettingsPage {
+  /** Custom title for the settings page header */
+  title?: string;
+  /** Description shown below the header */
+  description?: string;
+  /** Required admin role to access this settings page */
+  requiredPermission?: 'admin' | 'super_admin';
+  /** If defined, this plugin appears as a dedicated item in the admin sidebar */
+  sidebarItem?: PluginSidebarItem;
+  /** Sidebar group to appear under — defaults to "Plugin Settings" */
+  sidebarGroup?: string;
 }
 
 export interface PluginChangelog {
@@ -65,10 +141,16 @@ export interface PluginManifest {
   hooks: PluginHookType[];
   settingsSchema: PluginSettingField[];
   settingsValues: Record<string, unknown>;
+  /** Optional grouping of settings fields into tabs/sections */
+  settingsGroups?: PluginSettingsGroup[];
+  /** Declares a dedicated admin settings page and optional sidebar entry */
+  adminSettingsPage?: PluginAdminSettingsPage;
   changelog: PluginChangelog[];
   lifecycle?: PluginLifecycleMethods;
   dependencies?: { plugins?: string[]; services?: string[] };
   databaseMigrations?: PluginDatabaseMigration[];
+  /** Optional custom translations registered by the plugin (locale -> namespace -> key -> string) */
+  translations?: Record<string, Record<string, Record<string, string>>>;
   isEnabled: boolean;
   autoUpdate: boolean;
   hasUpdate?: boolean;

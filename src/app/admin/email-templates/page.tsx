@@ -18,8 +18,11 @@ import { Card } from '@/components/admin/ui/Card';
 import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
 import { Modal } from '@/components/admin/ui/Modal';
+import { getActiveProvider } from '@/lib/email/smtp-store';
+import { appendDeliveryLog } from '@/lib/email/delivery-log-store';
 import { useToast } from '@/components/ui/Toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import Link from 'next/link';
 
 export default function AdminEmailTemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -109,16 +112,71 @@ export default function AdminEmailTemplatesPage() {
     showToast(`Inserted variable ${varKey} to HTML body.`, 'info');
   };
 
-  const handleSendTestEmail = (e: React.FormEvent) => {
+  const handleSendTestEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!testRecipientEmail) return;
+    if (!testRecipientEmail || !activeTemplate) return;
     setIsSendingTest(true);
 
-    setTimeout(() => {
+    const activeProvider = getActiveProvider();
+    const providerName = activeProvider ? activeProvider.name : 'System Default Mailer';
+    const providerId = activeProvider ? activeProvider.id : null;
+
+    try {
+      const res = await fetch('/api/admin/smtp/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId,
+          providerName,
+          toEmail: testRecipientEmail,
+          subject: renderedPreview.subject,
+          templateSlug: activeTemplate.slug,
+          templateName: activeTemplate.name,
+          fromName: activeProvider?.fromName || 'CreatorPulse',
+          fromEmail: activeProvider?.fromEmail || 'noreply@creatorpulse.com',
+          provider: activeProvider?.provider || 'custom',
+          apiKey: activeProvider?.apiKey || '',
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        appendDeliveryLog({
+          providerId,
+          providerName,
+          templateSlug: activeTemplate.slug,
+          templateName: activeTemplate.name,
+          recipientEmail: testRecipientEmail,
+          subject: renderedPreview.subject,
+          status: 'sent',
+          errorMessage: null,
+          messageId: data.messageId || `msg_${Date.now()}`,
+          deliveredAt: new Date().toISOString(),
+          meta: { sentVia: providerName },
+        });
+        showToast(`Test email dispatched to ${testRecipientEmail} via ${providerName}!`, 'success');
+      } else {
+        appendDeliveryLog({
+          providerId,
+          providerName,
+          templateSlug: activeTemplate.slug,
+          templateName: activeTemplate.name,
+          recipientEmail: testRecipientEmail,
+          subject: renderedPreview.subject,
+          status: 'failed',
+          errorMessage: data.error || 'Failed to dispatch email.',
+          messageId: null,
+          deliveredAt: null,
+          meta: { sentVia: providerName },
+        });
+        showToast(`Send failed: ${data.error || 'Check SMTP provider status.'}`, 'error');
+      }
+    } catch {
+      showToast('Network error dispatching test email.', 'error');
+    } finally {
       setIsSendingTest(false);
       setIsTestSendOpen(false);
-      showToast(`Test email successfully dispatched to ${testRecipientEmail}!`, 'success');
-    }, 1200);
+    }
   };
 
   const renderedPreview = activeTemplate 
@@ -147,6 +205,13 @@ export default function AdminEmailTemplatesPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin/email-manager"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors"
+            >
+              <Sparkles size={13} />
+              SMTP &amp; Delivery Logs
+            </Link>
             <Button
               variant="outline"
               size="sm"

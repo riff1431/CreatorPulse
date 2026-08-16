@@ -1,0 +1,252 @@
+{
+  "id": "plugin-creator-verification",
+  "name": "Creator Verification Manager",
+  "slug": "creator-verification",
+  "description": "Enterprise-grade identity verification system for creators with configurable requirements, secure document uploads, multi-step admin review workflow, verification badges, audit trails, and automated notifications.",
+  "version": "1.0.0",
+  "author": "CreatorPulse Security Labs",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "✅",
+  "category": "Security & DRM",
+  "tags": [
+    "Verification",
+    "Identity",
+    "KYC",
+    "Trust",
+    "Security",
+    "Badges"
+  ],
+  "minAppVersion": "1.0.0",
+  "permissions": [
+    "storage_access",
+    "notifications_send",
+    "security_audit"
+  ],
+  "hooks": [
+    "navbar_actions",
+    "creator_dashboard_widgets",
+    "post_card_header"
+  ],
+  "isEnabled": false,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "adminSettingsPage": {
+    "title": "Creator Verification Manager",
+    "description": "Configure identity verification requirements, document policies, badge styles, and notification preferences for creator verification.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "Verification Manager",
+      "icon": "BadgeCheck",
+      "badge": "ID",
+      "badgeVariant": "emerald"
+    }
+  },
+  "settingsGroups": [
+    {
+      "id": "general",
+      "label": "General",
+      "icon": "📋",
+      "fieldIds": [
+        "enableVerification",
+        "autoApproveCreators",
+        "reviewSLAHours"
+      ]
+    },
+    {
+      "id": "requirements",
+      "label": "Requirements",
+      "icon": "📄",
+      "fieldIds": [
+        "requireGovernmentId",
+        "requireSelfie",
+        "requireProofOfAddress",
+        "requireSocialMediaLink",
+        "minimumFollowerCount",
+        "maxDocumentSizeMB",
+        "allowedDocumentTypes"
+      ]
+    },
+    {
+      "id": "notifications",
+      "label": "Notifications",
+      "icon": "🔔",
+      "fieldIds": [
+        "notifyOnSubmission",
+        "notifyOnStatusChange"
+      ]
+    },
+    {
+      "id": "badges",
+      "label": "Badges",
+      "icon": "🏅",
+      "fieldIds": [
+        "badgeStyle",
+        "badgeColor",
+        "verificationExpiryDays"
+      ]
+    }
+  ],
+  "settingsSchema": [
+    {
+      "id": "enableVerification",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Enable Verification System",
+      "description": "Master switch to enable or disable the entire creator verification workflow."
+    },
+    {
+      "id": "autoApproveCreators",
+      "type": "toggle",
+      "defaultValue": false,
+      "label": "Auto-Approve Verified Creators",
+      "description": "Automatically approve applications that pass all document validation checks."
+    },
+    {
+      "id": "reviewSLAHours",
+      "type": "number",
+      "defaultValue": 48,
+      "min": 1,
+      "max": 720,
+      "label": "Review SLA Target (Hours)",
+      "description": "Target time in hours for admin to review applications."
+    },
+    {
+      "id": "requireGovernmentId",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Require Government-Issued ID"
+    },
+    {
+      "id": "requireSelfie",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Require Selfie with ID",
+      "description": "Require a photo of the applicant holding their government ID."
+    },
+    {
+      "id": "requireProofOfAddress",
+      "type": "toggle",
+      "defaultValue": false,
+      "label": "Require Proof of Address"
+    },
+    {
+      "id": "requireSocialMediaLink",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Require Social Media Profile Link"
+    },
+    {
+      "id": "minimumFollowerCount",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1000000,
+      "label": "Minimum Follower Count",
+      "description": "Minimum platform follower count required to apply for verification."
+    },
+    {
+      "id": "maxDocumentSizeMB",
+      "type": "number",
+      "defaultValue": 10,
+      "min": 1,
+      "max": 50,
+      "label": "Max Document Upload Size (MB)"
+    },
+    {
+      "id": "allowedDocumentTypes",
+      "type": "text",
+      "defaultValue": "image/jpeg,image/png,application/pdf",
+      "label": "Allowed Document MIME Types",
+      "placeholder": "image/jpeg,image/png,application/pdf"
+    },
+    {
+      "id": "notifyOnSubmission",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Notify Admin on New Applications"
+    },
+    {
+      "id": "notifyOnStatusChange",
+      "type": "toggle",
+      "defaultValue": true,
+      "label": "Notify Creator on Status Changes"
+    },
+    {
+      "id": "badgeStyle",
+      "type": "select",
+      "options": [
+        {
+          "label": "Standard Checkmark",
+          "value": "standard",
+          "description": "Simple verified checkmark icon"
+        },
+        {
+          "label": "Premium Shield",
+          "value": "premium",
+          "description": "Gradient shield badge with glow"
+        },
+        {
+          "label": "Animated Pulse",
+          "value": "animated",
+          "description": "Subtle breathing pulse animation"
+        }
+      ],
+      "defaultValue": "standard",
+      "label": "Verification Badge Style"
+    },
+    {
+      "id": "badgeColor",
+      "type": "color",
+      "defaultValue": "#10B981",
+      "label": "Badge Accent Color"
+    },
+    {
+      "id": "verificationExpiryDays",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 3650,
+      "label": "Verification Expiry (Days)",
+      "description": "Number of days before verification expires. Set to 0 for permanent verification."
+    }
+  ],
+  "settingsValues": {
+    "enableVerification": true,
+    "autoApproveCreators": false,
+    "reviewSLAHours": 48,
+    "requireGovernmentId": true,
+    "requireSelfie": true,
+    "requireProofOfAddress": false,
+    "requireSocialMediaLink": true,
+    "minimumFollowerCount": 0,
+    "maxDocumentSizeMB": 10,
+    "allowedDocumentTypes": "image/jpeg,image/png,application/pdf",
+    "notifyOnSubmission": true,
+    "notifyOnStatusChange": true,
+    "badgeStyle": "standard",
+    "badgeColor": "#10B981",
+    "verificationExpiryDays": 0
+  },
+  "databaseMigrations": [
+    {
+      "version": "1.0.0",
+      "description": "Create verification application, history, and notes tables with indexes"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "Initial release with full verification workflow",
+        "Multi-document upload support",
+        "Approve/Reject/Request Changes workflow",
+        "Configurable verification badges",
+        "Audit trail and internal notes",
+        "Automated notifications"
+      ]
+    }
+  ]
+}

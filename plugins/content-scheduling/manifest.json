@@ -1,0 +1,146 @@
+{
+  "id": "plugin-content-scheduling",
+  "name": "Content Scheduling & Auto-Publishing",
+  "slug": "content-scheduling",
+  "description": "Comprehensive auto-publishing and scheduling suite for creators to schedule posts, video reels, and 24h stories with calendar & queue views, timezone controls, background job processing, failure retries, notifications, and granular permission controls.",
+  "version": "1.0.0",
+  "author": "CreatorPulse Core Team",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "📅",
+  "category": "AI & Automation",
+  "tags": [
+    "Scheduling",
+    "Auto-Publish",
+    "Calendar",
+    "Queue",
+    "Posts",
+    "Reels",
+    "Stories",
+    "Timezone",
+    "Background Jobs",
+    "Retries"
+  ],
+  "minAppVersion": "1.0.0",
+  "permissions": ["storage_access", "notifications_send", "security_audit"],
+  "hooks": [
+    "creator_dashboard_widgets",
+    "member_dashboard_widgets",
+    "sidebar_extra_links",
+    "navbar_actions",
+    "before_post_publish"
+  ],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "adminSettingsPage": {
+    "title": "Content Scheduling & Auto-Publishing Settings",
+    "description": "Configure publication worker check intervals, queue capacity limits, retry policies, default timezones, and automated notifications.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "Content Scheduling",
+      "icon": "Calendar",
+      "badge": "Queue",
+      "badgeVariant": "indigo",
+      "href": "/admin/plugins/content-scheduling/settings"
+    }
+  },
+  "settingsSchema": [
+    {
+      "id": "defaultTimezone",
+      "label": "Default System Timezone",
+      "type": "select",
+      "defaultValue": "UTC",
+      "options": [
+        { "label": "UTC (Coordinated Universal Time)", "value": "UTC" },
+        { "label": "America/New_York (EST / EDT)", "value": "America/New_York" },
+        { "label": "America/Los_Angeles (PST / PDT)", "value": "America/Los_Angeles" },
+        { "label": "Europe/London (GMT / BST)", "value": "Europe/London" },
+        { "label": "Europe/Paris (CET / CEST)", "value": "Europe/Paris" },
+        { "label": "Asia/Tokyo (JST)", "value": "Asia/Tokyo" },
+        { "label": "Asia/Dhaka (BST)", "value": "Asia/Dhaka" },
+        { "label": "Australia/Sydney (AEST)", "value": "Australia/Sydney" }
+      ],
+      "description": "Fallback timezone applied when creator timezone is unspecified."
+    },
+    {
+      "id": "maxQueueItemsPerCreator",
+      "label": "Maximum Scheduled Items Per Creator",
+      "type": "number",
+      "defaultValue": 50,
+      "min": 5,
+      "max": 500,
+      "description": "Maximum number of active scheduled content items allowed per creator queue."
+    },
+    {
+      "id": "cronCheckIntervalSeconds",
+      "label": "Background Worker Check Interval (Seconds)",
+      "type": "number",
+      "defaultValue": 30,
+      "min": 10,
+      "max": 3600,
+      "description": "Frequency in seconds for the background worker to poll and publish due items."
+    },
+    {
+      "id": "maxRetryAttempts",
+      "label": "Maximum Job Retry Attempts on Failure",
+      "type": "number",
+      "defaultValue": 3,
+      "min": 0,
+      "max": 10,
+      "description": "Number of retry attempts before marking a scheduled post permanently failed."
+    },
+    {
+      "id": "retryDelayMinutes",
+      "label": "Retry Backoff Delay (Minutes)",
+      "type": "number",
+      "defaultValue": 5,
+      "min": 1,
+      "max": 60,
+      "description": "Delay before attempting to retry a failed publishing job."
+    },
+    {
+      "id": "enableInAppNotifications",
+      "label": "Send In-App Notifications on Publish / Failure",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Sends system notifications to creators when scheduled content is published or fails."
+    },
+    {
+      "id": "autoPublishSimulation",
+      "label": "Auto-Publish Simulation Mode",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Simulates background execution in sandbox mode without external network API locks."
+    }
+  ],
+  "settingsValues": {
+    "defaultTimezone": "UTC",
+    "maxQueueItemsPerCreator": 50,
+    "cronCheckIntervalSeconds": 30,
+    "maxRetryAttempts": 3,
+    "retryDelayMinutes": 5,
+    "enableInAppNotifications": true,
+    "autoPublishSimulation": true
+  },
+  "databaseMigrations": [
+    {
+      "version": "1.0.0",
+      "description": "Creates plugin_scheduled_content and plugin_schedule_logs tables with RLS and index optimizations.",
+      "sql": "001_init.sql"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "Initial release of Content Scheduling & Auto-Publishing Add-on Plugin.",
+        "Implemented creator schedule manager with Calendar and Queue views.",
+        "Added multi-format scheduling support for Posts, Reels, and 24h Stories.",
+        "Integrated timezone conversions, background worker cron, retry engine, audit logs, and permission guards."
+      ]
+    }
+  ]
+}

@@ -5,8 +5,13 @@ import { PluginManifest } from '@/lib/extensions/plugin-types';
 import defaultTheme from '@themes/default-theme/theme.config';
 import starterTheme from '@themes/starter-theme/theme.config';
 
+import contentModeration from '@plugins/content-moderation/plugin.config';
+import contentScheduling from '@plugins/content-scheduling/plugin.config';
+import creatorAnalytics from '@plugins/creator-analytics/plugin.config';
 import creatorStories from '@plugins/creator-stories/plugin.config';
+import creatorVerification from '@plugins/creator-verification/plugin.config';
 import drmWatermark from '@plugins/drm-watermark/plugin.config';
+import piprapay from '@plugins/piprapay/plugin.config';
 import seoSocial from '@plugins/seo-social/plugin.config';
 import starterPlugin from '@plugins/starter-plugin/plugin.config';
 import telegramSync from '@plugins/telegram-sync/plugin.config';
@@ -24,8 +29,13 @@ export const DISCOVERED_THEMES: ThemeManifest[] = [
  * Discovered plugins loaded from root /plugins folder
  */
 export const DISCOVERED_PLUGINS = [
+  contentModeration,
+  contentScheduling,
+  creatorAnalytics,
   creatorStories,
+  creatorVerification,
   drmWatermark,
+  piprapay,
   seoSocial,
   starterPlugin,
   telegramSync,
@@ -33,5 +43,5 @@ export const DISCOVERED_PLUGINS = [
 ];
 
 export const DISCOVERED_PLUGIN_MANIFESTS: PluginManifest[] = DISCOVERED_PLUGINS.map(
-  (p) => p.manifest
+  (p) => p.manifest as PluginManifest
 );

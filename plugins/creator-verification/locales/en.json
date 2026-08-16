@@ -1,0 +1,69 @@
+{
+  "plugin_name": "Creator Verification Manager",
+  "verification": {
+    "title": "Creator Verification",
+    "description": "Verify your identity to earn a trusted creator badge.",
+    "apply": "Apply for Verification",
+    "reapply": "Re-Apply for Verification",
+    "update_application": "Update Application",
+    "status": {
+      "none": "Not Verified",
+      "pending": "Pending Review",
+      "under_review": "Under Review",
+      "approved": "Verified",
+      "rejected": "Rejected",
+      "changes_requested": "Changes Required",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "form": {
+      "full_name": "Full Legal Name",
+      "date_of_birth": "Date of Birth",
+      "country": "Country of Residence",
+      "government_id": "Government-Issued ID",
+      "selfie": "Selfie with ID",
+      "proof_of_address": "Proof of Address",
+      "social_links": "Social Media Links",
+      "additional_notes": "Additional Notes",
+      "submit": "Submit Application",
+      "uploading": "Uploading...",
+      "drag_drop": "Drag & drop or click to upload",
+      "max_size": "Maximum file size: {{size}}MB",
+      "allowed_types": "Allowed: {{types}}"
+    },
+    "admin": {
+      "dashboard_title": "Verification Manager",
+      "applications": "Applications",
+      "pending_count": "Pending",
+      "approved_count": "Approved",
+      "rejected_count": "Rejected",
+      "review_count": "Under Review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "request_changes": "Request Changes",
+      "revoke": "Revoke Verification",
+      "add_note": "Add Note",
+      "internal_note": "Internal Note (Admin Only)",
+      "rejection_reason": "Reason for Rejection",
+      "changes_message": "What changes are needed?",
+      "revoke_reason": "Reason for Revoking",
+      "history": "Status History",
+      "notes": "Notes",
+      "documents": "Documents",
+      "applicant_info": "Applicant Information"
+    },
+    "badge": {
+      "verified_creator": "Verified Creator",
+      "verified_since": "Verified since {{date}}",
+      "expires": "Expires {{date}}"
+    },
+    "notifications": {
+      "submitted": "Your verification application has been submitted for review.",
+      "approved": "Congratulations! Your identity has been verified.",
+      "rejected": "Your verification application was not approved.",
+      "changes_requested": "Your verification application needs updates.",
+      "revoked": "Your verified creator status has been revoked.",
+      "expired": "Your creator verification has expired."
+    }
+  }
+}

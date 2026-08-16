@@ -8,8 +8,11 @@ import {
   Sparkles, Mail, Lock, ArrowRight, ShieldCheck, UserCheck, 
   Eye, EyeOff, Shield, AlertCircle, CheckCircle2, User, Key, Crown, Ban
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { Input } from '../components/Input';
+import { Alert } from '../components/Alert';
+import { Checkbox } from '../components/Checkbox';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
 
@@ -217,65 +220,46 @@ function LoginFormContent() {
         </div>
 
         {errorMessage && (
-          <div className="p-3 bg-[#FFE4E6] border border-[#FECDD3] rounded-xl text-xs text-[#BE123C] flex items-center gap-2">
-            <AlertCircle size={14} className="shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
+          <Alert variant="error" onDismiss={() => setErrorMessage('')}>
+            {errorMessage}
+          </Alert>
         )}
 
         <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-          <div>
-            <label className="block text-[#18181B] font-bold mb-1">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-9 pr-3 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
-                placeholder="name@creatorpulse.com"
-                required
-              />
-            </div>
-          </div>
+          <Input
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            leftIcon={<Mail size={16} />}
+            placeholder="name@creatorpulse.com"
+            required
+          />
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-[#18181B] font-bold">Password</label>
-              <Link href="/auth/forgot-password" className="text-[#BE185D] text-[11px] font-bold hover:underline">
+              <label className="text-xs font-bold text-[#18181B] dark:text-[#FDF2F8]">Password</label>
+              <Link href="/auth/forgot-password" className="text-[#BE185D] dark:text-[#F472B6] text-[11px] font-bold hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={16} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl pl-9 pr-10 py-2.5 text-[#18181B] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors font-medium"
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#18181B] cursor-pointer"
-              >
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
+            <Input
+              type="password"
+              isPassword={true}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<Lock size={16} />}
+              placeholder="••••••••"
+              required
+            />
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 text-xs text-[#71717A] cursor-pointer font-medium select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#F3DCE8] text-[#EC4899] focus:ring-[#EC4899]/30 h-4 w-4 accent-[#EC4899]"
-              />
-              <span>Remember my session</span>
-            </label>
+            <Checkbox
+              checked={rememberMe}
+              onChange={setRememberMe}
+              label="Remember my session"
+            />
           </div>
 
           <Button
@@ -304,10 +288,10 @@ function LoginFormContent() {
 export function LoginPage() {
   return (
     <GuestGuard>
-      <div className="min-h-screen bg-[#FFF9FC] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777] relative">
-        <div className="absolute w-96 h-96 bg-[#FCE7F3]/60 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="min-h-screen bg-[#FFF9FC] dark:bg-[#0F0A14] text-[#18181B] dark:text-[#FDF2F8] flex flex-col items-center justify-center p-4 selection:bg-[#FCE7F3] selection:text-[#DB2777] relative transition-colors duration-200">
+        <div className="absolute w-96 h-96 bg-[#FCE7F3]/60 dark:bg-pink-900/15 rounded-full blur-[140px] pointer-events-none" />
         <Suspense fallback={
-          <div className="p-8 text-center text-xs text-[#71717A] font-bold">
+          <div className="p-8 text-center text-xs text-[#71717A] dark:text-[#D4B8D0] font-bold">
             Loading login portal...
           </div>
         }>

@@ -16,7 +16,18 @@
   "autoUpdate": true,
   "hasUpdate": false,
   "installedAt": "2026-08-06",
-  "updatedAt": "2026-08-06",
+  "updatedAt": "2026-08-15",
+  "adminSettingsPage": {
+    "title": "SEO & Social Sharing Configuration",
+    "description": "Customize OpenGraph social meta tags, Twitter card styles, and default fallback sharing images.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "SEO & Social Cards",
+      "icon": "Share2",
+      "badge": "SEO",
+      "badgeVariant": "blue"
+    }
+  },
   "settingsSchema": [
     {
       "id": "twitterCardType",
@@ -24,8 +35,8 @@
       "type": "select",
       "defaultValue": "summary_large_image",
       "options": [
-        { "label": "Large Visual Summary Image", "value": "summary_large_image" },
-        { "label": "Compact Thumbnail Summary", "value": "summary" }
+        { "label": "Large Visual Summary Image", "value": "summary_large_image", "description": "Full-width preview image format" },
+        { "label": "Compact Thumbnail Summary", "value": "summary", "description": "Small square thumbnail alongside text" }
       ]
     },
     {
@@ -33,12 +44,29 @@
       "label": "Social Meta Title Suffix",
       "type": "text",
       "defaultValue": "| CreatorPulse",
-      "placeholder": "| Your Brand Name"
+      "placeholder": "| Your Brand Name",
+      "required": true
+    },
+    {
+      "id": "enableAutoMeta",
+      "label": "Automatic Meta Tag Generation",
+      "type": "toggle",
+      "defaultValue": true,
+      "description": "Automatically extract excerpt from post contents for meta descriptions."
+    },
+    {
+      "id": "defaultOgImage",
+      "label": "Default Social Share Image",
+      "type": "media",
+      "defaultValue": "",
+      "description": "Fallback OpenGraph image when posts lack a dedicated cover photo."
     }
   ],
   "settingsValues": {
     "twitterCardType": "summary_large_image",
-    "brandPrefix": "| CreatorPulse"
+    "brandPrefix": "| CreatorPulse",
+    "enableAutoMeta": true,
+    "defaultOgImage": ""
   },
   "changelog": [
     { "version": "1.0.4", "date": "2026-08-06", "changes": ["Added custom aspect ratio controls"] },

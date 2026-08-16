@@ -1,0 +1,7 @@
+{
+  "name": "PipraPay Payment Gateway",
+  "checkout_button": "Pay with PipraPay (bKash, Nagad, Cards)",
+  "sandbox_notice": "Sandbox Test Mode Active",
+  "payment_success": "Payment completed successfully via PipraPay",
+  "payment_failed": "Payment failed or was cancelled by user"
+}

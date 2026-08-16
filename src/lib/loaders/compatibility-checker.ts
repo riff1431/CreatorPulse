@@ -23,8 +23,13 @@ export interface DiagnosticReport {
 export class CompatibilityChecker {
   private static CURRENT_APP_VERSION = '1.2.0';
   private static WHITELISTED_PERMISSIONS = [
-    'notifications_send',
     'storage_access',
+    'payment_hooks',
+    'network_requests',
+    'media_transform',
+    'notifications_send',
+    'security_audit',
+    'ai_service',
     'database_write',
     'network_access',
     'custom_routes'
@@ -98,24 +103,27 @@ export class CompatibilityChecker {
       addIssue('error', 'id', `Theme ID "${manifest.id}" collides with an existing theme in folder "/themes/${idCollision.slug}".`, 'Change the "id" field in manifest.json to a unique identifier.');
     }
 
-    // 4. Folder structure check
-    const standardFolders = [
-      'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
-      'styles', 'css', 'js', 'animations', 'assets', 'templates',
-      'partials', 'hooks', 'config', 'locales', 'preview'
-    ];
-    const presentDirs = new Set(folderNames);
-    const missing = standardFolders.filter(d => !presentDirs.has(d));
-    if (presentDirs.size < 10) {
-      addIssue('error', 'directoryHealth', `Non-compliant structure: Contains only ${presentDirs.size}/17 standard Theme SDK folders.`, `Create standard subdirectories. Missing standard directories: ${missing.join(', ')}`);
-    } else if (missing.length > 0) {
-      addIssue('warning', 'directoryHealth', `Missing ${missing.length} optional Theme SDK folders: ${missing.join(', ')}.`, 'Adding empty folders helps organize custom layouts.');
-    }
+    // 4. Folder structure check — only run when folderNames is provided (ZIP upload).
+    //    During activation of an already-installed theme, folderNames is [] so we skip.
+    if (folderNames.length > 0) {
+      const standardFolders = [
+        'pages', 'layouts', 'components', 'icons', 'images', 'fonts',
+        'styles', 'css', 'js', 'animations', 'assets', 'templates',
+        'partials', 'hooks', 'config', 'locales', 'preview'
+      ];
+      const presentDirs = new Set(folderNames);
+      const missing = standardFolders.filter(d => !presentDirs.has(d));
+      if (presentDirs.size < 10) {
+        addIssue('error', 'directoryHealth', `Non-compliant structure: Contains only ${presentDirs.size}/17 standard Theme SDK folders.`, `Create standard subdirectories. Missing standard directories: ${missing.join(', ')}`);
+      } else if (missing.length > 0) {
+        addIssue('warning', 'directoryHealth', `Missing ${missing.length} optional Theme SDK folders: ${missing.join(', ')}.`, 'Adding empty folders helps organize custom layouts.');
+      }
 
-    // 5. Unrecognized folders
-    const extraDirs = folderNames.filter(dir => !standardFolders.includes(dir));
-    if (extraDirs.length > 0) {
-      addIssue('warning', 'directoryHealth', `Found unrecognized folder structures: ${extraDirs.join(', ')}. Unsafe paths will be ignored.`, 'Align subdirectories strictly with standard SDK folder specifications.');
+      // 5. Unrecognized folders
+      const extraDirs = folderNames.filter(dir => !standardFolders.includes(dir));
+      if (extraDirs.length > 0) {
+        addIssue('warning', 'directoryHealth', `Found unrecognized folder structures: ${extraDirs.join(', ')}. Unsafe paths will be ignored.`, 'Align subdirectories strictly with standard SDK folder specifications.');
+      }
     }
 
     // 6. Dependencies check
@@ -216,19 +224,28 @@ export class CompatibilityChecker {
       addIssue('error', 'id', `Plugin ID "${manifest.id}" collides with an existing plugin in folder "/plugins/${idCollision.slug}".`, 'Change the "id" field in manifest.json to a unique identifier.');
     }
 
-    // 4. Folder structure check
-    const standardFolders = [
-      'client', 'server', 'api', 'components', 'pages', 'routes', 'hooks',
-      'services', 'database', 'migrations', 'settings', 'permissions', 'icons',
-      'images', 'css', 'js', 'assets', 'locales', 'jobs', 'events',
-      'webhooks', 'tests', 'docs'
-    ];
-    const presentDirs = new Set(folderNames);
-    const missing = standardFolders.filter(d => !presentDirs.has(d));
-    if (presentDirs.size < 15) {
-      addIssue('error', 'directoryHealth', `Non-compliant structure: Contains only ${presentDirs.size}/23 standard Plugin SDK folders.`, `Create standard subdirectories. Missing: ${missing.join(', ')}`);
-    } else if (missing.length > 0) {
-      addIssue('warning', 'directoryHealth', `Missing ${missing.length} optional Plugin SDK folders: ${missing.join(', ')}.`, 'Optional directories can be added for hooks, cron jobs, or tests.');
+    // 4. Folder structure check — only run when folderNames is provided (ZIP upload).
+    //    During activation or runtime checks of an already-installed plugin, folderNames is [] so we skip.
+    if (folderNames.length > 0) {
+      const standardFolders = [
+        'client', 'server', 'api', 'components', 'pages', 'routes', 'hooks',
+        'services', 'database', 'migrations', 'settings', 'permissions', 'icons',
+        'images', 'css', 'js', 'assets', 'locales', 'jobs', 'events',
+        'webhooks', 'tests', 'docs'
+      ];
+      const presentDirs = new Set(folderNames);
+      const missing = standardFolders.filter(d => !presentDirs.has(d));
+      if (presentDirs.size < 15) {
+        addIssue('error', 'directoryHealth', `Non-compliant structure: Contains only ${presentDirs.size}/23 standard Plugin SDK folders.`, `Create standard subdirectories. Missing: ${missing.join(', ')}`);
+      } else if (missing.length > 0) {
+        addIssue('warning', 'directoryHealth', `Missing ${missing.length} optional Plugin SDK folders: ${missing.join(', ')}.`, 'Optional directories can be added for hooks, cron jobs, or tests.');
+      }
+
+      // Unrecognized folders
+      const extraDirs = folderNames.filter(dir => !standardFolders.includes(dir));
+      if (extraDirs.length > 0) {
+        addIssue('warning', 'directoryHealth', `Found unrecognized folder structures: ${extraDirs.join(', ')}. Unsafe paths will be ignored.`, 'Align subdirectories strictly with standard SDK folder specifications.');
+      }
     }
 
     // 5. Database migrations checks

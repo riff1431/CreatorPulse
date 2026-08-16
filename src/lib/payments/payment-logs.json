@@ -1,5 +1,33 @@
 [
   {
+    "id": "evt-1786900676205-pjz0",
+    "timestamp": "2026-08-16T17:17:56.205Z",
+    "gatewayId": "plugin-piprapay",
+    "eventType": "WEBHOOK",
+    "transactionId": "pp_test_1786900667154_ngvp1a",
+    "status": "Completed",
+    "details": "Parsed webhook successfully. Event: PipraPay IPN received: Status = completed -> Completed"
+  },
+  {
+    "id": "evt-1786900671480-g68w",
+    "timestamp": "2026-08-16T17:17:51.480Z",
+    "gatewayId": "plugin-piprapay",
+    "eventType": "WEBHOOK",
+    "status": "Completed",
+    "details": "Idempotency hit resolved for duplicate execution key: test-idem-999"
+  },
+  {
+    "id": "evt-1786900667154-01h3",
+    "timestamp": "2026-08-16T17:17:47.154Z",
+    "gatewayId": "plugin-piprapay",
+    "eventType": "CHECKOUT",
+    "transactionId": "pp_test_1786900667154_ngvp1a",
+    "amount": 50,
+    "currency": "BDT",
+    "status": "Pending",
+    "details": "Executed checkout successfully. Message: PipraPay checkout transaction initialized."
+  },
+  {
     "id": "evt-1786741597536-c50s",
     "timestamp": "2026-08-14T21:06:37.536Z",
     "gatewayId": "plugin-zapier-webhooks",

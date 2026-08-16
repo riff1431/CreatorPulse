@@ -9,8 +9,9 @@ import {
   Layers, Settings, ChevronLeft, ChevronRight, Menu, Palette,
   Puzzle, ShieldCheck, Database, Compass, Radio, Search, ExternalLink,
   Shield, Mail, Image as ImageIcon, Wrench, Bell, HardDrive, RefreshCw,
-  ClipboardCheck, Newspaper
+  ClipboardCheck, Newspaper, Globe, Tag, Share2, Percent, ShoppingBag, Calendar
 } from 'lucide-react';
+
 import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 
 interface NavItem {
@@ -39,6 +40,10 @@ const allAdminNavGroups: NavGroup[] = [
     title: 'Dynamic Managers',
     items: [
       { label: 'Site Settings', href: '/admin/settings', icon: Settings, badge: 'Dynamic', badgeVariant: 'indigo' },
+      { label: 'Payment Gateways', href: '/admin/payment-gateways', icon: CreditCard, badge: 'Dynamic', badgeVariant: 'emerald' },
+      { label: 'Checkout & Paywalls', href: '/admin/checkout', icon: ShoppingBag, badge: 'Dynamic', badgeVariant: 'emerald' },
+      { label: 'Language & Translations', href: '/admin/language', icon: Globe, badge: 'Dynamic', badgeVariant: 'indigo' },
+      { label: 'Email & SMTP', href: '/admin/email-manager', icon: Mail, badge: 'Dynamic', badgeVariant: 'emerald' },
       { label: 'Storage & Drives', href: '/admin/storage', icon: HardDrive, badge: 'Dynamic', badgeVariant: 'emerald' },
       { label: 'Menu & Navigation', href: '/admin/navigation', icon: Menu },
       { label: 'Pages & CMS', href: '/admin/cms', icon: FileText },
@@ -46,6 +51,8 @@ const allAdminNavGroups: NavGroup[] = [
       { label: 'Feature Modules', href: '/admin/modules', icon: Puzzle, badge: 'New', badgeVariant: 'amber' },
     ],
   },
+
+
   {
     title: 'User Management',
     items: [
@@ -58,11 +65,13 @@ const allAdminNavGroups: NavGroup[] = [
   {
     title: 'Content & Media',
     items: [
-      { label: 'Media Manager', href: '/admin/media', icon: ImageIcon, badge: 'Pro', badgeVariant: 'indigo' },
+      { label: 'Media', href: '/admin/media', icon: ImageIcon, badge: 'Library', badgeVariant: 'indigo' },
       { label: 'Email Templates', href: '/admin/email-templates', icon: Mail },
       { label: 'Posts', href: '/admin/posts', icon: Newspaper },
       { label: 'Reels & Shorts', href: '/admin/reels', icon: Clapperboard },
       { label: '24h Stories', href: '/admin/stories', icon: Sparkles },
+      { label: 'Schedule Queue', href: '/admin/schedule-queue', icon: Calendar, badge: 'Queue', badgeVariant: 'indigo' },
+      { label: 'AI Moderation Hub', href: '/admin/moderation', icon: ShieldAlert, badge: 'AI Guard', badgeVariant: 'rose' },
       { label: 'Abuse Reports', href: '/admin/reports', icon: ShieldAlert, badge: 2, badgeVariant: 'amber' },
     ],
   },
@@ -77,7 +86,11 @@ const allAdminNavGroups: NavGroup[] = [
   {
     title: 'Finance & Commerce',
     items: [
+      { label: 'Coupons & Promos', href: '/admin/promotions', icon: Tag, badge: 'Dynamic', badgeVariant: 'emerald' },
+      { label: 'Referrals & Affiliates', href: '/admin/referrals', icon: Share2, badge: 'New', badgeVariant: 'indigo' },
       { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
+      { label: 'Invoices & Receipts', href: '/admin/invoices', icon: FileText, badge: 'New', badgeVariant: 'indigo' },
+      { label: 'Platform Fees & Taxes', href: '/admin/tax-fees', icon: Percent, badge: 'Dynamic', badgeVariant: 'emerald' },
       { label: 'VIP Memberships', href: '/admin/memberships', icon: Crown },
       { label: 'Transactions', href: '/admin/transactions', icon: Receipt },
       { label: 'Payout Requests', href: '/admin/payouts', icon: Wallet, badge: 1, badgeVariant: 'emerald' },
@@ -113,15 +126,55 @@ export const AdminSidebar: React.FC = () => {
   const { activePlugins } = usePlugins();
   const siteName = settings.site_name || 'CreatorPulse';
   const siteInitials = siteName.substring(0, 2).toUpperCase();
-  const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories');
 
-  const filteredGroups = allAdminNavGroups.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => {
-      if (item.href === '/admin/stories' && !hasStoriesPlugin) return false;
-      return item.label.toLowerCase().includes(navFilter.toLowerCase());
-    }),
-  })).filter((group) => group.items.length > 0);
+  const filteredGroups = (() => {
+    // Collect dynamic plugin sidebar items from active plugins
+    const dynamicPluginItems: NavItem[] = activePlugins
+      .filter(p => p.adminSettingsPage?.sidebarItem)
+      .map(p => {
+        const si = p.adminSettingsPage!.sidebarItem!;
+        return {
+          label: si.label,
+          href: si.href ?? `/admin/plugins/${p.slug}/settings`,
+          icon: Settings, // fallback icon — plugins may use an emoji via badge
+          badge: si.badge,
+          badgeVariant: si.badgeVariant,
+        };
+      });
+
+    // Build base groups, filtering legacy hardcoded entries
+    const base = allAdminNavGroups.map(group => ({
+      ...group,
+      items: group.items.filter(item => {
+        // Keep entries only if plugin is active
+        if (item.href === '/admin/stories') {
+          return activePlugins.some(p => p.id === 'plugin-creator-stories');
+        }
+        if (item.href === '/admin/schedule-queue') {
+          return activePlugins.some(p => p.id === 'plugin-content-scheduling' || p.slug === 'content-scheduling');
+        }
+        if (item.href === '/admin/moderation') {
+          return activePlugins.some(p => p.id === 'plugin-content-moderation' || p.slug === 'content-moderation' || p.id === 'plugin-ai-content-moderation' || p.slug === 'ai-content-moderation');
+        }
+        return item.label.toLowerCase().includes(navFilter.toLowerCase());
+      }),
+    })).filter(group => group.items.length > 0);
+
+    // Append dynamic plugin settings group if any plugins expose sidebar items
+    if (dynamicPluginItems.length > 0) {
+      const filteredPluginItems = dynamicPluginItems.filter(item =>
+        item.label.toLowerCase().includes(navFilter.toLowerCase())
+      );
+      if (filteredPluginItems.length > 0) {
+        base.push({
+          title: 'Plugin Settings',
+          items: filteredPluginItems,
+        });
+      }
+    }
+
+    return base;
+  })();
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white">

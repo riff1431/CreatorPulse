@@ -2,20 +2,20 @@
   "id": "theme-starter-theme",
   "name": "Starter Theme Template",
   "slug": "starter-theme",
-  "description": "Clean, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.",
-  "version": "1.0.1",
-  "author": "Your Studio / Developer Name",
-  "authorUrl": "https://yourwebsite.com",
+  "description": "Production-ready, fully commented official Theme SDK starter template for creating custom CreatorPulse themes.",
+  "version": "1.1.0",
+  "author": "CreatorPulse SDK Studio",
+  "authorUrl": "https://creatorpulse.com",
   "previewImageUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600",
   "category": "Modern Light",
-  "tags": ["Starter", "Developer", "Template", "SDK"],
+  "tags": ["Starter", "Developer", "Template", "SDK", "Clean UI"],
   "minAppVersion": "1.0.0",
   "isActive": false,
   "requiresLicense": true,
   "licenseKey": "CP-THEME-FREE-STRT-2026",
   "licenseStatus": "licensed",
   "installedAt": "2026-08-15",
-  "updatedAt": "2026-08-15",
+  "updatedAt": "2026-08-17",
   "tokens": {
     "primary": "#3B82F6",
     "primaryHover": "#2563EB",
@@ -44,8 +44,30 @@
     "sidebarPlacement": "left",
     "headerStyle": "fixed"
   },
+  "overrides": {
+    "pages": ["LandingPage"],
+    "layouts": ["MainLayout", "CreatorLayout", "AuthLayout"],
+    "components": ["Button", "Card", "Badge", "Avatar"]
+  },
   "changelog": [
-    { "version": "1.0.1", "date": "2026-08-15", "changes": ["Added pre-bundled license key for immediate activation"] },
-    { "version": "1.0.0", "date": "2026-08-15", "changes": ["Initial starter theme template"] }
+    {
+      "version": "1.1.0",
+      "date": "2026-08-17",
+      "changes": [
+        "Added full SDK boilerplate components: Card, Badge, Avatar, and Layouts",
+        "Configured declarative overrides manifest for automatic fallback validation",
+        "Enriched starter theme CSS with responsive animations and token bindings"
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-08-15",
+      "changes": ["Added pre-bundled license key for immediate activation"]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-08-15",
+      "changes": ["Initial starter theme template"]
+    }
   ]
 }

@@ -17,6 +17,17 @@
   "hasUpdate": false,
   "installedAt": "2026-08-15",
   "updatedAt": "2026-08-15",
+  "adminSettingsPage": {
+    "title": "Creator 24h Stories Settings",
+    "description": "Configure story self-destruct timers, DM reply permissions, and media upload limits.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "24h Stories Settings",
+      "icon": "Sparkles",
+      "badge": "24h",
+      "badgeVariant": "indigo"
+    }
+  },
   "databaseMigrations": [
     {
       "version": "1.0.0",
@@ -29,13 +40,16 @@
       "id": "maxStoryDurationHours",
       "label": "Story Expiration Time (Hours)",
       "type": "number",
-      "defaultValue": 24
+      "defaultValue": 24,
+      "min": 1,
+      "max": 168
     },
     {
       "id": "allowPublicReplies",
       "label": "Allow Direct DM Replies on Stories",
-      "type": "boolean",
-      "defaultValue": true
+      "type": "toggle",
+      "defaultValue": true,
+      "description": "Enables interactive reply input box on active story view screens."
     }
   ],
   "settingsValues": {

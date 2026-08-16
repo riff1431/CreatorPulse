@@ -21,7 +21,10 @@ export type FeatureModuleId =
   | 'memberships'
   | 'comments'
   | 'creator_applications'
-  | 'wallet';
+  | 'wallet'
+  | 'video_player'
+  | 'image_loader'
+  | 'audio_player';
 
 export interface FeatureModule {
   id: FeatureModuleId;
@@ -311,6 +314,185 @@ export const INITIAL_FEATURE_MODULES: FeatureModule[] = [
           { label: 'Monthly', value: 'monthly' },
         ],
         defaultValue: 'weekly',
+      },
+    ],
+  },
+  {
+    id: 'video_player',
+    name: 'Dynamic Video Engine',
+    description: 'Configure and select the active platform video player engine dynamically (Vidstack, Video.js, Plyr).',
+    isEnabled: true,
+    dependencies: [],
+    settings: {
+      activeEngine: 'vidstack',
+      autoPlay: false,
+      controls: true,
+      muted: false,
+      fluid: true,
+    },
+    icon: 'Video',
+    category: 'content',
+    version: '1.0.0',
+    detailDescription:
+      'Dynamic Video Engine allows administrators to choose and configure the primary open-source video playback package across the platform. Switch dynamically between Vidstack (modern UI & HLS support), Video.js / React Player (robust codecs & buffering), and Plyr (minimalist lightweight UI).',
+    features: [
+      'Vidstack open-source modern video player engine',
+      'Video.js / React Player open-source video engine',
+      'Plyr open-source HTML5 video player engine',
+      'Site-wide dynamic video player replacement',
+      'Global autoplay, control toggles, and muted presets',
+      'Adaptive responsive fluid scaling',
+    ],
+    settingsSchema: [
+      {
+        key: 'activeEngine',
+        label: 'Active Video Player Engine',
+        type: 'select',
+        description: 'Choose the default video player package used across all videos on the platform.',
+        options: [
+          { label: 'Vidstack Modern Player', value: 'vidstack' },
+          { label: 'Video.js / React Player Engine', value: 'videojs' },
+          { label: 'Plyr HTML5 Video Player', value: 'plyr' },
+        ],
+        defaultValue: 'vidstack',
+      },
+      {
+        key: 'autoPlay',
+        label: 'Auto-Play Videos',
+        type: 'boolean',
+        description: 'Automatically start video playback on load.',
+        defaultValue: false,
+      },
+      {
+        key: 'controls',
+        label: 'Show Player Controls',
+        type: 'boolean',
+        description: 'Display play/pause, timeline scrubber, and volume controls on video players.',
+        defaultValue: true,
+      },
+      {
+        key: 'muted',
+        label: 'Start Muted',
+        type: 'boolean',
+        description: 'Mute videos by default on initial render.',
+        defaultValue: false,
+      },
+    ],
+  },
+  {
+    id: 'image_loader',
+    name: 'Dynamic Image Engine',
+    description: 'Configure and select the active open-source image loading, rendering, and zoom engine dynamically.',
+    isEnabled: true,
+    dependencies: [],
+    settings: {
+      activeEngine: 'next_image',
+      enableLazyLoad: true,
+      quality: 85,
+      hoverEffect: 'zoom',
+    },
+    icon: 'Image',
+    category: 'content',
+    version: '1.0.0',
+    detailDescription:
+      'Dynamic Image Engine controls image loading and interactive rendering platform-wide. Select between Next.js Native Image (optimized layout & responsive srcSet), React Zoom Lightbox (fullscreen modal viewer & pinch zoom), and Progressive BlurHash (smooth skeleton pulse & blur-up transition).',
+    features: [
+      'Next.js Native `<Image />` optimization engine',
+      'React Zoom & Lightbox interactive modal viewer engine',
+      'Progressive BlurHash & Skeleton smooth fade engine',
+      'Site-wide dynamic image renderer',
+      'Configurable image quality & lazy-loading presets',
+      'Interactive hover and magnification effects',
+    ],
+    settingsSchema: [
+      {
+        key: 'activeEngine',
+        label: 'Active Image Loader Engine',
+        type: 'select',
+        description: 'Select the active open-source image engine used across the site.',
+        options: [
+          { label: 'Next.js Native Image (Optimized)', value: 'next_image' },
+          { label: 'React Zoom Lightbox (Interactive Expand)', value: 'zoom_lightbox' },
+          { label: 'Progressive BlurHash (Skeleton Pulse)', value: 'blurhash' },
+        ],
+        defaultValue: 'next_image',
+      },
+      {
+        key: 'enableLazyLoad',
+        label: 'Enable Lazy Loading',
+        type: 'boolean',
+        description: 'Defer image loading until scrolled into viewport.',
+        defaultValue: true,
+      },
+      {
+        key: 'hoverEffect',
+        label: 'Image Hover Effect',
+        type: 'select',
+        description: 'Select visual effect when hovering over images.',
+        options: [
+          { label: 'Subtle Scale Zoom', value: 'zoom' },
+          { label: 'Glow Border', value: 'glow' },
+          { label: 'None', value: 'none' },
+        ],
+        defaultValue: 'zoom',
+      },
+    ],
+  },
+  {
+    id: 'audio_player',
+    name: 'Dynamic Audio Engine',
+    description: 'Configure and select the active audio player package dynamically (Wavesurfer Waveform, Howler, Plyr Audio).',
+    isEnabled: true,
+    dependencies: [],
+    settings: {
+      activeEngine: 'wavesurfer',
+      waveformColor: '#EC4899',
+      showTimestamps: true,
+      autoPlay: false,
+    },
+    icon: 'Volume2',
+    category: 'content',
+    version: '1.0.0',
+    detailDescription:
+      'Dynamic Audio Engine manages interactive audio playback across creator posts and podcasts. Choose between Wavesurfer.js (visual waveform scrubbing & frequency visualization), Howler / Clean Audio Engine (full audio controls with duration & volume), and Plyr Audio (sleek minimalist audio pill).',
+    features: [
+      'Wavesurfer.js visual canvas waveform scrubber engine',
+      'Howler / Custom Audio Engine with volume & scrubber',
+      'Plyr Audio minimalist pill player engine',
+      'Dynamic waveform color customization',
+      'High precision scrubbing and playback rate controls',
+    ],
+    settingsSchema: [
+      {
+        key: 'activeEngine',
+        label: 'Active Audio Player Engine',
+        type: 'select',
+        description: 'Select the default audio player package for audio posts and media previews.',
+        options: [
+          { label: 'Wavesurfer.js (Visual Waveform)', value: 'wavesurfer' },
+          { label: 'Howler / Clean Audio Engine', value: 'howler' },
+          { label: 'Plyr Audio (Minimal Pill Player)', value: 'plyr_audio' },
+        ],
+        defaultValue: 'wavesurfer',
+      },
+      {
+        key: 'waveformColor',
+        label: 'Waveform Accent Color',
+        type: 'select',
+        description: 'Set primary color theme for waveform visualization.',
+        options: [
+          { label: 'Pink (#EC4899)', value: '#EC4899' },
+          { label: 'Indigo (#6366F1)', value: '#6366F1' },
+          { label: 'Emerald (#10B981)', value: '#10B981' },
+        ],
+        defaultValue: '#EC4899',
+      },
+      {
+        key: 'showTimestamps',
+        label: 'Show Timestamps',
+        type: 'boolean',
+        description: 'Display elapsed and total audio duration on player.',
+        defaultValue: true,
       },
     ],
   },

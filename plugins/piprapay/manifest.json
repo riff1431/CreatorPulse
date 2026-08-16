@@ -1,0 +1,156 @@
+{
+  "id": "plugin-piprapay",
+  "name": "PipraPay Payment Gateway",
+  "slug": "piprapay",
+  "description": "Seamlessly accept bKash, Nagad, Rocket, Upay, Cards, and multi-currency payments via PipraPay with instant webhook validation and auto-settlement.",
+  "version": "1.0.0",
+  "author": "PipraPay Labs",
+  "authorUrl": "https://piprapay.com",
+  "iconUrl": "💳",
+  "category": "Monetization",
+  "tags": ["Payments", "PipraPay", "bKash", "Nagad", "Rocket", "Credit Card", "Bangladesh", "Multi-Currency"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["payment_hooks", "network_requests"],
+  "hooks": ["payment_gateway_methods"],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "adminSettingsPage": {
+    "title": "PipraPay Gateway Settings",
+    "description": "Configure PipraPay API credentials, webhook verification keys, sandbox/live mode, supported currencies, and connection diagnostics.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "PipraPay Gateway",
+      "icon": "CreditCard",
+      "badge": "Payment",
+      "badgeVariant": "emerald"
+    }
+  },
+  "settingsSchema": [
+    {
+      "id": "mode",
+      "label": "Operating Mode",
+      "type": "select",
+      "defaultValue": "sandbox",
+      "options": [
+        { "label": "Sandbox (Simulation & Test Checkout)", "value": "sandbox", "description": "Safe test environment for simulated bKash, Nagad, Rocket, and card transactions." },
+        { "label": "Live (Production Transactions)", "value": "live", "description": "Connect to live PipraPay API for real customer transactions." }
+      ]
+    },
+    {
+      "id": "baseUrl",
+      "label": "PipraPay API Base URL",
+      "type": "text",
+      "defaultValue": "https://sandbox.piprapay.com/api",
+      "placeholder": "https://sandbox.piprapay.com/api or https://piprapay.com/api",
+      "required": true,
+      "description": "Base REST API endpoint. Use https://sandbox.piprapay.com/api for testing or https://piprapay.com/api for production."
+    },
+    {
+      "id": "apiKey",
+      "label": "PipraPay API Key",
+      "type": "api_key",
+      "defaultValue": "pk_test_piprapay_demo_key",
+      "placeholder": "pk_test_... or pk_live_...",
+      "required": true,
+      "description": "Confidential API Key issued by PipraPay Merchant Dashboard. Kept securely in the server vault."
+    },
+    {
+      "id": "secretKey",
+      "label": "Webhook / Signature Secret Key",
+      "type": "password",
+      "defaultValue": "whsec_piprapay_demo_secret",
+      "placeholder": "whsec_...",
+      "required": true,
+      "description": "Secret key used for HMAC-SHA256 verification of incoming webhook IPN notifications."
+    },
+    {
+      "id": "supportedCurrencies",
+      "label": "Supported Checkout Currencies",
+      "type": "select",
+      "defaultValue": "BDT",
+      "options": [
+        { "label": "BDT (৳ Bangladeshi Taka - bKash, Nagad, Rocket)", "value": "BDT" },
+        { "label": "USD ($ US Dollar)", "value": "USD" },
+        { "label": "EUR (€ Euro)", "value": "EUR" },
+        { "label": "GBP (£ British Pound)", "value": "GBP" },
+        { "label": "Multi-Currency (All Supported)", "value": "ALL" }
+      ]
+    },
+    {
+      "id": "transactionFeePercentage",
+      "label": "Transaction Surcharge / Processing Fee (%)",
+      "type": "number",
+      "defaultValue": 0.0,
+      "min": 0,
+      "max": 15,
+      "step": 0.1,
+      "description": "Optional merchant processing fee percentage added to customer total at checkout (0 for no surcharge)."
+    },
+    {
+      "id": "isDefault",
+      "label": "Set as Default Payment Gateway",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Automatically pre-selects PipraPay in customer checkout modals."
+    },
+    {
+      "id": "displayOrder",
+      "label": "Display Priority Order",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 1,
+      "max": 100,
+      "description": "Ordering priority in checkout modal list (1 = top)."
+    },
+    {
+      "id": "webhookUrl",
+      "label": "IPN Webhook Listener URL",
+      "type": "text",
+      "defaultValue": "/api/payments/webhook/piprapay",
+      "description": "Copy this endpoint into your PipraPay Merchant Webhook settings."
+    },
+    {
+      "id": "transactionStatusMapping",
+      "label": "Status Mapping Rules (JSON)",
+      "type": "textarea",
+      "defaultValue": "{\n  \"completed\": \"Completed\",\n  \"paid\": \"Completed\",\n  \"success\": \"Completed\",\n  \"pending\": \"Pending\",\n  \"processing\": \"Pending\",\n  \"failed\": \"Failed\",\n  \"cancelled\": \"Failed\",\n  \"refunded\": \"Refunded\"\n}",
+      "description": "Maps gateway IPN statuses to platform transaction ledger statuses."
+    },
+    {
+      "id": "enableLogging",
+      "label": "Enable Diagnostic & Webhook Audit Logging",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Persists all gateway requests, webhook deliveries, and API errors to the central payment audit ledger."
+    }
+  ],
+  "settingsValues": {
+    "mode": "sandbox",
+    "baseUrl": "https://sandbox.piprapay.com/api",
+    "apiKey": "pk_test_piprapay_demo_key",
+    "secretKey": "whsec_piprapay_demo_secret",
+    "supportedCurrencies": "BDT",
+    "transactionFeePercentage": 0.0,
+    "isDefault": false,
+    "displayOrder": 1,
+    "webhookUrl": "/api/payments/webhook/piprapay",
+    "transactionStatusMapping": "{\n  \"completed\": \"Completed\",\n  \"paid\": \"Completed\",\n  \"success\": \"Completed\",\n  \"pending\": \"Pending\",\n  \"processing\": \"Pending\",\n  \"failed\": \"Failed\",\n  \"cancelled\": \"Failed\",\n  \"refunded\": \"Refunded\"\n}",
+    "enableLogging": true
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "Initial release of the standalone PipraPay Payment Gateway Add-on Plugin.",
+        "Integrated bKash, Nagad, Rocket, Upay, Cards, and multi-currency checkout redirect flow.",
+        "Full server-side secret management with HMAC-SHA256 webhook validation.",
+        "Idempotency protection preventing duplicate charge completions.",
+        "Full support for memberships, subscriptions, wallet funding, and tips."
+      ]
+    }
+  ]
+}

@@ -16,40 +16,127 @@
   "autoUpdate": true,
   "hasUpdate": false,
   "installedAt": "2026-08-01",
-  "updatedAt": "2026-08-13",
+  "updatedAt": "2026-08-15",
+  "adminSettingsPage": {
+    "title": "Digital Watermark & DRM Guard Settings",
+    "description": "Configure digital rights management policies, visual watermark stamps, and screen recording protection.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "DRM & Protection",
+      "icon": "Shield",
+      "badge": "Active",
+      "badgeVariant": "emerald"
+    }
+  },
+  "settingsGroups": [
+    {
+      "id": "general",
+      "label": "General & Text",
+      "icon": "📝",
+      "description": "Configure visual text stamps and watermark positioning.",
+      "fieldIds": ["watermarkText", "watermarkColor", "watermarkPosition"]
+    },
+    {
+      "id": "protection",
+      "label": "Protection & DRM",
+      "icon": "🛡️",
+      "description": "Configure anti-piracy policies and viewer tracking overlay.",
+      "fieldIds": ["watermarkOpacity", "includeViewerUsername", "blockRightClick", "licenseVaultKey"]
+    },
+    {
+      "id": "ip_rules",
+      "label": "IP Restrictions",
+      "icon": "🌐",
+      "description": "Define custom IP access restrictions and domain allowlists.",
+      "fieldIds": ["allowedDomains"]
+    }
+  ],
   "settingsSchema": [
     {
       "id": "watermarkText",
       "label": "Default Watermark Text",
       "type": "text",
       "defaultValue": "© CreatorPulse Protected",
-      "placeholder": "© CreatorPulse Protected"
+      "placeholder": "© CreatorPulse Protected",
+      "required": true,
+      "maxLength": 60
+    },
+    {
+      "id": "watermarkColor",
+      "label": "Watermark Text Color",
+      "type": "color",
+      "defaultValue": "#EC4899",
+      "description": "Hex color for visual overlay stamps."
+    },
+    {
+      "id": "watermarkPosition",
+      "label": "Watermark Stamp Placement",
+      "type": "radio",
+      "defaultValue": "bottom-right",
+      "options": [
+        { "label": "Bottom Right", "value": "bottom-right", "description": "Subtle corner badge" },
+        { "label": "Center Diagonal", "value": "center-diagonal", "description": "High security overlay" },
+        { "label": "Top Left", "value": "top-left", "description": "Top bar overlay" }
+      ]
     },
     {
       "id": "watermarkOpacity",
       "label": "Watermark Opacity (0.1 - 1.0)",
       "type": "number",
-      "defaultValue": 0.4
+      "defaultValue": 0.4,
+      "min": 0.1,
+      "max": 1.0,
+      "step": 0.05
     },
     {
       "id": "includeViewerUsername",
       "label": "Include Viewer Username Stamp",
-      "type": "boolean",
+      "type": "toggle",
       "defaultValue": true,
       "description": "Disincentivizes screen recording by stamping active subscriber username."
     },
     {
       "id": "blockRightClick",
       "label": "Disable Right Click on Media",
-      "type": "boolean",
-      "defaultValue": true
+      "type": "toggle",
+      "defaultValue": true,
+      "description": "Prevents standard right-click context menu image saving."
+    },
+    {
+      "id": "licenseVaultKey",
+      "label": "DRM Licensing Vault API Key",
+      "type": "api_key",
+      "defaultValue": "",
+      "placeholder": "drm_live_sec_key_...",
+      "description": "API secret for validating enterprise Widevine DRM certificates."
+    },
+    {
+      "id": "allowedDomains",
+      "label": "Domain & Embed Allowlists",
+      "type": "repeater",
+      "defaultValue": [
+        { "domainName": "creatorpulse.io", "allowEmbed": true },
+        { "domainName": "cdn.storywave.net", "allowEmbed": false }
+      ],
+      "maxRows": 10,
+      "repeaterSchema": [
+        { "id": "domainName", "label": "Domain Name", "type": "text", "placeholder": "example.com" },
+        { "id": "allowEmbed", "label": "Allow Video iFrame Embeds", "type": "boolean", "defaultValue": true }
+      ]
     }
   ],
   "settingsValues": {
     "watermarkText": "© CreatorPulse Protected",
+    "watermarkColor": "#EC4899",
+    "watermarkPosition": "bottom-right",
     "watermarkOpacity": 0.4,
     "includeViewerUsername": true,
-    "blockRightClick": true
+    "blockRightClick": true,
+    "licenseVaultKey": "••••••••",
+    "allowedDomains": [
+      { "domainName": "creatorpulse.io", "allowEmbed": true },
+      { "domainName": "cdn.storywave.net", "allowEmbed": false }
+    ]
   },
   "changelog": [
     {

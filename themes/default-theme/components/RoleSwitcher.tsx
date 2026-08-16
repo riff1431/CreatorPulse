@@ -14,20 +14,20 @@ export const RoleSwitcher: React.FC = () => {
   if (isLive) return null;
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border-b border-[#F3DCE8] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50 shadow-xs">
-      <div className="flex items-center gap-2 text-[#71717A]">
+    <div className="bg-white/95 dark:bg-[#0F0A14]/95 backdrop-blur-md border-b border-[#F3DCE8] dark:border-[#3A2A4C] px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50 shadow-xs">
+      <div className="flex items-center gap-2 text-[#71717A] dark:text-[#D4B8D0]">
         <Sparkles size={14} className="text-[#EC4899] animate-pulse" />
-        <span className="font-bold text-[#18181B]">CreatorPulse Role Sandbox:</span>
-        <span className="text-[#71717A] hidden md:inline font-medium">Switch active demo role & permissions</span>
+        <span className="font-bold text-[#18181B] dark:text-[#FDF2F8]">Role Sandbox:</span>
+        <span className="text-[#71717A] dark:text-[#D4B8D0] hidden md:inline font-medium">Switch active demo role & permissions</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 bg-[#FFF9FC] p-1 rounded-2xl border border-[#F3DCE8]">
+      <div className="flex flex-wrap items-center gap-1.5 bg-[#FFF9FC] dark:bg-[#241A30] p-1 rounded-2xl border border-[#F3DCE8] dark:border-[#3A2A4C]">
         <button
           onClick={() => switchRole('member')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             role === 'member'
-              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-              : 'text-[#71717A] hover:text-[#18181B]'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8]'
           }`}
         >
           <UserCheck size={13} />
@@ -38,8 +38,8 @@ export const RoleSwitcher: React.FC = () => {
           onClick={() => switchRole('creator')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             role === 'creator'
-              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-              : 'text-[#71717A] hover:text-[#18181B]'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8]'
           }`}
         >
           <Eye size={13} />
@@ -50,8 +50,8 @@ export const RoleSwitcher: React.FC = () => {
           onClick={() => switchRole('moderator')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             role === 'moderator'
-              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-              : 'text-[#71717A] hover:text-[#18181B]'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8]'
           }`}
         >
           <Key size={13} />
@@ -62,8 +62,8 @@ export const RoleSwitcher: React.FC = () => {
           onClick={() => switchRole('admin')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             role === 'admin'
-              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-              : 'text-[#71717A] hover:text-[#18181B]'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8]'
           }`}
         >
           <Shield size={13} />
@@ -74,8 +74,8 @@ export const RoleSwitcher: React.FC = () => {
           onClick={() => switchRole('super_admin')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
             role === 'super_admin'
-              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-              : 'text-[#71717A] hover:text-[#18181B]'
+              ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
+              : 'text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8]'
           }`}
         >
           <Crown size={13} />
@@ -85,3 +85,5 @@ export const RoleSwitcher: React.FC = () => {
     </div>
   );
 };
+
+export default RoleSwitcher;

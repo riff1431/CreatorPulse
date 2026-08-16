@@ -13,6 +13,9 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
+import { DynamicVideoPlayer } from '@/components/media/DynamicVideoPlayer';
+import { DynamicImageLoader } from '@/components/media/DynamicImageLoader';
+import { DynamicAudioPlayer } from '@/components/media/DynamicAudioPlayer';
 
 interface MediaLibraryModalProps {
   isOpen: boolean;
@@ -592,11 +595,13 @@ export const MediaLibraryModal: React.FC<MediaLibraryModalProps> = ({
                     {/* Preview Area */}
                     <div className="aspect-video bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-200">
                       {focusedFile.mimeType.startsWith('image/') ? (
-                        <img src={focusedFile.url} alt="" className="max-h-full object-contain" />
+                        <DynamicImageLoader src={focusedFile.url} alt={focusedFile.name} className="w-full h-full" />
                       ) : focusedFile.mimeType.startsWith('video/') ? (
-                        <video src={focusedFile.url} controls className="max-h-full w-full" />
+                        <DynamicVideoPlayer src={focusedFile.url} className="w-full h-full" />
                       ) : focusedFile.mimeType.startsWith('audio/') ? (
-                        <audio src={focusedFile.url} controls className="w-full px-2" />
+                        <div className="w-full p-2">
+                          <DynamicAudioPlayer src={focusedFile.url} title={focusedFile.name} artist="Media File" />
+                        </div>
                       ) : (
                         getFileIconComponent(focusedFile.mimeType)
                       )}

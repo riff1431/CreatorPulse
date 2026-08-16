@@ -7,7 +7,7 @@ import {
   Shield, Search, Bell, ArrowLeft, ChevronDown, User, DollarSign, FileText,
   Palette, Puzzle, CheckCircle2, Clock, AlertTriangle, Sparkles, X, Plus,
   Layers, Settings, Users, LogOut, Check, ExternalLink, Radio, Command,
-  Filter, Trash2, Zap, ShieldAlert, CreditCard, Sun, Moon, Monitor
+  Filter, Trash2, Zap, ShieldAlert, CreditCard, Sun, Moon, Monitor, UserCog, UserCheck
 } from 'lucide-react';
 import { Avatar } from '@/components/admin/ui/Avatar';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -16,6 +16,7 @@ import { AdminIcon } from '@/components/admin/ui/AdminIcon';
 import { IconButton } from '@/components/admin/ui/IconButton';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
 import { useAdminTheme } from '@/components/admin/AdminThemeProvider';
+import { EditProfileModal } from '@/components/admin/EditProfileModal';
 
 export interface AdminNotification {
   id: string;
@@ -136,6 +137,7 @@ export const AdminHeader: React.FC = () => {
   
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
   // Quick actions dropdown state
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -686,6 +688,24 @@ export const AdminHeader: React.FC = () => {
 
               {/* Navigation Links */}
               <div className="space-y-0.5 text-xs font-semibold">
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    setShowEditProfileModal(true);
+                  }}
+                  className="w-full px-3 py-2 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/60 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group text-left border border-indigo-100"
+                >
+                  <AdminIcon icon={UserCog} size="xs" variant="indigo" />
+                  <span className="font-bold">Edit Profile & Avatar</span>
+                </button>
+
+                <Link href="/admin/profile" onClick={() => setShowProfileMenu(false)}>
+                  <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
+                    <AdminIcon icon={User} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
+                    <span>My Profile</span>
+                  </div>
+                </Link>
+
                 <Link href="/admin/settings" onClick={() => setShowProfileMenu(false)}>
                   <div className="px-3 py-2 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/40 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 group">
                     <AdminIcon icon={Settings} size="xs" variant="neutral" className="group-hover:text-indigo-600" />
@@ -750,6 +770,12 @@ export const AdminHeader: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={showEditProfileModal}
+        onClose={() => setShowEditProfileModal(false)}
+      />
     </header>
   );
 };

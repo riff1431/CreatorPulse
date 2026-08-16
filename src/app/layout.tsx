@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth/auth-context";
 import { ThemeProvider } from "@/lib/extensions/theme-engine";
 import { PluginProvider } from "@/lib/extensions/plugin-engine";
 import { SiteSettingsProvider } from "@/lib/settings/site-settings-context";
+import { I18nProvider } from "@/lib/i18n/i18n-context";
 import { NavigationProvider } from "@/lib/navigation/navigation-context";
 import { CMSProvider } from "@/lib/cms/cms-context";
 import { AnnouncementProvider } from "@/lib/notifications/announcement-context";
@@ -18,13 +19,6 @@ import { cookies } from 'next/headers';
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AUTH_ACCOUNTS } from "@/lib/auth/users";
 import { UserProfile } from "@/lib/supabase/store";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   let faviconUrl = '/favicon.ico';
@@ -172,7 +166,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="en" className={`${plusJakartaSans.variable} font-sans h-full antialiased`}>
+    <html lang="en" className="font-sans h-full antialiased">
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -196,30 +190,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#FFF9FC] text-[#18181B] selection:bg-[#FCE7F3] selection:text-[#DB2777]">
-        <SiteSettingsProvider>
-          <StorageProvider>
-            <NavigationProvider>
-              <CMSProvider>
-                <AnnouncementProvider>
-                  <FeatureModuleProvider>
-                    <ThemeProvider>
-                      <PluginProvider>
-                        <AuthProvider initialUser={initialUser} initialRole={initialRole}>
-                          <ToastProvider>
-                            <AnnouncementBanner />
-                            <MaintenanceOverlay />
-                            <AnnouncementModal />
-                            {children}
-                          </ToastProvider>
-                        </AuthProvider>
-                      </PluginProvider>
-                    </ThemeProvider>
-                  </FeatureModuleProvider>
-                </AnnouncementProvider>
-              </CMSProvider>
-            </NavigationProvider>
-          </StorageProvider>
-        </SiteSettingsProvider>
+        <I18nProvider>
+          <SiteSettingsProvider>
+            <StorageProvider>
+              <NavigationProvider>
+                <CMSProvider>
+                  <AnnouncementProvider>
+                    <FeatureModuleProvider>
+                      <ThemeProvider>
+                        <PluginProvider>
+                          <AuthProvider initialUser={initialUser} initialRole={initialRole}>
+                            <ToastProvider>
+                              <AnnouncementBanner />
+                              <MaintenanceOverlay />
+                              <AnnouncementModal />
+                              {children}
+                            </ToastProvider>
+                          </AuthProvider>
+                        </PluginProvider>
+                      </ThemeProvider>
+                    </FeatureModuleProvider>
+                  </AnnouncementProvider>
+                </CMSProvider>
+              </NavigationProvider>
+            </StorageProvider>
+          </SiteSettingsProvider>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -17,8 +17,8 @@ import { Button } from '@/components/admin/ui/Button';
 import { Badge } from '@/components/admin/ui/Badge';
 import { useAdminProgress } from '@/components/admin/AdminProgressProvider';
 import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
-import { MediaUploader } from '@/components/ui/MediaUploader';
 import { Image as ImageIcon } from 'lucide-react';
+
 
 // Helper to extract plugin.json from binary ZIP archive using DecompressionStream
 async function extractPluginJsonFromZip(arrayBuffer: ArrayBuffer): Promise<string> {
@@ -100,8 +100,10 @@ export default function AdminPluginsPage() {
     installPlugin,
     installFromLibrary,
     deletePlugin,
-    activatePluginWithLicense
+    activatePluginWithLicense,
+    getPluginSettingsPageUrl,
   } = usePlugins();
+
 
   const { startProgress, updateProgress, completeProgress, errorProgress } = useAdminProgress();
 
@@ -110,8 +112,6 @@ export default function AdminPluginsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Modals
-  const [configuringPlugin, setConfiguringPlugin] = useState<PluginManifest | null>(null);
-  const [configDraft, setConfigDraft] = useState<Record<string, unknown>>({});
   const [detailsPlugin, setDetailsPlugin] = useState<PluginManifest | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
@@ -177,18 +177,6 @@ export default function AdminPluginsPage() {
   });
 
   const updateCount = plugins.filter((p) => p.hasUpdate).length;
-
-  const openConfigModal = (plugin: PluginManifest) => {
-    setConfiguringPlugin(plugin);
-    setConfigDraft({ ...plugin.settingsValues });
-  };
-
-  const handleSaveConfig = () => {
-    if (!configuringPlugin) return;
-    updatePluginSettings(configuringPlugin.id, configDraft);
-    setConfiguringPlugin(null);
-    triggerNotice(`Saved settings for ${configuringPlugin.name}`);
-  };
 
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
@@ -601,7 +589,9 @@ export default function AdminPluginsPage() {
         ]
       });
 
+      let currentStep = 0;
       try {
+        currentStep = 0;
         updateProgress(0, 'running', 30, "Verifying system compliance...");
         await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -622,6 +612,7 @@ export default function AdminPluginsPage() {
 
         updateProgress(0, 'success', 60, "Compliance checks OK.");
 
+        currentStep = 1;
         updateProgress(1, 'running', 80, "Binding plugin event hooks...");
         
         // Auto-enable any required dependencies first!
@@ -635,13 +626,14 @@ export default function AdminPluginsPage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
         updateProgress(1, 'success', 90, "Event hooks mapped.");
 
+        currentStep = 2;
         updateProgress(2, 'running', 95, "Running bootstrap initialization...");
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         completeProgress("Plugin activated successfully!");
         triggerNotice(`Activated "${pluginName}" successfully!`);
       } catch (err: any) {
-        errorProgress(1, err.message || "Failed to activate plugin.");
+        errorProgress(currentStep, err.message || "Failed to activate plugin.");
       }
     } else if (type === 'deactivate') {
       startProgress({
@@ -1098,13 +1090,13 @@ export default function AdminPluginsPage() {
                   <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200">
                     <div className="flex items-center gap-1">
                       {plugin.settingsSchema.length > 0 && (
-                        <button
-                          onClick={() => openConfigModal(plugin)}
-                          className="p-2 rounded-xl text-[#71717A] hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                        <Link
+                          href={getPluginSettingsPageUrl(plugin)}
+                          className="p-2 rounded-xl text-[#71717A] hover:text-indigo-600 hover:bg-slate-100 transition-colors"
                           title="Configure Settings"
                         >
                           <Settings size={15} />
-                        </button>
+                        </Link>
                       )}
                       <button
                         onClick={() => setDetailsPlugin(plugin)}
@@ -1244,125 +1236,6 @@ export default function AdminPluginsPage() {
                 </Card>
               );
             })}
-          </div>
-        </div>
-      )}
-
-      {/* Settings Configuration Modal */}
-      {configuringPlugin && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-xl flex items-center justify-center border border-slate-200">
-                  {configuringPlugin.iconUrl}
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-[#18181B]">{configuringPlugin.name} Settings</h3>
-                  <p className="text-xs text-[#71717A]">Configure parameters and preferences</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setConfiguringPlugin(null)}
-                className="p-1 rounded-xl text-[#71717A] hover:text-[#18181B] cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
-              {configuringPlugin.settingsSchema.map((field) => (
-                <div key={field.id} className="space-y-1.5">
-                  <label className="block font-bold text-[#18181B]">{field.label}</label>
-                  {field.description && (
-                    <p className="text-[11px] text-[#71717A]">{field.description}</p>
-                  )}
-
-                  {field.type === 'text' && (
-                    <input
-                      type="text"
-                      value={String(configDraft[field.id] ?? '')}
-                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
-                      placeholder={field.placeholder}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
-                    />
-                  )}
-
-                  {field.type === 'media' && (
-                    <MediaUploader
-                      folder="plugins"
-                      accept="all"
-                      value={String(configDraft[field.id] ?? '')}
-                      onChange={(url) => setConfigDraft({ ...configDraft, [field.id]: url })}
-                    />
-                  )}
-
-                  {field.type === 'password' && (
-                    <input
-                      type="password"
-                      value={String(configDraft[field.id] ?? '')}
-                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
-                      placeholder={field.placeholder}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-mono"
-                    />
-                  )}
-
-                  {field.type === 'number' && (
-                    <input
-                      type="number"
-                      value={configDraft[field.id] !== undefined ? Number(configDraft[field.id]) : ''}
-                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: parseFloat(e.target.value) })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none focus:border-indigo-500 font-medium"
-                    />
-                  )}
-
-                  {field.type === 'boolean' && (
-                    <label className="flex items-center gap-2 cursor-pointer pt-1 font-bold text-[#18181B]">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(configDraft[field.id])}
-                        onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.checked })}
-                        className="accent-[#4F46E5] rounded"
-                      />
-                      <span>Enable Option</span>
-                    </label>
-                  )}
-
-                  {field.type === 'select' && (
-                    <select
-                      value={String(configDraft[field.id] ?? '')}
-                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#18181B] focus:outline-none font-medium"
-                    >
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {field.type === 'textarea' && (
-                    <textarea
-                      rows={3}
-                      value={String(configDraft[field.id] ?? '')}
-                      onChange={(e) => setConfigDraft({ ...configDraft, [field.id]: e.target.value })}
-                      placeholder={field.placeholder}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-[#18181B] focus:outline-none focus:border-indigo-500"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 shrink-0">
-              <Button variant="ghost" size="sm" onClick={() => setConfiguringPlugin(null)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" onClick={handleSaveConfig}>
-                Save Settings
-              </Button>
-            </div>
           </div>
         </div>
       )}
@@ -1679,7 +1552,7 @@ export default function AdminPluginsPage() {
                 allowedTypes={['.zip', '.json', 'application/zip', 'application/json']}
                 maxFiles={1}
                 initialFolder="plugins"
-                onSelect={async (selected) => {
+                onSelect={async (selected: any[]) => {
                   const selectedFile = selected[0];
                   if (selectedFile) {
                     try {

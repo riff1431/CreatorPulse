@@ -1,0 +1,40 @@
+{
+  "id": "plugin-content-moderation",
+  "name": "AI-Assisted Content Moderation",
+  "slug": "content-moderation",
+  "description": "Automated text toxicity scanning, image visual classifiers, video metadata anomaly detection, and moderation queues.",
+  "version": "1.0.0",
+  "author": "CreatorPulse Core Team",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "🛡️",
+  "category": "Security & DRM",
+  "tags": [
+    "Moderation",
+    "AI",
+    "Toxicity",
+    "Safety",
+    "Queue"
+  ],
+  "minAppVersion": "1.0.0",
+  "permissions": ["security_audit"],
+  "hooks": [
+    "before_post_publish",
+    "before_comment_post"
+  ],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "settingsSchema": [],
+  "settingsValues": {},
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "Initial release of AI-Assisted Content Moderation plugin."
+      ]
+    }
+  ]
+}

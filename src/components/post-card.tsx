@@ -11,6 +11,9 @@ import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
+import { DynamicVideoPlayer } from '@/components/media/DynamicVideoPlayer';
+import { DynamicImageLoader } from '@/components/media/DynamicImageLoader';
+import { DynamicAudioPlayer } from '@/components/media/DynamicAudioPlayer';
 
 interface PostCardProps {
   post: Post;
@@ -224,29 +227,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
       {/* Audio Post Player */}
       {post.postType === 'audio' && (
-        <div className="bg-[#FFF1F7] border border-[#F3DCE8] rounded-2xl p-4 flex items-center gap-4">
-          <button
-            onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-            className="w-12 h-12 rounded-full gradient-btn flex items-center justify-center text-white shadow-md shadow-[#EC4899]/25 shrink-0 hover:scale-105 transition-transform cursor-pointer"
-          >
-            {isPlayingAudio ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
-          </button>
-          <div className="flex-1 space-y-1.5">
-            <div className="flex items-center justify-between text-xs text-[#18181B]">
-              <span className="font-bold flex items-center gap-1.5 text-[#BE185D]">
-                <Volume2 size={14} className="text-[#EC4899]" /> Audio Masterclass Note
-              </span>
-              <span className="text-[#71717A] font-medium">03:45</span>
-            </div>
-            <div className="h-2 bg-[#FCE7F3] rounded-full overflow-hidden">
-              <div
-                className={`h-full bg-[#EC4899] rounded-full transition-all duration-300 ${
-                  isPlayingAudio ? 'w-2/5 animate-pulse' : 'w-0'
-                }`}
-              ></div>
-            </div>
-          </div>
-        </div>
+        <DynamicAudioPlayer
+          src={post.audioUrl || post.mediaUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'}
+          title={post.title || 'Audio Masterclass Note'}
+          artist={`@${post.authorUsername}`}
+        />
       )}
 
       {/* Media or Lock overlay */}
@@ -268,23 +253,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               </Link>
             </div>
           ) : post.postType === 'video' ? (
-            <div className="relative group cursor-pointer">
-              <img
-                src={post.thumbnailUrl || post.mediaUrl}
-                alt={post.title || 'Video content'}
-                className="w-full h-64 object-cover"
-              />
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/15 transition-all">
-                <div className="w-14 h-14 rounded-full bg-[#EC4899] flex items-center justify-center text-white shadow-xl shadow-[#EC4899]/40 group-hover:scale-110 transition-transform">
-                  <Play size={24} className="ml-1 fill-white" />
-                </div>
-              </div>
-            </div>
+            <DynamicVideoPlayer
+              src={post.mediaUrl}
+              poster={post.thumbnailUrl}
+              aspectRatio="video"
+            />
           ) : (
-            <img
+            <DynamicImageLoader
               src={post.mediaUrl}
               alt={post.title || 'Post image'}
-              className="w-full h-auto max-h-96 object-cover"
+              aspectRatio="auto"
             />
           )}
         </div>

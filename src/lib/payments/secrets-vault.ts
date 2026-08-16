@@ -1,8 +1,21 @@
-import fs from 'fs';
-import path from 'path';
+function getNodeFs() {
+  if (typeof window !== 'undefined') return null;
+  try {
+    const req = eval('require');
+    return {
+      fs: req('fs'),
+      path: req('path')
+    };
+  } catch {
+    return null;
+  }
+}
 
-// Store the vault file within the payments library, excluded from Git
-const VAULT_FILE = path.join(process.cwd(), 'src/lib/payments/vault.json');
+function getVaultFile(): string {
+  const node = getNodeFs();
+  if (!node || !node.path || typeof process === 'undefined' || !process.cwd) return '';
+  return node.path.join(process.cwd(), 'src/lib/payments/vault.json');
+}
 
 function readVault(): Record<string, Record<string, string>> {
   if (typeof window !== 'undefined') {
@@ -10,8 +23,10 @@ function readVault(): Record<string, Record<string, string>> {
   }
   
   try {
-    if (fs.existsSync(VAULT_FILE)) {
-      const data = fs.readFileSync(VAULT_FILE, 'utf8');
+    const node = getNodeFs();
+    const vaultFile = getVaultFile();
+    if (node && node.fs && vaultFile && node.fs.existsSync(vaultFile)) {
+      const data = node.fs.readFileSync(vaultFile, 'utf8');
       return JSON.parse(data);
     }
   } catch (e) {
@@ -26,11 +41,15 @@ function writeVault(vault: Record<string, Record<string, string>>) {
   }
   
   try {
-    const dir = path.dirname(VAULT_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const node = getNodeFs();
+    const vaultFile = getVaultFile();
+    if (node && node.fs && node.path && vaultFile) {
+      const dir = node.path.dirname(vaultFile);
+      if (!node.fs.existsSync(dir)) {
+        node.fs.mkdirSync(dir, { recursive: true });
+      }
+      node.fs.writeFileSync(vaultFile, JSON.stringify(vault, null, 2), 'utf8');
     }
-    fs.writeFileSync(VAULT_FILE, JSON.stringify(vault, null, 2), 'utf8');
   } catch (e) {
     console.error('[Vault] Failed to write secrets vault', e);
   }

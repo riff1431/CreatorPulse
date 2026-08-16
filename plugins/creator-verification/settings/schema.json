@@ -1,0 +1,111 @@
+[
+  {
+    "id": "enableVerification",
+    "label": "Enable Verification System",
+    "type": "toggle",
+    "defaultValue": true,
+    "description": "Master switch to enable or disable the entire creator verification workflow."
+  },
+  {
+    "id": "autoApproveCreators",
+    "label": "Auto-Approve Verified Creators",
+    "type": "toggle",
+    "defaultValue": false,
+    "description": "Automatically approve applications that pass all document validation checks."
+  },
+  {
+    "id": "reviewSLAHours",
+    "label": "Review SLA Target (Hours)",
+    "type": "number",
+    "defaultValue": 48,
+    "min": 1,
+    "max": 720
+  },
+  {
+    "id": "requireGovernmentId",
+    "label": "Require Government-Issued ID",
+    "type": "toggle",
+    "defaultValue": true
+  },
+  {
+    "id": "requireSelfie",
+    "label": "Require Selfie with ID",
+    "type": "toggle",
+    "defaultValue": true,
+    "description": "Require a photo of the applicant holding their government ID."
+  },
+  {
+    "id": "requireProofOfAddress",
+    "label": "Require Proof of Address",
+    "type": "toggle",
+    "defaultValue": false
+  },
+  {
+    "id": "requireSocialMediaLink",
+    "label": "Require Social Media Profile Link",
+    "type": "toggle",
+    "defaultValue": true
+  },
+  {
+    "id": "minimumFollowerCount",
+    "label": "Minimum Follower Count",
+    "type": "number",
+    "defaultValue": 0,
+    "min": 0,
+    "max": 1000000,
+    "description": "Minimum platform follower count required to apply for verification."
+  },
+  {
+    "id": "maxDocumentSizeMB",
+    "label": "Max Document Upload Size (MB)",
+    "type": "number",
+    "defaultValue": 10,
+    "min": 1,
+    "max": 50
+  },
+  {
+    "id": "allowedDocumentTypes",
+    "label": "Allowed Document MIME Types",
+    "type": "text",
+    "defaultValue": "image/jpeg,image/png,application/pdf",
+    "placeholder": "image/jpeg,image/png,application/pdf"
+  },
+  {
+    "id": "notifyOnSubmission",
+    "label": "Notify Admin on New Applications",
+    "type": "toggle",
+    "defaultValue": true
+  },
+  {
+    "id": "notifyOnStatusChange",
+    "label": "Notify Creator on Status Changes",
+    "type": "toggle",
+    "defaultValue": true
+  },
+  {
+    "id": "badgeStyle",
+    "label": "Verification Badge Style",
+    "type": "select",
+    "defaultValue": "standard",
+    "options": [
+      { "label": "Standard Checkmark", "value": "standard", "description": "Simple verified checkmark icon" },
+      { "label": "Premium Shield", "value": "premium", "description": "Gradient shield badge with glow" },
+      { "label": "Animated Pulse", "value": "animated", "description": "Subtle breathing pulse animation" }
+    ]
+  },
+  {
+    "id": "badgeColor",
+    "label": "Badge Accent Color",
+    "type": "color",
+    "defaultValue": "#10B981"
+  },
+  {
+    "id": "verificationExpiryDays",
+    "label": "Verification Expiry (Days)",
+    "type": "number",
+    "defaultValue": 0,
+    "min": 0,
+    "max": 3650,
+    "description": "Number of days before verification expires. Set to 0 for permanent verification."
+  }
+]

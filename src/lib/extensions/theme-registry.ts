@@ -18,6 +18,13 @@ import { CreatorLayout as DefaultCreatorLayout } from '@themes/default-theme/lay
 import { AuthLayout as DefaultAuthLayout } from '@themes/default-theme/layouts/AuthLayout';
 import { MinimalLayout as DefaultMinimalLayout } from '@themes/default-theme/layouts/MinimalLayout';
 
+// Starter theme overrides imports
+import * as StarterThemePages from '@themes/starter-theme';
+import * as StarterThemeComponents from '@themes/starter-theme/components';
+import { MainLayout as StarterMainLayout } from '@themes/starter-theme/layouts/MainLayout';
+import { CreatorLayout as StarterCreatorLayout } from '@themes/starter-theme/layouts/CreatorLayout';
+import { AuthLayout as StarterAuthLayout } from '@themes/starter-theme/layouts/AuthLayout';
+
 export const ALL_THEME_PAGES: ThemePageName[] = [
   'LandingPage',
   'LoginPage',
@@ -112,6 +119,25 @@ const DEFAULT_THEME_MODULE: ThemeModulePackage = {
   },
 };
 
+const STARTER_THEME_MODULE: ThemeModulePackage = {
+  id: 'theme-starter-theme',
+  slug: 'starter-theme',
+  pages: {
+    LandingPage: (StarterThemePages as any).LandingPage,
+  },
+  layouts: {
+    MainLayout: StarterMainLayout,
+    CreatorLayout: StarterCreatorLayout,
+    AuthLayout: StarterAuthLayout,
+  },
+  components: {
+    Button: (StarterThemeComponents as any).Button,
+    Card: (StarterThemeComponents as any).Card,
+    Badge: (StarterThemeComponents as any).Badge,
+    Avatar: (StarterThemeComponents as any).Avatar,
+  },
+};
+
 class ThemeRegistryManager {
   private modules: Map<string, ThemeModulePackage> = new Map();
 
@@ -122,6 +148,11 @@ class ThemeRegistryManager {
     this.modules.set('default-theme', DEFAULT_THEME_MODULE);
     this.modules.set('theme-blush-core', DEFAULT_THEME_MODULE);
     this.modules.set('blush-core', DEFAULT_THEME_MODULE);
+
+    // Register starter theme module
+    this.registerModule(STARTER_THEME_MODULE);
+    this.modules.set('theme-starter-theme', STARTER_THEME_MODULE);
+    this.modules.set('starter-theme', STARTER_THEME_MODULE);
   }
 
   public registerModule(module: ThemeModulePackage) {

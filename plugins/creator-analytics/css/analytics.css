@@ -1,0 +1,4 @@
+/* Creator Analytics CSS Utilities */
+.analytics-chart-bar {
+  transition: all 0.3s ease-in-out;
+}

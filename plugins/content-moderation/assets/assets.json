@@ -1,0 +1,5 @@
+{
+  "stylesheets": ["css/plugin.css"],
+  "scripts": ["js/runtime.js"],
+  "icons": ["icons/icon.svg"]
+}

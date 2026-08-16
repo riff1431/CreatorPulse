@@ -21,6 +21,7 @@ interface AuthContextType {
   hasPermission: (permission: string) => boolean;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -562,6 +563,50 @@ export const AuthProvider: React.FC<{
     }
   };
 
+  const updateProfile = async (updates: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'No active user session found.' };
+
+    const updatedUser: UserProfile = {
+      ...user,
+      ...updates,
+    };
+
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      if (supabase) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              full_name: updates.fullName ?? user.fullName,
+              username: updates.username ?? user.username,
+              avatar_url: updates.avatarUrl ?? user.avatarUrl,
+              bio: updates.bio ?? user.bio,
+              email: updates.email ?? user.email,
+            })
+            .eq('id', user.id);
+
+          if (error) {
+            console.error('Supabase profile update error:', error);
+          }
+        } catch (err) {
+          console.error('Supabase profile update exception:', err);
+        }
+      }
+    }
+
+    if (MOCK_USERS[user.id]) {
+      MOCK_USERS[user.id] = updatedUser;
+    }
+
+    setUser(updatedUser);
+    syncCookiesAndStorage(updatedUser, true);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('creatorpulse_user_updated', { detail: updatedUser }));
+    }
+    return { success: true };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -578,6 +623,7 @@ export const AuthProvider: React.FC<{
         hasPermission,
         forgotPassword,
         resetPassword,
+        updateProfile,
       }}
     >
       {children}

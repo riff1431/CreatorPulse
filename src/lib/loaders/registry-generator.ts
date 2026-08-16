@@ -64,7 +64,7 @@ export const DISCOVERED_PLUGINS = [
 ${pluginList}];
 
 export const DISCOVERED_PLUGIN_MANIFESTS: PluginManifest[] = DISCOVERED_PLUGINS.map(
-  (p) => p.manifest
+  (p) => p.manifest as PluginManifest
 );
 `;
 

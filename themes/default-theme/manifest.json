@@ -3,7 +3,7 @@
   "name": "Official Default Theme",
   "slug": "default-theme",
   "description": "The official built-in creator-platform default theme featuring radiant blush hues, editorial typography, full responsive layouts, and rich interactive components.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "CreatorPulse Core Team",
   "authorUrl": "https://creatorpulse.com",
   "previewImageUrl": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
@@ -13,13 +13,14 @@
     "Default Theme",
     "Blush Core",
     "Built-in",
-    "Responsive"
+    "Responsive",
+    "Glassmorphism"
   ],
   "minAppVersion": "1.0.0",
   "isDefault": true,
   "isActive": true,
   "installedAt": "2026-08-01",
-  "updatedAt": "2026-08-15",
+  "updatedAt": "2026-08-17",
   "tokens": {
     "primary": "#EC4899",
     "primaryHover": "#DB2777",
@@ -45,9 +46,21 @@
     "containerWidth": "max-w-7xl",
     "buttonStyle": "gradient-glow",
     "animationIntensity": "normal",
-    "cardShadow": "soft-pink"
+    "cardShadow": "soft-pink",
+    "spacing": "standard",
+    "sidebarPlacement": "left",
+    "headerStyle": "fixed"
   },
   "changelog": [
+    {
+      "version": "1.1.0",
+      "date": "2026-08-17",
+      "changes": [
+        "Enhanced glassmorphism and micro-animations across all portal pages",
+        "Upgraded design tokens with refined contrast and dark mode compatibility",
+        "Optimized layout responsiveness and touch targets across all device sizes"
+      ]
+    },
     {
       "version": "1.0.0",
       "date": "2026-08-15",

@@ -1,5 +1,10 @@
 import { ThemeManifest } from './theme-types';
 import { PluginManifest, AuditLogEntry } from './plugin-types';
+import contentModerationManifest from '@plugins/content-moderation/manifest.json';
+import creatorVerificationManifest from '@plugins/creator-verification/manifest.json';
+import seoSocialManifest from '@plugins/seo-social/manifest.json';
+import telegramSyncManifest from '@plugins/telegram-sync/manifest.json';
+import starterPluginManifest from '@plugins/starter-plugin/manifest.json';
 
 export const DEFAULT_THEMES: ThemeManifest[] = [
   {
@@ -230,6 +235,183 @@ export const THEME_LIBRARY_CATALOG: ThemeManifest[] = [
 ];
 
 export const DEFAULT_PLUGINS: PluginManifest[] = [
+  contentModerationManifest as unknown as PluginManifest,
+  creatorVerificationManifest as unknown as PluginManifest,
+  seoSocialManifest as unknown as PluginManifest,
+  telegramSyncManifest as unknown as PluginManifest,
+  starterPluginManifest as unknown as PluginManifest,
+  {
+    id: 'plugin-content-scheduling',
+    name: 'Content Scheduling & Auto-Publishing',
+    slug: 'content-scheduling',
+    description: 'Comprehensive auto-publishing and scheduling suite for creators to schedule posts, video reels, and 24h stories with calendar & queue views, timezone controls, background job processing, failure retries, notifications, and granular permission controls.',
+    version: '1.0.0',
+    author: 'CreatorPulse Core Team',
+    authorUrl: 'https://creatorpulse.com',
+    iconUrl: '📅',
+    category: 'AI & Automation',
+    tags: ['Scheduling', 'Auto-Publish', 'Calendar', 'Queue', 'Posts', 'Reels', 'Stories', 'Timezone', 'Background Jobs', 'Retries'],
+    minAppVersion: '1.0.0',
+    permissions: ['storage_access', 'notifications_send', 'security_audit'],
+    hooks: ['creator_dashboard_widgets', 'member_dashboard_widgets', 'sidebar_extra_links', 'navbar_actions', 'before_post_publish'],
+    isEnabled: true,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-16',
+    updatedAt: '2026-08-16',
+    adminSettingsPage: {
+      title: 'Content Scheduling & Auto-Publishing Settings',
+      description: 'Configure publication worker check intervals, queue capacity limits, retry policies, default timezones, and automated notifications.',
+      requiredPermission: 'admin',
+      sidebarItem: {
+        label: 'Content Scheduling',
+        icon: 'Calendar',
+        badge: 'Queue',
+        badgeVariant: 'indigo',
+        href: '/admin/plugins/content-scheduling/settings'
+      }
+    },
+    settingsSchema: [
+      { id: 'defaultTimezone', label: 'Default System Timezone', type: 'select', defaultValue: 'UTC', options: [{ label: 'UTC', value: 'UTC' }, { label: 'America/New_York', value: 'America/New_York' }, { label: 'Europe/London', value: 'Europe/London' }, { label: 'Asia/Tokyo', value: 'Asia/Tokyo' }, { label: 'Asia/Dhaka', value: 'Asia/Dhaka' }] },
+      { id: 'maxQueueItemsPerCreator', label: 'Maximum Scheduled Items Per Creator', type: 'number', defaultValue: 50 },
+      { id: 'cronCheckIntervalSeconds', label: 'Background Worker Check Interval (Seconds)', type: 'number', defaultValue: 30 },
+      { id: 'maxRetryAttempts', label: 'Maximum Job Retry Attempts on Failure', type: 'number', defaultValue: 3 },
+      { id: 'retryDelayMinutes', label: 'Retry Backoff Delay (Minutes)', type: 'number', defaultValue: 5 },
+      { id: 'enableInAppNotifications', label: 'Send In-App Notifications on Publish / Failure', type: 'boolean', defaultValue: true }
+    ],
+    settingsValues: {
+      defaultTimezone: 'UTC',
+      maxQueueItemsPerCreator: 50,
+      cronCheckIntervalSeconds: 30,
+      maxRetryAttempts: 3,
+      retryDelayMinutes: 5,
+      enableInAppNotifications: true
+    },
+    databaseMigrations: [
+      {
+        version: '1.0.0',
+        description: 'Creates plugin_scheduled_content and plugin_schedule_logs tables.',
+        sql: '001_init.sql'
+      }
+    ],
+    changelog: [
+      {
+        version: '1.0.0',
+        date: '2026-08-16',
+        changes: ['Initial release of Content Scheduling & Auto-Publishing Add-on Plugin.']
+      }
+    ]
+  },
+  {
+    id: 'plugin-creator-analytics',
+    name: 'Creator Analytics & Insights',
+    slug: 'creator-analytics',
+    description: 'Comprehensive analytics and insights add-on for creators and admins featuring profile views, follower growth, post/reel/story metrics, revenue trends, top content, date filters, SVG charts, exports, and aggregated admin analytics.',
+    version: '1.0.0',
+    author: 'CreatorPulse Analytics Studio',
+    authorUrl: 'https://creatorpulse.com',
+    iconUrl: '📊',
+    category: 'Monetization',
+    tags: ['Analytics', 'Insights', 'Profile Views', 'Followers', 'Subscribers', 'Revenue', 'Charts', 'Exports'],
+    minAppVersion: '1.0.0',
+    permissions: ['storage_access', 'notifications_send', 'security_audit'],
+    hooks: ['creator_dashboard_widgets', 'sidebar_extra_links', 'navbar_actions'],
+    isEnabled: true,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-16',
+    updatedAt: '2026-08-16',
+    adminSettingsPage: {
+      title: 'Creator Analytics & Insights Settings',
+      description: 'Configure analytics tracking resolution, default date filters, CSV/JSON export defaults, and automated threshold alerts.',
+      requiredPermission: 'admin',
+      sidebarItem: {
+        label: 'Creator Analytics',
+        icon: 'BarChart3',
+        badge: 'Analytics',
+        badgeVariant: 'indigo',
+        href: '/admin/plugins/creator-analytics/settings'
+      }
+    },
+    settingsSchema: [
+      {
+        id: 'defaultDateRange',
+        label: 'Default Dashboard Time Period',
+        type: 'select',
+        defaultValue: '30d',
+        options: [
+          { label: 'Last 7 Days', value: '7d', description: '7 day quick window' },
+          { label: 'Last 30 Days', value: '30d', description: '30 day standard monthly window' },
+          { label: 'Last 90 Days', value: '90d', description: 'Quarterly view' },
+          { label: 'Last 12 Months', value: '12m', description: 'Annual overall view' }
+        ]
+      },
+      {
+        id: 'trackingResolution',
+        label: 'Analytics Data Aggregation Resolution',
+        type: 'select',
+        defaultValue: 'daily',
+        options: [
+          { label: 'Real-time Hourly Tracking', value: 'hourly' },
+          { label: 'Daily Snapshot Summary', value: 'daily' },
+          { label: 'Weekly Batch Aggregation', value: 'weekly' }
+        ]
+      },
+      {
+        id: 'enableAdminAlerts',
+        label: 'Enable High Traffic / Spike Notifications for Admins',
+        type: 'toggle',
+        defaultValue: true,
+        description: 'Sends system notices when creator traffic or revenue spikes over 200%.'
+      },
+      {
+        id: 'defaultExportFormat',
+        label: 'Default Report Export Format',
+        type: 'select',
+        defaultValue: 'csv',
+        options: [
+          { label: 'CSV Spreadsheet File (.csv)', value: 'csv' },
+          { label: 'Structured JSON Data (.json)', value: 'json' },
+          { label: 'Print / PDF Report View', value: 'pdf' }
+        ]
+      },
+      {
+        id: 'cacheTTLSeconds',
+        label: 'Analytics Cache Duration (Seconds)',
+        type: 'number',
+        defaultValue: 300,
+        min: 0,
+        max: 86400,
+        description: 'Duration in seconds to cache aggregated chart data to optimize database load.'
+      }
+    ],
+    settingsValues: {
+      defaultDateRange: '30d',
+      trackingResolution: 'daily',
+      enableAdminAlerts: true,
+      defaultExportFormat: 'csv',
+      cacheTTLSeconds: 300
+    },
+    databaseMigrations: [
+      {
+        version: '1.0.0',
+        description: 'Creates plugin_creator_analytics_events, daily_stats, and content_metrics tables.',
+        sql: '001_init.sql'
+      }
+    ],
+    changelog: [
+      {
+        version: '1.0.0',
+        date: '2026-08-16',
+        changes: [
+          'Initial release of Creator Analytics & Insights Add-on Plugin.',
+          'Implemented creator analytics dashboard (profile views, followers, subscribers, post/reel/story metrics, engagement rate, revenue trends, top content).',
+          'Implemented admin aggregated analytics dashboard & creator leaderboards.',
+          'Added interactive date filters, SVG visual charts, CSV/JSON report exports, database migrations, lifecycle hooks, and active status guards.'
+        ]
+      }
+    ]
+  },
   {
     id: 'plugin-drm-watermark',
     name: 'Digital Watermark & DRM Guard',
@@ -419,6 +601,161 @@ export const DEFAULT_PLUGINS: PluginManifest[] = [
     ]
   },
   {
+    id: 'plugin-piprapay',
+    name: 'PipraPay Payment Gateway',
+    slug: 'piprapay',
+    description: 'Seamlessly accept bKash, Nagad, Rocket, Upay, Cards, and multi-currency payments via PipraPay with instant webhook validation and auto-settlement.',
+    version: '1.0.0',
+    author: 'PipraPay Labs',
+    authorUrl: 'https://piprapay.com',
+    iconUrl: '💳',
+    category: 'Monetization',
+    tags: ['Payments', 'PipraPay', 'bKash', 'Nagad', 'Rocket', 'Credit Card', 'Bangladesh', 'Multi-Currency'],
+    minAppVersion: '1.0.0',
+    permissions: ['payment_hooks', 'network_requests'],
+    hooks: ['payment_gateway_methods'],
+    isEnabled: true,
+    autoUpdate: true,
+    hasUpdate: false,
+    installedAt: '2026-08-16',
+    updatedAt: '2026-08-16',
+    adminSettingsPage: {
+      title: 'PipraPay Gateway Settings',
+      description: 'Configure PipraPay API credentials, webhook verification keys, sandbox/live mode, supported currencies, and connection diagnostics.',
+      requiredPermission: 'admin',
+      sidebarItem: {
+        label: 'PipraPay Gateway',
+        icon: 'CreditCard',
+        badge: 'Payment',
+        badgeVariant: 'emerald'
+      }
+    },
+    settingsSchema: [
+      {
+        id: 'mode',
+        label: 'Operating Mode',
+        type: 'select',
+        defaultValue: 'sandbox',
+        options: [
+          { label: 'Sandbox (Simulation & Test Checkout)', value: 'sandbox', description: 'Safe test environment for simulated bKash, Nagad, Rocket, and card transactions.' },
+          { label: 'Live (Production Transactions)', value: 'live', description: 'Connect to live PipraPay API for real customer transactions.' }
+        ]
+      },
+      {
+        id: 'baseUrl',
+        label: 'PipraPay API Base URL',
+        type: 'text',
+        defaultValue: 'https://sandbox.piprapay.com/api',
+        placeholder: 'https://sandbox.piprapay.com/api or https://piprapay.com/api',
+        required: true,
+        description: 'Base REST API endpoint. Use https://sandbox.piprapay.com/api for testing or https://piprapay.com/api for production.'
+      },
+      {
+        id: 'apiKey',
+        label: 'PipraPay API Key',
+        type: 'api_key',
+        defaultValue: 'pk_test_piprapay_demo_key',
+        placeholder: 'pk_test_... or pk_live_...',
+        required: true,
+        description: 'Confidential API Key issued by PipraPay Merchant Dashboard. Kept securely in the server vault.'
+      },
+      {
+        id: 'secretKey',
+        label: 'Webhook / Signature Secret Key',
+        type: 'password',
+        defaultValue: 'whsec_piprapay_demo_secret',
+        placeholder: 'whsec_...',
+        required: true,
+        description: 'Secret key used for HMAC-SHA256 verification of incoming webhook IPN notifications.'
+      },
+      {
+        id: 'supportedCurrencies',
+        label: 'Supported Checkout Currencies',
+        type: 'select',
+        defaultValue: 'BDT',
+        options: [
+          { label: 'BDT (৳ Bangladeshi Taka - bKash, Nagad, Rocket)', value: 'BDT' },
+          { label: 'USD ($ US Dollar)', value: 'USD' },
+          { label: 'EUR (€ Euro)', value: 'EUR' },
+          { label: 'GBP (£ British Pound)', value: 'GBP' },
+          { label: 'Multi-Currency (All Supported)', value: 'ALL' }
+        ]
+      },
+      {
+        id: 'transactionFeePercentage',
+        label: 'Transaction Surcharge / Processing Fee (%)',
+        type: 'number',
+        defaultValue: 0.0,
+        min: 0,
+        max: 15,
+        step: 0.1,
+        description: 'Optional merchant processing fee percentage added to customer total at checkout (0 for no surcharge).'
+      },
+      {
+        id: 'isDefault',
+        label: 'Set as Default Payment Gateway',
+        type: 'boolean',
+        defaultValue: false,
+        description: 'Automatically pre-selects PipraPay in customer checkout modals.'
+      },
+      {
+        id: 'displayOrder',
+        label: 'Display Priority Order',
+        type: 'number',
+        defaultValue: 1,
+        min: 1,
+        max: 100,
+        description: 'Ordering priority in checkout modal list (1 = top).'
+      },
+      {
+        id: 'webhookUrl',
+        label: 'IPN Webhook Listener URL',
+        type: 'text',
+        defaultValue: '/api/payments/webhook/piprapay',
+        description: 'Copy this endpoint into your PipraPay Merchant Webhook settings.'
+      },
+      {
+        id: 'transactionStatusMapping',
+        label: 'Status Mapping Rules (JSON)',
+        type: 'textarea',
+        defaultValue: '{\n  "completed": "Completed",\n  "paid": "Completed",\n  "success": "Completed",\n  "pending": "Pending",\n  "processing": "Pending",\n  "failed": "Failed",\n  "cancelled": "Failed",\n  "refunded": "Refunded"\n}',
+        description: 'Maps gateway IPN statuses to platform transaction ledger statuses.'
+      },
+      {
+        id: 'enableLogging',
+        label: 'Enable Diagnostic & Webhook Audit Logging',
+        type: 'boolean',
+        defaultValue: true,
+        description: 'Persists all gateway requests, webhook deliveries, and API errors to the central payment audit ledger.'
+      }
+    ],
+    settingsValues: {
+      mode: 'sandbox',
+      baseUrl: 'https://sandbox.piprapay.com/api',
+      apiKey: 'pk_test_piprapay_demo_key',
+      secretKey: 'whsec_piprapay_demo_secret',
+      supportedCurrencies: 'BDT',
+      transactionFeePercentage: 0.0,
+      isDefault: false,
+      displayOrder: 1,
+      webhookUrl: '/api/payments/webhook/piprapay',
+      transactionStatusMapping: '{\n  "completed": "Completed",\n  "paid": "Completed",\n  "success": "Completed",\n  "pending": "Pending",\n  "processing": "Pending",\n  "failed": "Failed",\n  "cancelled": "Failed",\n  "refunded": "Refunded"\n}',
+      enableLogging: true
+    },
+    changelog: [
+      {
+        version: '1.0.0',
+        date: '2026-08-16',
+        changes: [
+          'Initial release of the standalone PipraPay Payment Gateway Add-on Plugin.',
+          'Integrated bKash, Nagad, Rocket, Upay, Cards, and multi-currency checkout redirect flow.',
+          'Full server-side secret management with HMAC-SHA256 webhook validation.',
+          'Idempotency protection preventing duplicate charge completions.'
+        ]
+      }
+    ]
+  },
+  {
     id: 'plugin-stripe',
     name: 'Stripe Payment Gateway',
     slug: 'stripe-payments',
@@ -473,6 +810,7 @@ export const DEFAULT_PLUGINS: PluginManifest[] = [
     description: 'Integrates PayPal checkout, credit/debit smart buttons, recurring billing agreements, and payouts.',
     version: '1.1.0',
     author: 'PayPal Inc.',
+
     authorUrl: 'https://paypal.com',
     iconUrl: '🅿️',
     category: 'Monetization',

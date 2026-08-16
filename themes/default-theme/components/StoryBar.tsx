@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Sparkles, Clock, ChevronLeft, ChevronRight, Send, AlertCircle, Lock, Eye, CheckCircle2 } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
+import { Avatar } from './Avatar';
+import { Button } from './Button';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePlugins } from '@/lib/extensions/plugin-engine';
 import { StoriesService, PluginStory } from '@/lib/services/stories-service';

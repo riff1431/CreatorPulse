@@ -1,0 +1,12 @@
+{
+  "test-idem-999": {
+    "result": {
+      "success": true,
+      "transactionId": "pp_test_1786900667154_ngvp1a",
+      "status": "Pending",
+      "message": "PipraPay checkout transaction initialized.",
+      "gatewayReference": "/api/payments/checkout/simulate?gateway=piprapay&sessionId=pp_test_1786900667154_ngvp1a&amount=50&currency=BDT&orderId=test-idem-999&description=Creator%20Tip&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fbalance%3Fsuccess%3Dtrue%26gateway%3Dpiprapay%26idempotency%3Dtest-idem-999&cancelUrl=http%3A%2F%2Flocalhost%3A3000%2Fbalance%3Fcancelled%3Dtrue%26gateway%3Dpiprapay"
+    },
+    "timestamp": "2026-08-16T17:17:47.154Z"
+  }
+}

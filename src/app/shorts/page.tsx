@@ -14,6 +14,7 @@ import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { MOCK_SHORTS, ShortVideo } from '@/lib/supabase/store';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { DynamicVideoPlayer } from '@/components/media/DynamicVideoPlayer';
 
 const mockReelComments = [
   { userName: 'Alex Vance', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Wow, this transition is clean!', time: '2m ago' },
@@ -131,12 +132,13 @@ export default function ShortsPage() {
             <div ref={reelCardRef} className="absolute inset-0 flex flex-col justify-between">
               {/* Background Video Media Mock */}
               <div className="absolute inset-0 z-0 bg-black">
-                <img
+                <DynamicVideoPlayer
                   src={activeShort.videoUrl}
-                  alt={activeShort.title}
-                  className="w-full h-full object-cover opacity-85"
+                  poster={activeShort.videoUrl}
+                  aspectRatio="vertical"
+                  className="w-full h-full"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none"></div>
               </div>
 
               {/* Top Navigation Overlay */}

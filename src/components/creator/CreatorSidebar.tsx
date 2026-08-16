@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FileText, Film, Clock, Users, Star,
   DollarSign, Wallet, BarChart3, Layers, Settings,
-  ChevronLeft, ChevronRight, Menu
+  ChevronLeft, ChevronRight, Menu, Share2, Calendar
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,6 +34,7 @@ const navGroups: NavGroup[] = [
       { label: 'Posts', href: '/creator/posts', icon: FileText },
       { label: 'Reels', href: '/creator/reels', icon: Film },
       { label: 'Stories', href: '/creator/stories', icon: Clock },
+      { label: 'Schedule Queue', href: '/creator/schedule', icon: Calendar },
     ],
   },
   {
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Earnings', href: '/creator/earnings', icon: DollarSign },
       { label: 'Payouts', href: '/creator/payouts', icon: Wallet },
+      { label: 'Referrals', href: '/creator/referrals', icon: Share2 },
     ],
   },
   {
@@ -77,12 +79,16 @@ export const CreatorSidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { activePlugins } = usePlugins();
-  const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories');
+  const hasStoriesPlugin = activePlugins.some((p) => p.id === 'plugin-creator-stories' || p.slug === 'creator-stories');
+  const hasSchedulingPlugin = activePlugins.some((p) => p.id === 'plugin-content-scheduling' || p.slug === 'content-scheduling');
+  const hasAnalyticsPlugin = activePlugins.some((p) => p.id === 'plugin-creator-analytics' || p.slug === 'creator-analytics');
 
   const filteredGroups = navGroups.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
       if (item.href === '/creator/stories' && !hasStoriesPlugin) return false;
+      if (item.href === '/creator/schedule' && !hasSchedulingPlugin) return false;
+      if (item.href === '/creator/analytics' && !hasAnalyticsPlugin) return false;
       return true;
     })
   })).filter((group) => group.items.length > 0);

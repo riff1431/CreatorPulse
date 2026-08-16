@@ -1,68 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
-const SUBFOLDERS = ['avatars', 'covers', 'posts', 'reels', 'stories', 'messages', 'themes', 'plugins', 'documents'];
-
-function ensureFoldersExist() {
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  }
-  for (const sub of SUBFOLDERS) {
-    const subPath = path.join(UPLOADS_DIR, sub);
-    if (!fs.existsSync(subPath)) {
-      fs.mkdirSync(subPath, { recursive: true });
-    }
-  }
-}
+import { StorageDriverManager } from '@/lib/storage/driver-manager';
+import { StorageDriverType } from '@/lib/storage/storage-types';
 
 export async function GET() {
   try {
-    ensureFoldersExist();
-
-    const folderStats: Record<string, { count: number; totalSizeBytes: number }> = {};
-    let grandTotalBytes = 0;
-    let grandTotalFiles = 0;
-
-    for (const sub of SUBFOLDERS) {
-      const subPath = path.join(UPLOADS_DIR, sub);
-      try {
-        const files = fs.readdirSync(subPath).filter((f) => !f.startsWith('.'));
-        let folderBytes = 0;
-
-        for (const file of files) {
-          const filePath = path.join(subPath, file);
-          const stat = fs.statSync(filePath);
-          folderBytes += stat.size;
-        }
-
-        folderStats[sub] = {
-          count: files.length,
-          totalSizeBytes: folderBytes,
-        };
-
-        grandTotalBytes += folderBytes;
-        grandTotalFiles += files.length;
-      } catch {
-        folderStats[sub] = { count: 0, totalSizeBytes: 0 };
-      }
-    }
+    const manager = StorageDriverManager.getInstance();
+    const config = manager.getConfig(true);
+    const usage = await manager.getAggregatedUsage();
+    const activeDriver = manager.getActiveDriver();
+    const stats = await activeDriver.getUsageStats();
 
     return NextResponse.json({
       success: true,
-      data: {
-        driver: 'local',
-        basePath: 'public/uploads',
-        isWritable: true,
-        grandTotalFiles,
-        grandTotalBytes,
-        folderStats,
-      }
+      config,
+      usage,
+      stats,
+      activeDriver: config.activeDriver,
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { success: false, error: error.message || 'Failed to retrieve storage status' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const manager = StorageDriverManager.getInstance();
+
+    // If secrets are masked in the incoming request, preserve the existing secrets
+    const currentConfig = manager.getConfig(false);
+    const updatedS3 = { ...body.s3 };
+    const updatedR2 = { ...body.r2 };
+    const updatedSupabase = { ...body.supabase };
+
+    if (updatedS3?.secretAccessKey && updatedS3.secretAccessKey.includes('••')) {
+      updatedS3.secretAccessKey = currentConfig.s3.secretAccessKey;
+    }
+    if (updatedR2?.secretAccessKey && updatedR2.secretAccessKey.includes('••')) {
+      updatedR2.secretAccessKey = currentConfig.r2.secretAccessKey;
+    }
+    if (updatedSupabase?.supabaseAnonKey && updatedSupabase.supabaseAnonKey.includes('••')) {
+      updatedSupabase.supabaseAnonKey = currentConfig.supabase.supabaseAnonKey;
+    }
+
+    const payload = {
+      ...body,
+      s3: updatedS3,
+      r2: updatedR2,
+      supabase: updatedSupabase,
+    };
+
+    const savedConfig = manager.saveConfig(payload);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Storage configuration updated and saved successfully!',
+      config: manager.getConfig(true),
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to update storage settings' },
       { status: 500 }
     );
   }
@@ -71,29 +71,82 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, driver } = body;
+    const { action, driver, migration } = body;
+    const manager = StorageDriverManager.getInstance();
 
+    // 1. Connection Diagnostic Test
     if (action === 'test_connection') {
-      ensureFoldersExist();
-      const testFile = path.join(UPLOADS_DIR, 'documents', `.test_${Date.now()}.tmp`);
-      fs.writeFileSync(testFile, 'creatorpulse-storage-diagnostic-ok');
-      const readContent = fs.readFileSync(testFile, 'utf8');
-      fs.unlinkSync(testFile);
+      const targetDriver: StorageDriverType = driver || manager.getConfig(false).activeDriver;
+      const testResult = await manager.testConnection(targetDriver);
+      return NextResponse.json(testResult);
+    }
+
+    // 2. Migration Between Providers (Whole batch or Chunked)
+    if (action === 'migrate_batch') {
+      if (!migration || !migration.sourceDriver || !migration.targetDriver) {
+        return NextResponse.json(
+          { success: false, error: 'Missing sourceDriver or targetDriver in batch migration request' },
+          { status: 400 }
+        );
+      }
+
+      const batchResult = await manager.migrateBatch({
+        sourceDriver: migration.sourceDriver,
+        targetDriver: migration.targetDriver,
+        folders: migration.folders,
+        offset: migration.offset || 0,
+        limit: migration.limit || 15,
+        deleteFromSource: migration.deleteFromSource || false,
+        overwriteExisting: migration.overwriteExisting !== false,
+      });
 
       return NextResponse.json({
-        success: true,
-        driver: driver || 'local',
-        message: 'Storage connection & filesystem write test successful!',
-        readOk: readContent === 'creatorpulse-storage-diagnostic-ok',
-        writeOk: true,
-        deleteOk: true,
+        success: batchResult.success,
+        batch: batchResult,
+        message: `Batch ${batchResult.batchIndex} completed: ${batchResult.migratedCount} files transferred.`,
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Storage updated' });
-  } catch (error) {
+    if (action === 'migrate') {
+      if (!migration || !migration.sourceDriver || !migration.targetDriver) {
+        return NextResponse.json(
+          { success: false, error: 'Missing sourceDriver or targetDriver in migration request' },
+          { status: 400 }
+        );
+      }
+
+      const result = await manager.migrateFiles({
+        sourceDriver: migration.sourceDriver,
+        targetDriver: migration.targetDriver,
+        folders: migration.folders,
+        deleteFromSource: migration.deleteFromSource || false,
+        overwriteExisting: migration.overwriteExisting !== false,
+      });
+
+      return NextResponse.json({
+        success: result.success,
+        result,
+        message: `Migration finished: ${result.migratedCount} files transferred, ${result.failedCount} failed.`,
+      });
+    }
+
+    // 3. Switch Driver
+    if (action === 'switch_driver') {
+      if (!driver) {
+        return NextResponse.json({ success: false, error: 'Driver parameter is required' }, { status: 400 });
+      }
+      manager.saveConfig({ activeDriver: driver });
+      return NextResponse.json({
+        success: true,
+        message: `Active storage driver switched to ${driver.toUpperCase()}`,
+        activeDriver: driver,
+      });
+    }
+
+    return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { success: false, error: error.message || 'Failed to execute storage action' },
       { status: 500 }
     );
   }

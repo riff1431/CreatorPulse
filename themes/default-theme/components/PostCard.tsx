@@ -7,9 +7,9 @@ import {
   Play, Pause, Eye, Send, Check, BarChart2, Volume2, CheckCircle2 
 } from 'lucide-react';
 import { Post, Comment } from '@/lib/supabase/store';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Avatar } from './Avatar';
+import { Badge } from './Badge';
+import { Button } from './Button';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
 
 interface PostCardProps {
@@ -70,11 +70,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
   const handleToggleSave = () => {
     const nextSavedState = !isSaved;
     setIsSaved(nextSavedState);
-    triggerToast(nextSavedState ? "💾 Post saved to Bookmarks!" : "🗑️ Post removed from Bookmarks!");
+    triggerToast(nextSavedState ? "Post saved to Bookmarks!" : "Post removed from Bookmarks!");
   };
 
   const handleVote = (optionId: string) => {
-    if (userVotedId) return; // already voted
+    if (userVotedId) return;
 
     const updated = pollOptions.map((opt) =>
       opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt
@@ -82,7 +82,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
     setPollOptions(updated);
     setUserVotedId(optionId);
     setTotalVotes(totalVotes + 1);
-    triggerToast("🗳️ Thank you for voting!");
+    triggerToast("Thank you for voting!");
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -101,7 +101,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
     setComments([...comments, created]);
     setNewCommentText('');
-    triggerToast("💬 Comment posted successfully!");
+    triggerToast("Comment posted successfully!");
   };
 
   const handleToggleCommentLike = (commentId: string) => {
@@ -113,14 +113,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.origin + `/feed#${post.id}`);
-    setCopiedShare(true);
-    triggerToast("🔗 Link copied to clipboard!");
-    setTimeout(() => setCopiedShare(false), 2000);
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.origin + `/feed#${post.id}`);
+      setCopiedShare(true);
+      triggerToast("Link copied to clipboard!");
+      setTimeout(() => setCopiedShare(false), 2000);
+    }
   };
 
   return (
-    <article id={post.id} className="bg-white/90 backdrop-blur-md border border-[#F3DCE8] rounded-[24px] p-5 space-y-4 shadow-sm shadow-[#EC4899]/5 hover:shadow-md hover:shadow-[#EC4899]/10 transition-all relative">
+    <article id={post.id} className="bg-white/95 dark:bg-[#1A1222]/95 backdrop-blur-xl border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm shadow-pink-500/5 hover:shadow-md hover:shadow-pink-500/10 transition-all relative">
       {/* Header Info */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -136,16 +138,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/c/${post.authorUsername}`}
-                className="font-bold text-sm text-[#18181B] hover:text-[#EC4899] transition-colors"
+                className="font-bold text-sm text-[#18181B] dark:text-[#FDF2F8] hover:text-[#EC4899] transition-colors"
               >
                 {post.authorName}
               </Link>
-              <span className="text-xs text-[#71717A]">@{post.authorUsername}</span>
+              <span className="text-xs text-[#71717A] dark:text-[#D4B8D0]">@{post.authorUsername}</span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#A1A1AA] mt-0.5 font-medium">
+            <div className="flex items-center gap-2 text-[11px] text-[#A1A1AA] dark:text-[#8E7890] mt-0.5 font-medium">
               <span>{post.createdAt}</span>
               <span>•</span>
-              <span className="text-[#BE185D] font-semibold">{post.authorCategory}</span>
+              <span className="text-[#BE185D] dark:text-[#F472B6] font-semibold">{post.authorCategory}</span>
             </div>
           </div>
         </div>
@@ -153,27 +155,27 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
         {/* Visibility Badge */}
         {post.visibility === 'members_only' ? (
           <Badge variant="pink" size="sm">
-            <Lock size={11} /> Members Only
+            <Lock size={11} /> VIP Exclusive
           </Badge>
         ) : (
           <Badge variant="slate" size="sm">
-            Public Post
+            Public
           </Badge>
         )}
       </div>
 
       {/* Title */}
       {post.title && (
-        <h3 className="text-base font-bold text-[#18181B] leading-snug">{post.title}</h3>
+        <h3 className="text-base font-bold text-[#18181B] dark:text-[#FDF2F8] leading-snug">{post.title}</h3>
       )}
 
       {/* Content text */}
-      <p className="text-sm text-[#3F3F46] leading-relaxed whitespace-pre-line font-normal">{post.content}</p>
+      <p className="text-sm text-[#3F3F46] dark:text-[#D4B8D0] leading-relaxed whitespace-pre-line font-normal">{post.content}</p>
 
       {/* Interactive Poll Component */}
       {post.postType === 'poll' && post.poll && (
-        <div className="bg-[#FFF9FC] border border-[#F3DCE8] rounded-2xl p-4 space-y-3 shadow-inner">
-          <div className="flex items-center gap-2 text-[#BE185D] font-bold text-xs">
+        <div className="bg-[#FFF9FC] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-[#BE185D] dark:text-[#F472B6] font-bold text-xs">
             <BarChart2 size={16} className="text-[#EC4899]" />
             <span>{post.poll.question}</span>
           </div>
@@ -188,18 +190,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
                   key={opt.id}
                   onClick={() => handleVote(opt.id)}
                   disabled={Boolean(userVotedId)}
-                  className={`w-full text-left p-3 rounded-xl relative overflow-hidden transition-all text-xs font-semibold border ${
+                  className={`w-full text-left p-3 rounded-xl relative overflow-hidden transition-all text-xs font-semibold border cursor-pointer ${
                     isSelected
-                      ? 'border-[#EC4899] bg-[#FCE7F3] text-[#BE185D]'
-                      : 'border-[#F3DCE8] bg-white text-[#18181B] hover:border-[#F472B6]/60'
+                      ? 'border-[#EC4899] bg-[#FCE7F3] dark:bg-[#381A2B] text-[#BE185D] dark:text-[#F472B6]'
+                      : 'border-[#F3DCE8] dark:border-[#3A2A4C] bg-white dark:bg-[#1A1222] text-[#18181B] dark:text-[#FDF2F8] hover:border-[#EC4899]/60'
                   }`}
                 >
-                  {/* Percentage background fill */}
                   {Boolean(userVotedId) && (
                     <div
                       style={{ width: `${percentage}%` }}
-                      className="absolute inset-y-0 left-0 bg-[#FCE7F3]/60 transition-all duration-500"
-                    ></div>
+                      className="absolute inset-y-0 left-0 bg-[#FCE7F3]/60 dark:bg-[#381A2B]/60 transition-all duration-500"
+                    />
                   )}
 
                   <div className="relative z-10 flex items-center justify-between">
@@ -208,7 +209,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
                       {opt.text}
                     </span>
                     {Boolean(userVotedId) && (
-                      <span className="font-bold text-[#BE185D]">{percentage}%</span>
+                      <span className="font-bold text-[#BE185D] dark:text-[#F472B6]">{percentage}%</span>
                     )}
                   </div>
                 </button>
@@ -216,7 +217,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
             })}
           </div>
 
-          <span className="text-[10px] text-[#A1A1AA] block text-right font-medium">
+          <span className="text-[10px] text-[#A1A1AA] dark:text-[#8E7890] block text-right font-medium">
             {totalVotes} total vote{totalVotes === 1 ? '' : 's'}
           </span>
         </div>
@@ -224,26 +225,26 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
       {/* Audio Post Player */}
       {post.postType === 'audio' && (
-        <div className="bg-[#FFF1F7] border border-[#F3DCE8] rounded-2xl p-4 flex items-center gap-4">
+        <div className="bg-[#FFF1F7] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-2xl p-4 flex items-center gap-4">
           <button
             onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-            className="w-12 h-12 rounded-full gradient-btn flex items-center justify-center text-white shadow-md shadow-[#EC4899]/25 shrink-0 hover:scale-105 transition-transform cursor-pointer"
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#EC4899] to-[#F43F5E] flex items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 hover:scale-105 transition-transform cursor-pointer"
           >
             {isPlayingAudio ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
           </button>
           <div className="flex-1 space-y-1.5">
-            <div className="flex items-center justify-between text-xs text-[#18181B]">
-              <span className="font-bold flex items-center gap-1.5 text-[#BE185D]">
+            <div className="flex items-center justify-between text-xs text-[#18181B] dark:text-[#FDF2F8]">
+              <span className="font-bold flex items-center gap-1.5 text-[#BE185D] dark:text-[#F472B6]">
                 <Volume2 size={14} className="text-[#EC4899]" /> Audio Masterclass Note
               </span>
-              <span className="text-[#71717A] font-medium">03:45</span>
+              <span className="text-[#71717A] dark:text-[#D4B8D0] font-medium">03:45</span>
             </div>
-            <div className="h-2 bg-[#FCE7F3] rounded-full overflow-hidden">
+            <div className="h-2 bg-[#FCE7F3] dark:bg-[#381A2B] rounded-full overflow-hidden">
               <div
                 className={`h-full bg-[#EC4899] rounded-full transition-all duration-300 ${
                   isPlayingAudio ? 'w-2/5 animate-pulse' : 'w-0'
                 }`}
-              ></div>
+              />
             </div>
           </div>
         </div>
@@ -251,14 +252,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
       {/* Media or Lock overlay */}
       {post.mediaUrl && post.postType !== 'poll' && (
-        <div className="relative rounded-2xl overflow-hidden bg-[#FFF9FC] border border-[#F3DCE8] max-h-[440px]">
+        <div className="relative rounded-2xl overflow-hidden bg-[#FFF9FC] dark:bg-[#1A1222] border border-[#F3DCE8] dark:border-[#3A2A4C] max-h-[440px]">
           {isLocked ? (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
-              <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] border border-[#FBCFE8] flex items-center justify-center text-[#EC4899] shadow-md shadow-[#EC4899]/10">
+            <div className="absolute inset-0 bg-white/95 dark:bg-[#1A1222]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
+              <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] dark:bg-[#381A2B] border border-[#FBCFE8] dark:border-[#4C1D3B] flex items-center justify-center text-[#EC4899] shadow-md shadow-pink-500/10">
                 <Lock size={22} />
               </div>
-              <h4 className="text-base font-bold text-[#18181B]">Exclusive VIP Member Content</h4>
-              <p className="text-xs text-[#71717A] max-w-sm font-normal">
+              <h4 className="text-base font-bold text-[#18181B] dark:text-[#FDF2F8]">Exclusive VIP Member Content</h4>
+              <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] max-w-sm font-normal">
                 Subscribe to @{post.authorUsername} to unlock source code, masterclasses, and private posts.
               </p>
               <Link href={`/c/${post.authorUsername}`}>
@@ -275,7 +276,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
                 className="w-full h-64 object-cover"
               />
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/15 transition-all">
-                <div className="w-14 h-14 rounded-full bg-[#EC4899] flex items-center justify-center text-white shadow-xl shadow-[#EC4899]/40 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 rounded-full bg-[#EC4899] flex items-center justify-center text-white shadow-xl shadow-pink-500/40 group-hover:scale-110 transition-transform">
                   <Play size={24} className="ml-1 fill-white" />
                 </div>
               </div>
@@ -291,7 +292,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
       )}
 
       {/* Actions Footer */}
-      <div className="flex items-center justify-between border-t border-[#F3DCE8] pt-3 text-xs text-[#71717A]">
+      <div className="flex items-center justify-between border-t border-[#F3DCE8] dark:border-[#3A2A4C] pt-3 text-xs text-[#71717A] dark:text-[#D4B8D0]">
         <div className="flex items-center gap-4">
           <button
             onClick={handleToggleLike}
@@ -303,7 +304,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               size={16} 
               className={`transition-transform duration-200 ${
                 isLiked ? 'fill-[#EC4899] text-[#EC4899]' : 'hover:scale-110'
-              } ${isLiking ? 'animate-heart-pop' : ''}`} 
+              } ${isLiking ? 'scale-125' : ''}`} 
             />
             <span>{likesCount}</span>
           </button>
@@ -316,7 +317,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
             <span>{comments.length} Comments</span>
           </button>
 
-          <div className="flex items-center gap-1 text-[#A1A1AA] hidden sm:flex">
+          <div className="flex items-center gap-1 text-[#A1A1AA] dark:text-[#8E7890] hidden sm:flex">
             <Eye size={14} />
             <span>{post.viewsCount} views</span>
           </div>
@@ -325,7 +326,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
         <div className="flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="p-2 hover:text-[#EC4899] hover:bg-[#FDF2F8] transition-colors rounded-xl cursor-pointer"
+            className="p-2 hover:text-[#EC4899] hover:bg-[#FDF2F8] dark:hover:bg-[#241A30] transition-colors rounded-xl cursor-pointer"
             title="Share post"
           >
             {copiedShare ? <Check size={16} className="text-emerald-500" /> : <Share2 size={16} />}
@@ -333,7 +334,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
           <button
             onClick={handleToggleSave}
-            className={`p-2 transition-colors rounded-xl hover:bg-[#FDF2F8] cursor-pointer ${
+            className={`p-2 transition-colors rounded-xl hover:bg-[#FDF2F8] dark:hover:bg-[#241A30] cursor-pointer ${
               isSaved ? 'text-[#EC4899]' : 'hover:text-[#EC4899]'
             }`}
             title="Save post"
@@ -345,7 +346,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
 
       {/* Comments Drawer */}
       {showComments && (
-        <div className="border-t border-[#F3DCE8] pt-3 space-y-3">
+        <div className="border-t border-[#F3DCE8] dark:border-[#3A2A4C] pt-3 space-y-3">
           <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
             {comments.length === 0 ? (
               <p className="text-[11px] text-[#A1A1AA] text-center py-3 font-semibold">No comments yet. Support the creator by posting one!</p>
@@ -353,22 +354,21 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               comments.map((comment) => {
                 const isCommentLiked = likedCommentIds.includes(comment.id);
                 return (
-                  <div key={comment.id} className="bg-[#FFF9FC] border border-[#F3DCE8] p-3 rounded-2xl flex items-start justify-between gap-2.5">
+                  <div key={comment.id} className="bg-[#FFF9FC] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] p-3 rounded-2xl flex items-start justify-between gap-2.5">
                     <div className="flex items-start gap-2.5 flex-1">
                       <Avatar alt={comment.userName} src={comment.userAvatar} size="sm" />
                       <div className="flex-1 text-xs">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-[#18181B]">{comment.userName}</span>
-                          <span className="text-[10px] text-[#A1A1AA] font-medium">{comment.createdAt}</span>
+                          <span className="font-bold text-[#18181B] dark:text-[#FDF2F8]">{comment.userName}</span>
+                          <span className="text-[10px] text-[#A1A1AA] dark:text-[#8E7890] font-medium">{comment.createdAt}</span>
                         </div>
-                        <p className="text-[#52525B] mt-1 font-normal leading-relaxed">{comment.content}</p>
+                        <p className="text-[#52525B] dark:text-[#D4B8D0] mt-1 font-normal leading-relaxed">{comment.content}</p>
                       </div>
                     </div>
 
-                    {/* Like Comment Button */}
                     <button 
                       onClick={() => handleToggleCommentLike(comment.id)}
-                      className={`text-[#A1A1AA] hover:text-[#EC4899] transition-colors p-1 rounded-lg ${
+                      className={`text-[#A1A1AA] hover:text-[#EC4899] transition-colors p-1 rounded-lg cursor-pointer ${
                         isCommentLiked ? 'text-[#EC4899]' : ''
                       }`}
                     >
@@ -387,7 +387,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
                 key={emoji}
                 type="button"
                 onClick={() => setNewCommentText((prev) => prev + emoji)}
-                className="hover:scale-110 active:scale-95 transition-transform bg-[#FFF9FC] border border-[#F3DCE8] px-2.5 py-1 rounded-xl text-xs cursor-pointer font-normal"
+                className="hover:scale-110 active:scale-95 transition-transform bg-[#FFF9FC] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] px-2.5 py-1 rounded-xl text-xs cursor-pointer"
               >
                 {emoji}
               </button>
@@ -400,7 +400,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
               placeholder="Write a supportive comment..."
-              className="flex-1 bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3 py-2 text-xs text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white transition-colors"
+              className="flex-1 bg-[#FFF9FC] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-xl px-3 py-2 text-xs text-[#18181B] dark:text-[#FDF2F8] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899] focus:bg-white dark:focus:bg-[#1A1222] transition-colors"
             />
             <Button type="submit" variant="primary" size="sm" leftIcon={<Send size={12} />}>
               Post
@@ -412,12 +412,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
       {/* Extensible Plugin Hook Point */}
       <HookPoint name="post_card_footer" context={{ post }} />
 
-      {/* Floating Card Toast alert notice */}
+      {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] text-white px-4 py-2.5 rounded-2xl flex items-center gap-2.5 text-[11px] font-bold border border-white/10 shadow-2xl z-50 animate-toast-in">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] text-white px-4 py-2 rounded-2xl text-xs font-bold border border-white/10 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
           <span>{toastMessage}</span>
         </div>
       )}
     </article>
   );
 };
+
+export default PostCard;

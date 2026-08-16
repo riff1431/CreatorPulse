@@ -8,15 +8,12 @@ import {
   Sparkles, Lock, CheckCircle2, UserPlus, Heart, MessageSquare, 
   Share2, ShieldCheck, Star, Users, Check, Globe, X, Film, Info, Image as ImageIcon, AlertCircle
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { MobileNav } from '@/components/layout/MobileNav';
-import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
-import { Card } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { PostCard } from '@/components/post-card';
+import { MainLayout } from '../layouts/MainLayout';
+import { Card } from '../components/Card';
+import { Avatar } from '../components/Avatar';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { PostCard } from '../components/PostCard';
 import { SupportModal } from '@/components/support-modal';
 import { CheckoutModal } from '@/components/payments/CheckoutModal';
 import { 
@@ -92,14 +89,8 @@ export function CreatorProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9FC] text-[#18181B] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">
-      <RoleSwitcher />
-      <Navbar />
-
-      <div className="max-w-7xl mx-auto w-full flex-1 flex theme-layout-wrapper theme-gap px-4 lg:px-8 py-6">
-        <Sidebar />
-
-        <main className="flex-1 space-y-6 max-w-3xl mx-auto lg:mx-0 w-full pb-20 lg:pb-8">
+    <MainLayout showSidebar={true} showFooter={false}>
+      <div className="space-y-6 max-w-3xl mx-auto w-full">
           {/* Cover & Profile Card */}
           <Card className="p-0 overflow-hidden relative border border-[#F3DCE8] shadow-sm shadow-[#EC4899]/5">
             <div className="h-44 sm:h-56 relative bg-[#FFF1F7] overflow-hidden group">
@@ -323,8 +314,6 @@ export function CreatorProfilePage() {
               )}
             </>
           )}
-        </main>
-      </div>
 
       {/* Lightbox Modal overlay */}
       {lightboxImage && (
@@ -446,8 +435,8 @@ export function CreatorProfilePage() {
         />
       )}
 
-      <MobileNav />
-    </div>
+      </div>
+    </MainLayout>
   );
 }
 

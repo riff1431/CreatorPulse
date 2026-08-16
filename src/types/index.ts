@@ -50,3 +50,15 @@ export type { FeatureModule } from '@/lib/modules/feature-module-context';
 
 // Site Settings
 export type { SiteSettings, SocialLinks, SEODefaults } from '@/lib/settings/site-settings-context';
+
+// Referrals & Affiliates
+export type {
+  ReferralSettings,
+  ReferralCampaign,
+  ReferralLink,
+  ReferralConversion,
+  ReferralPayout,
+  ReferralAnalytics,
+  UserReferralEarnings,
+  TopAffiliate
+} from '@/lib/referrals/types';

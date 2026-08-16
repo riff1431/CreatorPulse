@@ -1,0 +1,15 @@
+{
+  "fields": [
+    "mode",
+    "baseUrl",
+    "apiKey",
+    "secretKey",
+    "supportedCurrencies",
+    "transactionFeePercentage",
+    "isDefault",
+    "displayOrder",
+    "webhookUrl",
+    "transactionStatusMapping",
+    "enableLogging"
+  ]
+}

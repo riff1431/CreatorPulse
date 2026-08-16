@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import {
   X, CheckCircle2, Settings, AlertTriangle, Link2, Tag,
-  Film, MessageSquare, Star, MessageCircle, FileText, Wallet, Puzzle,
+  Film, MessageSquare, Star, MessageCircle, FileText, Wallet, Puzzle, Video, Image, Volume2,
 } from 'lucide-react';
 import { Button } from '@/components/admin/ui/Button';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@/lib/modules/feature-module-context';
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  Film, MessageSquare, Star, MessageCircle, FileText, Wallet, Puzzle,
+  Film, MessageSquare, Star, MessageCircle, FileText, Wallet, Puzzle, Video, Image, Volume2,
 };
 
 interface ModuleDetailSheetProps {

@@ -1,4 +1,11 @@
-import { StorageConfig, StorageDriverType, StorageCategoryFolder, StoredFile, StorageStats, StorageTestResult } from './storage-types';
+import { 
+  StorageConfig, 
+  StorageDriverType, 
+  StorageCategoryFolder, 
+  StoredFile, 
+  StorageStats, 
+  STORAGE_FOLDERS 
+} from './storage-types';
 
 export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
   activeDriver: 'local',
@@ -22,10 +29,29 @@ export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
   ],
   autoOptimizeImages: true,
   preserveOriginalFilenames: false,
+  enableFallbackToLocal: true,
   local: {
     basePath: 'public/uploads',
     publicUrlPrefix: '/uploads',
     isWritable: true,
+  },
+  s3: {
+    bucket: process.env.AWS_S3_BUCKET || '',
+    region: process.env.AWS_REGION || 'us-east-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    endpoint: process.env.AWS_S3_ENDPOINT || '',
+    cdnUrl: process.env.AWS_S3_CDN_URL || '',
+    forcePathStyle: false,
+  },
+  r2: {
+    accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID || '',
+    bucket: process.env.CLOUDFLARE_R2_BUCKET || '',
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+    region: 'auto',
+    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || '',
+    publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || '',
   },
   supabase: {
     bucketName: 'creatorpulse-media',
@@ -35,89 +61,65 @@ export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
   }
 };
 
-export const INITIAL_STORED_FILES: StoredFile[] = [
-  {
-    id: 'file-1',
-    name: 'avatar-elena.jpg',
-    originalName: 'elena_profile.jpg',
-    folder: 'avatars',
-    driver: 'local',
-    path: 'avatars/avatar-elena.jpg',
-    url: '/uploads/avatars/avatar-elena.jpg',
-    sizeBytes: 245760, // 240 KB
-    mimeType: 'image/jpeg',
-    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+export const STORAGE_FOLDER_INFO: Record<StorageCategoryFolder, { label: string; description: string; color: string; iconName: string }> = {
+  avatars: {
+    label: 'User Avatars',
+    description: 'Profile photos and user avatars',
+    color: '#EC4899',
+    iconName: 'User'
   },
-  {
-    id: 'file-2',
-    name: 'cover-sarah-gradient.webp',
-    originalName: 'banner_header.webp',
-    folder: 'covers',
-    driver: 'local',
-    path: 'covers/cover-sarah-gradient.webp',
-    url: '/uploads/covers/cover-sarah-gradient.webp',
-    sizeBytes: 1048576, // 1 MB
-    mimeType: 'image/webp',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  covers: {
+    label: 'Cover Banners',
+    description: 'Profile headers and page cover banners',
+    color: '#8B5CF6',
+    iconName: 'Image'
   },
-  {
-    id: 'file-3',
-    name: 'post-ui-figma-mastery.png',
-    originalName: 'figma_preview.png',
-    folder: 'posts',
-    driver: 'local',
-    path: 'posts/post-ui-figma-mastery.png',
-    url: '/uploads/posts/post-ui-figma-mastery.png',
-    sizeBytes: 3145728, // 3 MB
-    mimeType: 'image/png',
-    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+  posts: {
+    label: 'Feed & Media Posts',
+    description: 'Images and videos shared in posts and feeds',
+    color: '#3B82F6',
+    iconName: 'FileImage'
   },
-  {
-    id: 'file-4',
-    name: 'reel-cyber-motion-4k.mp4',
-    originalName: 'cyber_reel_final.mp4',
-    folder: 'reels',
-    driver: 'local',
-    path: 'reels/reel-cyber-motion-4k.mp4',
-    url: '/uploads/reels/reel-cyber-motion-4k.mp4',
-    sizeBytes: 15728640, // 15 MB
-    mimeType: 'video/mp4',
-    createdAt: new Date(Date.now() - 12 * 3600000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 3600000).toISOString(),
+  reels: {
+    label: 'Reels & Videos',
+    description: 'Short video reels and media clips',
+    color: '#10B981',
+    iconName: 'Film'
   },
-  {
-    id: 'file-5',
-    name: 'starter-theme-template-v1.0.zip',
-    originalName: 'starter-theme-template.zip',
-    folder: 'themes',
-    driver: 'local',
-    path: 'themes/starter-theme-template-v1.0.zip',
-    url: '/uploads/themes/starter-theme-template-v1.0.zip',
-    sizeBytes: 2097152, // 2 MB
-    mimeType: 'application/zip',
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+  stories: {
+    label: '24h Stories',
+    description: 'Ephemeral stories and temporary media',
+    color: '#F59E0B',
+    iconName: 'Clock'
   },
-  {
-    id: 'file-6',
-    name: 'plugin-drm-watermark.zip',
-    originalName: 'drm-guard-v2.1.zip',
-    folder: 'plugins',
-    driver: 'local',
-    path: 'plugins/plugin-drm-watermark.zip',
-    url: '/uploads/plugins/plugin-drm-watermark.zip',
-    sizeBytes: 1572864, // 1.5 MB
-    mimeType: 'application/zip',
-    createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+  messages: {
+    label: 'Direct Messages',
+    description: 'Private message attachments and audio clips',
+    color: '#6366F1',
+    iconName: 'MessageSquare'
+  },
+  themes: {
+    label: 'Theme Packages',
+    description: 'Custom frontend theme ZIP bundles and previews',
+    color: '#D946EF',
+    iconName: 'Palette'
+  },
+  plugins: {
+    label: 'Plugin Add-ons',
+    description: 'Installable plugin ZIP archives and assets',
+    color: '#14B8A6',
+    iconName: 'Plug'
+  },
+  documents: {
+    label: 'Documents & Payouts',
+    description: 'Invoices, payout statements and PDF documents',
+    color: '#64748B',
+    iconName: 'FileText'
   }
-];
+};
 
 export function formatBytes(bytes: number, decimals: number = 2): string {
-  if (bytes === 0) return '0 Bytes';
+  if (!bytes || bytes === 0) return '0 Bytes';
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -125,33 +127,33 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function computeStorageStats(files: StoredFile[], activeDriver: StorageDriverType): StorageStats {
-  const folders: { folder: StorageCategoryFolder; label: string; color: string }[] = [
-    { folder: 'avatars', label: 'User Avatars', color: '#EC4899' },
-    { folder: 'covers', label: 'Cover Banners', color: '#8B5CF6' },
-    { folder: 'posts', label: 'Feed & Media Posts', color: '#3B82F6' },
-    { folder: 'reels', label: 'Reels & Videos', color: '#10B981' },
-    { folder: 'stories', label: '24h Stories', color: '#F59E0B' },
-    { folder: 'messages', label: 'Direct Messages', color: '#6366F1' },
-    { folder: 'themes', label: 'Themes Packages', color: '#D946EF' },
-    { folder: 'plugins', label: 'Plugin Add-ons', color: '#14B8A6' },
-    { folder: 'documents', label: 'Documents & Payouts', color: '#64748B' },
-  ];
+export function sanitizeFilename(filename: string): string {
+  return filename
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_{2,}/g, '_');
+}
 
+export function computeStorageStats(
+  files: StoredFile[], 
+  activeDriver: StorageDriverType,
+  driverStatuses?: Record<StorageDriverType, { isConfigured: boolean; isOnline: boolean; lastTested?: string }>
+): StorageStats {
   const totalSizeBytes = files.reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
 
-  const categories = folders.map((item) => {
-    const matchingFiles = files.filter((f) => f.folder === item.folder);
+  const categories = STORAGE_FOLDERS.map((folder) => {
+    const info = STORAGE_FOLDER_INFO[folder];
+    const matchingFiles = files.filter((f) => f.folder === folder);
     const size = matchingFiles.reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
     const percentage = totalSizeBytes > 0 ? Math.round((size / totalSizeBytes) * 100) : 0;
 
     return {
-      folder: item.folder,
-      label: item.label,
+      folder,
+      label: info?.label || folder,
       fileCount: matchingFiles.length,
       totalSizeBytes: size,
       percentage,
-      color: item.color,
+      color: info?.color || '#6B7280',
     };
   });
 
@@ -162,5 +164,11 @@ export function computeStorageStats(files: StoredFile[], activeDriver: StorageDr
     formattedTotalSize: formatBytes(totalSizeBytes),
     categories,
     lastCheckedAt: new Date().toISOString(),
+    driverStatuses: driverStatuses || {
+      local: { isConfigured: true, isOnline: true },
+      s3: { isConfigured: false, isOnline: false },
+      r2: { isConfigured: false, isOnline: false },
+      supabase: { isConfigured: false, isOnline: false },
+    }
   };
 }

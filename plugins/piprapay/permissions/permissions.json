@@ -1,0 +1,6 @@
+{
+  "permissions": [
+    { "name": "payment_hooks", "description": "Subscribe to central payment gateway methods and checkout hooks" },
+    { "name": "network_requests", "description": "Make server-side HTTP requests to PipraPay REST API" }
+  ]
+}

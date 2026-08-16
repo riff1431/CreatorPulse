@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import gsap from 'gsap';
 import {
   Users, Star, Eye, DollarSign, TrendingUp, Clock,
   Sparkles, ArrowRight, PlusSquare, Wallet, Radio, ArrowUpRight
 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Sparkline } from '@/components/ui/Sparkline';
+import { CreatorLayout } from '../layouts/CreatorLayout';
+import { Card } from '../components/Card';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { Avatar } from '../components/Avatar';
+import { Sparkline } from '../components/Sparkline';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
 import { PluginSlot } from '@/lib/extensions/plugin-slot';
+import { prefersReducedMotion } from '../utils/animations';
 
 const periodData = {
   '7d': {
@@ -71,9 +74,20 @@ const topPosts = [
 export function CreatorDashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d'>('30d');
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   const activeData = periodData[selectedPeriod];
   const maxChartVal = Math.max(...activeData.chartData.map((d) => d.value));
+
+  useEffect(() => {
+    if (statsRef.current && !prefersReducedMotion()) {
+      gsap.fromTo(
+        statsRef.current.children,
+        { opacity: 0, y: 15, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.05, ease: 'power2.out' }
+      );
+    }
+  }, [selectedPeriod]);
 
   const graphWidth = 500;
   const graphHeight = 160;
@@ -89,7 +103,8 @@ export function CreatorDashboardPage() {
   const pathArea = `${pathLine} L ${points[points.length - 1].x} ${graphHeight - padding} L ${points[0].x} ${graphHeight - padding} Z`;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <CreatorLayout>
+      <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -119,7 +134,7 @@ export function CreatorDashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Followers Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
@@ -445,7 +460,8 @@ export function CreatorDashboardPage() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </CreatorLayout>
   );
 }
 

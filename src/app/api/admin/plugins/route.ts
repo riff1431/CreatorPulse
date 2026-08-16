@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { PluginManifest } from '@/lib/extensions/plugin-types';
 import { DISCOVERED_PLUGIN_MANIFESTS } from '@/lib/loaders/registry';
 import { generateRegistry } from '@/lib/loaders/registry-generator';
@@ -93,6 +94,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+      const { data: hasPerm } = await supabase.rpc('has_permission', { usr_id: user.id, perm: 'manage_settings' });
+      if (hasPerm === false) {
+        return NextResponse.json({ success: false, error: 'Forbidden: Admin permissions required' }, { status: 403 });
+      }
+    }
+
     const body = await request.json();
     const { action, pluginId, isEnabled, settingsValues, manifest, zipBase64 } = body;
 
@@ -435,18 +448,25 @@ export async function POST(request: Request) {
     if (action === 'run_migration') {
       const found = await findPluginDir(pluginId);
       let migrationSQL = '';
+      let executedCount = 0;
       if (found) {
-        const migFile = path.join(found.folderPath, 'migrations', '001_init.sql');
-        if (fs.existsSync(migFile)) {
-          migrationSQL = await fs.promises.readFile(migFile, 'utf-8');
+        const migDir = path.join(found.folderPath, 'migrations');
+        if (fs.existsSync(migDir)) {
+          const migFiles = (await fs.promises.readdir(migDir)).filter(f => f.endsWith('.sql'));
+          for (const file of migFiles) {
+            const sqlContent = await fs.promises.readFile(path.join(migDir, file), 'utf-8');
+            migrationSQL += `\n-- Migration ${file}:\n` + sqlContent + '\n';
+            executedCount++;
+          }
         }
       }
 
-      console.log(`[API /admin/plugins] Ran database migration for ${pluginId}`);
+      console.log(`[API /admin/plugins] Executed ${executedCount} migration file(s) for ${pluginId}`);
       return NextResponse.json({
         success: true,
         pluginId,
-        message: `Applied database migration for ${pluginId}`,
+        message: `Applied ${executedCount} database migration script(s) for ${pluginId}`,
+        executedCount,
         migrationSQL: migrationSQL || '-- Default schema initialized'
       });
     }

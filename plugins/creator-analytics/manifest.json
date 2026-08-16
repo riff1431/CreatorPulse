@@ -1,0 +1,110 @@
+{
+  "id": "plugin-creator-analytics",
+  "name": "Creator Analytics & Insights",
+  "slug": "creator-analytics",
+  "description": "Comprehensive analytics and insights add-on for creators and admins featuring profile views, follower growth, post/reel/story metrics, revenue trends, top content, date filters, SVG charts, exports, and aggregated admin analytics.",
+  "version": "1.0.0",
+  "author": "CreatorPulse Analytics Studio",
+  "authorUrl": "https://creatorpulse.com",
+  "iconUrl": "📊",
+  "category": "Monetization",
+  "tags": ["Analytics", "Insights", "Profile Views", "Followers", "Subscribers", "Revenue", "Charts", "Exports"],
+  "minAppVersion": "1.0.0",
+  "permissions": ["storage_access", "notifications_send", "security_audit"],
+  "hooks": ["creator_dashboard_widgets", "sidebar_extra_links", "navbar_actions"],
+  "isEnabled": true,
+  "autoUpdate": true,
+  "hasUpdate": false,
+  "installedAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "adminSettingsPage": {
+    "title": "Creator Analytics & Insights Settings",
+    "description": "Configure analytics tracking resolution, default date filters, CSV/JSON export defaults, and automated threshold alerts.",
+    "requiredPermission": "admin",
+    "sidebarItem": {
+      "label": "Creator Analytics",
+      "icon": "BarChart3",
+      "badge": "Analytics",
+      "badgeVariant": "indigo",
+      "href": "/admin/plugins/creator-analytics/settings"
+    }
+  },
+  "settingsSchema": [
+    {
+      "id": "defaultDateRange",
+      "label": "Default Dashboard Time Period",
+      "type": "select",
+      "defaultValue": "30d",
+      "options": [
+        { "label": "Last 7 Days", "value": "7d", "description": "7 day quick window" },
+        { "label": "Last 30 Days", "value": "30d", "description": "30 day standard monthly window" },
+        { "label": "Last 90 Days", "value": "90d", "description": "Quarterly view" },
+        { "label": "Last 12 Months", "value": "12m", "description": "Annual overall view" }
+      ]
+    },
+    {
+      "id": "trackingResolution",
+      "label": "Analytics Data Aggregation Resolution",
+      "type": "select",
+      "defaultValue": "daily",
+      "options": [
+        { "label": "Real-time Hourly Tracking", "value": "hourly" },
+        { "label": "Daily Snapshot Summary", "value": "daily" },
+        { "label": "Weekly Batch Aggregation", "value": "weekly" }
+      ]
+    },
+    {
+      "id": "enableAdminAlerts",
+      "label": "Enable High Traffic / Spike Notifications for Admins",
+      "type": "toggle",
+      "defaultValue": true,
+      "description": "Sends system notices when creator traffic or revenue spikes over 200%."
+    },
+    {
+      "id": "defaultExportFormat",
+      "label": "Default Report Export Format",
+      "type": "select",
+      "defaultValue": "csv",
+      "options": [
+        { "label": "CSV Spreadsheet File (.csv)", "value": "csv" },
+        { "label": "Structured JSON Data (.json)", "value": "json" },
+        { "label": "Print / PDF Report View", "value": "pdf" }
+      ]
+    },
+    {
+      "id": "cacheTTLSeconds",
+      "label": "Analytics Cache Duration (Seconds)",
+      "type": "number",
+      "defaultValue": 300,
+      "min": 0,
+      "max": 86400,
+      "description": "Duration in seconds to cache aggregated chart data to optimize database load."
+    }
+  ],
+  "settingsValues": {
+    "defaultDateRange": "30d",
+    "trackingResolution": "daily",
+    "enableAdminAlerts": true,
+    "defaultExportFormat": "csv",
+    "cacheTTLSeconds": 300
+  },
+  "databaseMigrations": [
+    {
+      "version": "1.0.0",
+      "description": "Creates plugin_creator_analytics_events, daily_stats, and content_metrics tables.",
+      "sql": "001_init.sql"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "Initial release of Creator Analytics & Insights Add-on Plugin.",
+        "Implemented creator analytics dashboard (profile views, followers, subscribers, post/reel/story metrics, engagement rate, revenue trends, top content).",
+        "Implemented admin aggregated analytics dashboard & creator leaderboards.",
+        "Added interactive date filters, SVG visual charts, CSV/JSON report exports, database migrations, lifecycle hooks, and active status guards."
+      ]
+    }
+  ]
+}
