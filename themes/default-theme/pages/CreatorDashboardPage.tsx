@@ -13,6 +13,8 @@ import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { Sparkline } from '../components/Sparkline';
+import { ProfileCompletionWidget } from '../components/ProfileCompletionWidget';
+import { FirstActionsWidget } from '../components/FirstActionsWidget';
 import { HookPoint } from '@/lib/extensions/plugin-engine';
 import { PluginSlot } from '@/lib/extensions/plugin-slot';
 import { prefersReducedMotion } from '../utils/animations';
@@ -109,22 +111,22 @@ export function CreatorDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="text-[#EC4899] animate-pulse" size={22} />
-            <h1 className="text-xl font-black text-[#18181B] tracking-tight">Creator Dashboard</h1>
+            <Sparkles className="text-[var(--color-primary)] animate-pulse" size={22} />
+            <h1 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">Creator Dashboard</h1>
           </div>
-          <p className="text-xs text-[#71717A] mt-1 font-medium">Revenue overview, audience growth, and content performance.</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium">Revenue overview, audience growth, and content performance.</p>
         </div>
 
         {/* Period Selector Tabs */}
-        <div className="flex items-center gap-1 bg-white/70 p-1 rounded-2xl border border-[#F3DCE8] self-start sm:self-auto shadow-xs">
+        <div className="flex items-center gap-1 bg-[var(--color-surface)] /70 p-1 rounded-2xl border border-[var(--color-border)] self-start sm:self-auto shadow-xs">
           {(['7d', '30d', '90d'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setSelectedPeriod(period)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 selectedPeriod === period
-                  ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] shadow-xs'
-                  : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7]/50'
+                  ? 'bg-[var(--color-soft-primary)] text-[var(--color-primary)] border border-[#FBCFE8] shadow-xs'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] /50'
               }`}
             >
               {period === '7d' ? '7 Days' : period === '30d' ? '30 Days' : '90 Days'}
@@ -133,19 +135,25 @@ export function CreatorDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Profile & Channel Completion Tracker */}
+      <ProfileCompletionWidget variant="card" />
+
+      {/* Starter Milestones Checklist */}
+      <FirstActionsWidget />
+
+      {/* Main KPI Stats Grid */}
+      <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
         {/* Followers Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Followers</span>
-              <div className="p-1.5 rounded-lg bg-pink-50 text-[#EC4899]"><Users size={14} /></div>
+              <div className="p-1.5 rounded-lg bg-pink-50 text-[var(--color-primary)] "><Users size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">{activeData.followers.total}</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">{activeData.followers.total}</div>
           </div>
           <div className="flex items-end justify-between pt-2">
-            <div className="text-[11px] font-bold text-[#BE185D] flex items-center gap-0.5">
+            <div className="text-[11px] font-bold text-[var(--color-primary)] flex items-center gap-0.5">
               <ArrowUpRight size={12} /> {activeData.followers.growth} ({activeData.followers.rate})
             </div>
             <Sparkline data={activeData.followers.spark} width={70} height={20} />
@@ -155,14 +163,14 @@ export function CreatorDashboardPage() {
         {/* Subscribers Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Subscribers</span>
-              <div className="p-1.5 rounded-lg bg-pink-50 text-[#EC4899]"><Star size={14} /></div>
+              <div className="p-1.5 rounded-lg bg-pink-50 text-[var(--color-primary)] "><Star size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">{activeData.subscribers.total}</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">{activeData.subscribers.total}</div>
           </div>
           <div className="flex items-end justify-between pt-2">
-            <div className="text-[11px] font-bold text-[#BE185D] flex items-center gap-0.5">
+            <div className="text-[11px] font-bold text-[var(--color-primary)] flex items-center gap-0.5">
               <ArrowUpRight size={12} /> {activeData.subscribers.growth} ({activeData.subscribers.rate})
             </div>
             <Sparkline data={activeData.subscribers.spark} width={70} height={20} color="#BE185D" fillColor="rgba(190, 24, 93, 0.1)" />
@@ -172,14 +180,14 @@ export function CreatorDashboardPage() {
         {/* Profile Views Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Profile Views</span>
-              <div className="p-1.5 rounded-lg bg-pink-50 text-[#EC4899]"><Eye size={14} /></div>
+              <div className="p-1.5 rounded-lg bg-pink-50 text-[var(--color-primary)] "><Eye size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">{activeData.views.total}</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">{activeData.views.total}</div>
           </div>
           <div className="flex items-end justify-between pt-2">
-            <div className="text-[11px] font-bold text-[#BE185D] flex items-center gap-0.5">
+            <div className="text-[11px] font-bold text-[var(--color-primary)] flex items-center gap-0.5">
               <ArrowUpRight size={12} /> {activeData.views.growth} ({activeData.views.rate})
             </div>
             <Sparkline data={activeData.views.spark} width={70} height={20} />
@@ -189,11 +197,11 @@ export function CreatorDashboardPage() {
         {/* Revenue Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Revenue</span>
               <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600"><DollarSign size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">{activeData.revenue.total}</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">{activeData.revenue.total}</div>
           </div>
           <div className="flex items-end justify-between pt-2">
             <div className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
@@ -206,14 +214,14 @@ export function CreatorDashboardPage() {
         {/* Lifetime Earnings Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Lifetime Earnings</span>
-              <div className="p-1.5 rounded-lg bg-pink-50 text-[#EC4899]"><TrendingUp size={14} /></div>
+              <div className="p-1.5 rounded-lg bg-pink-50 text-[var(--color-primary)] "><TrendingUp size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">$34,500</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">$34,500</div>
           </div>
           <div className="flex items-end justify-between pt-2">
-            <div className="text-[11px] font-medium text-[#71717A]">
+            <div className="text-[11px] font-medium text-[var(--color-text-secondary)] ">
               Total payout cleared
             </div>
             <Sparkline data={[28000, 29000, 30500, 32000, 32800, 33600, 34500]} width={70} height={20} />
@@ -223,11 +231,11 @@ export function CreatorDashboardPage() {
         {/* Pending Payout Card */}
         <Card className="p-5 flex flex-col justify-between min-h-36 hoverable">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-[#71717A]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] ">
               <span className="font-bold uppercase tracking-wider">Pending Release</span>
               <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600"><Clock size={14} /></div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">$1,200</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">$1,200</div>
           </div>
           <div className="flex items-end justify-between pt-2">
             <div className="text-[11px] font-bold text-amber-600">
@@ -244,8 +252,8 @@ export function CreatorDashboardPage() {
         <Card className="lg:col-span-2 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18181B]">Earnings Trend</h3>
-              <p className="text-[10px] text-[#71717A] mt-0.5">Visualize your cash flow increments over the period.</p>
+              <h3 className="text-sm font-bold text-[var(--color-text-primary)] ">Earnings Trend</h3>
+              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">Visualize your cash flow increments over the period.</p>
             </div>
             <Badge variant="emerald" size="sm">+{activeData.revenue.growth} Growth</Badge>
           </div>
@@ -338,15 +346,15 @@ export function CreatorDashboardPage() {
 
             {hoveredChartIndex !== null && (
               <div
-                className="absolute bg-white/95 border border-[#F3DCE8] p-2 rounded-xl shadow-md text-[10px] space-y-0.5 z-10 font-bold text-[#18181B]"
+                className="absolute bg-[var(--color-surface)] /95 border border-[var(--color-border)] p-2 rounded-xl shadow-md text-[10px] space-y-0.5 z-10 font-bold text-[var(--color-text-primary)] "
                 style={{
                   left: `${(points[hoveredChartIndex].x / graphWidth) * 100}%`,
                   top: `${(points[hoveredChartIndex].y / graphHeight) * 100 - 32}%`,
                   transform: 'translateX(-50%)',
                 }}
               >
-                <span className="text-[#EC4899] block font-black">${points[hoveredChartIndex].val}</span>
-                <span className="text-[#A1A1AA] text-[8px] font-semibold">{points[hoveredChartIndex].label}</span>
+                <span className="text-[var(--color-primary)] block font-black">${points[hoveredChartIndex].val}</span>
+                <span className="text-[var(--color-text-muted)] text-[8px] font-semibold">{points[hoveredChartIndex].label}</span>
               </div>
             )}
           </div>
@@ -355,46 +363,46 @@ export function CreatorDashboardPage() {
         {/* Quick Actions Panel */}
         <Card className="p-6 space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-[#18181B]">Quick Actions</h3>
-            <p className="text-[10px] text-[#71717A] mt-0.5">Frequent creator studio shortcuts.</p>
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)] ">Quick Actions</h3>
+            <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">Frequent creator studio shortcuts.</p>
           </div>
           <div className="space-y-3">
             <Link href="/creator/posts">
-              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[#F472B6] hover:bg-[var(--color-surface-secondary)] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold"><PlusSquare size={16} /></div>
+                  <div className="w-9 h-9 rounded-xl bg-[var(--color-soft-primary)] flex items-center justify-center text-[var(--color-primary)] font-bold"><PlusSquare size={16} /></div>
                   <div>
-                    <p className="text-xs font-black text-[#18181B]">Create New Post</p>
-                    <p className="text-[9px] text-[#71717A] font-semibold">Publish text, image, poll</p>
+                    <p className="text-xs font-black text-[var(--color-text-primary)] ">Create New Post</p>
+                    <p className="text-[9px] text-[var(--color-text-secondary)] font-semibold">Publish text, image, poll</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
+                <ArrowRight size={14} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors" />
               </div>
             </Link>
 
             <Link href="/creator/reels">
-              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[#F472B6] hover:bg-[var(--color-surface-secondary)] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold"><Radio size={16} /></div>
+                  <div className="w-9 h-9 rounded-xl bg-[var(--color-soft-primary)] flex items-center justify-center text-[var(--color-primary)] font-bold"><Radio size={16} /></div>
                   <div>
-                    <p className="text-xs font-black text-[#18181B]">Upload Reel</p>
-                    <p className="text-[9px] text-[#71717A] font-semibold">Short full-screen video reels</p>
+                    <p className="text-xs font-black text-[var(--color-text-primary)] ">Upload Reel</p>
+                    <p className="text-[9px] text-[var(--color-text-secondary)] font-semibold">Short full-screen video reels</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
+                <ArrowRight size={14} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors" />
               </div>
             </Link>
 
             <Link href="/creator/payouts">
-              <div className="p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6] hover:bg-[#FFF1F7] transition-all flex items-center justify-between cursor-pointer group">
+              <div className="p-3.5 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[#F472B6] hover:bg-[var(--color-surface-secondary)] transition-all flex items-center justify-between cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#FCE7F3] flex items-center justify-center text-[#EC4899] font-bold"><Wallet size={16} /></div>
+                  <div className="w-9 h-9 rounded-xl bg-[var(--color-soft-primary)] flex items-center justify-center text-[var(--color-primary)] font-bold"><Wallet size={16} /></div>
                   <div>
-                    <p className="text-xs font-black text-[#18181B]">Request Payout</p>
-                    <p className="text-[9px] text-[#71717A] font-semibold">Transfer available balance</p>
+                    <p className="text-xs font-black text-[var(--color-text-primary)] ">Request Payout</p>
+                    <p className="text-[9px] text-[var(--color-text-secondary)] font-semibold">Transfer available balance</p>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-[#A1A1AA] group-hover:text-[#EC4899] transition-colors" />
+                <ArrowRight size={14} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors" />
               </div>
             </Link>
           </div>
@@ -410,24 +418,24 @@ export function CreatorDashboardPage() {
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18181B]">Recent Subscribers</h3>
-              <p className="text-[10px] text-[#71717A] mt-0.5">Newly subscribed fans and members.</p>
+              <h3 className="text-sm font-bold text-[var(--color-text-primary)] ">Recent Subscribers</h3>
+              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">Newly subscribed fans and members.</p>
             </div>
             <Link href="/creator/subscribers">
-              <Button variant="ghost" size="sm" className="text-[#EC4899] text-xs font-bold">View All</Button>
+              <Button variant="ghost" size="sm" className="text-[var(--color-primary)] text-xs font-bold">View All</Button>
             </Link>
           </div>
           <div className="space-y-3">
             {recentSubscribers.map((s) => (
-              <div key={s.name} className="flex items-center justify-between text-xs p-2.5 rounded-xl border border-[#F3DCE8]/50 hover:bg-[#FFF9FC] transition-all">
+              <div key={s.name} className="flex items-center justify-between text-xs p-2.5 rounded-xl border border-[var(--color-border)] /50 hover:bg-[var(--color-bg)] transition-all">
                 <div className="flex items-center gap-3">
                   <Avatar src={s.avatar} alt={s.name} size="sm" />
                   <div>
-                    <p className="font-bold text-[#18181B]">{s.name}</p>
-                    <p className="text-[10px] text-[#BE185D] font-semibold">{s.plan}</p>
+                    <p className="font-bold text-[var(--color-text-primary)] ">{s.name}</p>
+                    <p className="text-[10px] text-[var(--color-primary)] font-semibold">{s.plan}</p>
                   </div>
                 </div>
-                <span className="text-[#A1A1AA] font-bold text-[10px]">{s.time}</span>
+                <span className="text-[var(--color-text-muted)] font-bold text-[10px]">{s.time}</span>
               </div>
             ))}
           </div>
@@ -436,19 +444,19 @@ export function CreatorDashboardPage() {
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18181B]">Top Performing Posts</h3>
-              <p className="text-[10px] text-[#71717A] mt-0.5">Most views and comments this period.</p>
+              <h3 className="text-sm font-bold text-[var(--color-text-primary)] ">Top Performing Posts</h3>
+              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">Most views and comments this period.</p>
             </div>
             <Link href="/creator/analytics">
-              <Button variant="ghost" size="sm" className="text-[#EC4899] text-xs font-bold">Analytics</Button>
+              <Button variant="ghost" size="sm" className="text-[var(--color-primary)] text-xs font-bold">Analytics</Button>
             </Link>
           </div>
           <div className="space-y-3">
             {topPosts.map((p) => (
-              <div key={p.title} className="flex items-center justify-between text-xs p-3.5 bg-[#FFF9FC] rounded-2xl border border-[#F3DCE8] hover:border-[#F472B6]/50 transition-all">
+              <div key={p.title} className="flex items-center justify-between text-xs p-3.5 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[#F472B6]/50 transition-all">
                 <div className="flex-1 min-w-0 pr-4">
-                  <p className="font-extrabold text-[#18181B] truncate">{p.title}</p>
-                  <div className="flex items-center gap-3 mt-1 text-[10px] text-[#71717A] font-bold">
+                  <p className="font-extrabold text-[var(--color-text-primary)] truncate">{p.title}</p>
+                  <div className="flex items-center gap-3 mt-1 text-[10px] text-[var(--color-text-secondary)] font-bold">
                     <span>{p.views.toLocaleString()} views</span>
                     <span>•</span>
                     <span>{p.likes} likes</span>

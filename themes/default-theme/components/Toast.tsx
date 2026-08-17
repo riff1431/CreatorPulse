@@ -88,14 +88,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             warning:
               'bg-amber-50 dark:bg-amber-950/85 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100',
             info:
-              'bg-white/95 dark:bg-[#1A1222]/95 border-[#F3DCE8] dark:border-[#3A2A4C] text-[#18181B] dark:text-[#FDF2F8]',
+              'bg-[var(--color-surface)] /95 /95 border-[var(--color-border)] text-[var(--color-text-primary)] ',
           }[toast.type];
 
           const iconClasses = {
             success: 'text-emerald-500',
             error: 'text-rose-500',
             warning: 'text-amber-500',
-            info: 'text-[#EC4899]',
+            info: 'text-[var(--color-primary)] ',
           }[toast.type];
 
           return (
@@ -115,7 +115,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                       toast.action?.onClick();
                       removeToast(toast.id);
                     }}
-                    className="mt-2 text-[11px] font-black text-[#EC4899] hover:underline cursor-pointer"
+                    className="mt-2 text-[11px] font-black text-[var(--color-primary)] hover:underline cursor-pointer"
                   >
                     {toast.action.label} →
                   </button>

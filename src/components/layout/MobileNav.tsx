@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Film, Compass, LayoutDashboard, Shield, Database } from 'lucide-react';
+import { Home, Film, Compass, LayoutDashboard, Shield, Database, Bookmark } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 
 export const MobileNav: React.FC = () => {
@@ -64,13 +64,13 @@ export const MobileNav: React.FC = () => {
         </Link>
       ) : (
         <Link
-          href="/database"
+          href="/saved"
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
-            pathname === '/database' ? 'text-[#EC4899]' : 'text-[#71717A]'
+            pathname === '/saved' ? 'text-[#EC4899]' : 'text-[#71717A]'
           }`}
         >
-          <Database size={18} />
-          <span>Supabase</span>
+          <Bookmark size={18} />
+          <span>Saved</span>
         </Link>
       )}
     </nav>

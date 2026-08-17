@@ -175,9 +175,12 @@ export const AnnouncementProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const dismissAnnouncement = (id: string) => {
-    const updated = [...dismissedIds, id];
-    setDismissedIds(updated);
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify(updated));
+    setDismissedIds(prev => {
+      if (prev.includes(id)) return prev;
+      const updated = [...prev, id];
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const isDismissed = (id: string) => dismissedIds.includes(id);

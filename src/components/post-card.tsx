@@ -14,6 +14,10 @@ import { HookPoint } from '@/lib/extensions/plugin-engine';
 import { DynamicVideoPlayer } from '@/components/media/DynamicVideoPlayer';
 import { DynamicImageLoader } from '@/components/media/DynamicImageLoader';
 import { DynamicAudioPlayer } from '@/components/media/DynamicAudioPlayer';
+import { useSaved } from '@/lib/saved/saved-context';
+import { useHistory } from '@/lib/history/history-context';
+import { SaveToCollectionModal } from '@/components/saved/SaveToCollectionModal';
+import { FolderPlus } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
@@ -21,10 +25,16 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = false }) => {
+  const { isSaved: checkIsSaved, toggleQuickSave } = useSaved();
+  const { logActivity } = useHistory();
+
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [isLiking, setIsLiking] = useState(false);
-  const [isSaved, setIsSaved] = useState(post.isSaved || false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  
+  const isPostSaved = checkIsSaved(post.id);
+
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([
     {
@@ -67,13 +77,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
       setIsLiked(true);
       setIsLiking(true);
       setTimeout(() => setIsLiking(false), 450);
+
+      // Log interaction activity
+      logActivity({
+        category: 'interaction',
+        title: `Liked post by @${post.authorUsername}`,
+        subtitle: post.title || post.content.slice(0, 60),
+        targetUrl: `/feed#${post.id}`,
+        targetId: post.id,
+        avatarUrl: post.authorAvatar,
+        actionType: 'like',
+      });
     }
   };
 
   const handleToggleSave = () => {
-    const nextSavedState = !isSaved;
-    setIsSaved(nextSavedState);
-    triggerToast(nextSavedState ? "💾 Post saved to Bookmarks!" : "🗑️ Post removed from Bookmarks!");
+    const isNowSaved = toggleQuickSave({ id: post.id, type: 'post', post });
+    triggerToast(isNowSaved ? "💾 Post saved to Bookmarks!" : "🗑️ Post removed from Bookmarks!");
   };
 
   const handleVote = (optionId: string) => {
@@ -309,15 +329,25 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
             {copiedShare ? <Check size={16} className="text-emerald-500" /> : <Share2 size={16} />}
           </button>
 
-          <button
-            onClick={handleToggleSave}
-            className={`p-2 transition-colors rounded-xl hover:bg-[#FDF2F8] cursor-pointer ${
-              isSaved ? 'text-[#EC4899]' : 'hover:text-[#EC4899]'
-            }`}
-            title="Save post"
-          >
-            <Bookmark size={16} className={isSaved ? 'fill-[#EC4899]' : ''} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleToggleSave}
+              className={`p-2 transition-colors rounded-xl hover:bg-[#FDF2F8] cursor-pointer ${
+                isPostSaved ? 'text-[#EC4899]' : 'hover:text-[#EC4899]'
+              }`}
+              title={isPostSaved ? "Unsave post" : "Save post"}
+            >
+              <Bookmark size={16} className={isPostSaved ? 'fill-[#EC4899]' : ''} />
+            </button>
+
+            <button
+              onClick={() => setIsSaveModalOpen(true)}
+              className="p-2 text-[#71717A] hover:text-[#EC4899] hover:bg-[#FDF2F8] transition-colors rounded-xl cursor-pointer"
+              title="Save to folder / collection"
+            >
+              <FolderPlus size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -396,6 +426,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isMemberUnlocked = fal
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Save to Collection Modal */}
+      <SaveToCollectionModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        item={{ id: post.id, type: 'post', post }}
+      />
     </article>
   );
 };

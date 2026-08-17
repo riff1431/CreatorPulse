@@ -46,5 +46,6 @@ next-env.d.ts
 # temporary & scratch files
 /scratch/
 skill_instructions.txt
+TEMP/
 
 

@@ -51,7 +51,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         <div
           className={`absolute ${
             align === 'right' ? 'right-0' : 'left-0'
-          } mt-2 w-52 rounded-2xl bg-white/95 dark:bg-[#1A1222]/95 backdrop-blur-xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl p-1.5 z-50 space-y-0.5 animate-in fade-in zoom-in-95 duration-150`}
+          } mt-2 w-52 rounded-2xl bg-[var(--color-surface)] /95 /95 backdrop-blur-xl border border-[var(--color-border)] shadow-2xl p-1.5 z-50 space-y-0.5 animate-in fade-in zoom-in-95 duration-150`}
           role="menu"
         >
           {items.map((item) => (
@@ -71,7 +71,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     ? 'opacity-40 cursor-not-allowed'
                     : item.destructive
                     ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                    : 'text-[#18181B] dark:text-[#FDF2F8] hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] hover:text-[#EC4899]'
+                    : 'text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-primary)] '
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -80,7 +80,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 </div>
 
                 {item.badge && (
-                  <span className="text-[9px] font-black bg-pink-100 dark:bg-pink-950 text-[#BE185D] dark:text-[#F472B6] px-1.5 py-0.5 rounded-md">
+                  <span className="text-[9px] font-black bg-pink-100 dark:bg-pink-950 text-[var(--color-primary)] px-1.5 py-0.5 rounded-md">
                     {item.badge}
                   </span>
                 )}

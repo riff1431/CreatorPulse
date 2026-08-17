@@ -54,7 +54,11 @@ export type ThemePageName =
   | 'ShortsPage'
   | 'ExplorePage'
   | 'SavedPage'
-  | 'BalancePage';
+  | 'BalancePage'
+  | 'SettingsPage'
+  | 'MemberDashboardPage'
+  | 'OnboardingPage'
+  | 'ConnectionsPage';
 
 export type ThemeLayoutName =
   | 'MainLayout'

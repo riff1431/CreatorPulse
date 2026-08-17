@@ -40,7 +40,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-xs font-bold text-[#18181B] dark:text-[#FDF2F8]"
+            className="block text-xs font-bold text-[var(--color-text-primary)] "
           >
             {label}
           </label>
@@ -51,16 +51,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             disabled={disabled}
-            className={`w-full appearance-none bg-[#FFF9FC] dark:bg-[#241A30] text-[#18181B] dark:text-[#FDF2F8] text-xs font-bold rounded-2xl border transition-all duration-200 py-2.5 pl-3.5 pr-10 outline-none cursor-pointer ${
+            className={`w-full appearance-none bg-[var(--color-bg)] text-[var(--color-text-primary)] text-xs font-bold rounded-2xl border transition-all duration-200 py-2.5 pl-3.5 pr-10 outline-none cursor-pointer ${
               error
                 ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20'
-                : 'border-[#F3DCE8] dark:border-[#3A2A4C] focus:border-[#EC4899] focus:bg-white dark:focus:bg-[#1A1222] focus:ring-2 focus:ring-pink-500/15'
+                : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] dark:focus:bg-[#1A1222] focus:ring-2 focus:ring-pink-500/15'
             } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900' : ''} ${className}`}
             {...props}
           >
             {options
               ? options.map((opt) => (
-                  <option key={opt.value} value={opt.value} disabled={opt.disabled} className="bg-white dark:bg-[#1A1222]">
+                  <option key={opt.value} value={opt.value} disabled={opt.disabled} className="bg-[var(--color-surface)] ">
                     {opt.label}
                   </option>
                 ))
@@ -69,7 +69,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
           <ChevronDown
             size={16}
-            className="absolute right-3.5 text-[#A1A1AA] dark:text-[#8E7890] pointer-events-none"
+            className="absolute right-3.5 text-[var(--color-text-muted)] dark:text-[#8E7890] pointer-events-none"
           />
         </div>
 
@@ -79,7 +79,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             <span>{error}</span>
           </p>
         ) : helperText ? (
-          <p className="text-[11px] text-[#71717A] dark:text-[#8E7890] mt-1 font-medium">{helperText}</p>
+          <p className="text-[11px] text-[var(--color-text-secondary)] dark:text-[#8E7890] mt-1 font-medium">{helperText}</p>
         ) : null}
       </div>
     );

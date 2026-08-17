@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Heart, MessageSquare, Share2, Play, Sparkles, 
-  ChevronUp, ChevronDown, CheckCircle2, UserPlus, X, Check 
+  ChevronUp, ChevronDown, CheckCircle2, UserPlus, X, Check, Bookmark, FolderOutput 
 } from 'lucide-react';
 import gsap from 'gsap';
 import { Navbar } from '@/components/layout/Navbar';
@@ -15,6 +15,9 @@ import { MOCK_SHORTS, ShortVideo } from '@/lib/supabase/store';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { DynamicVideoPlayer } from '@/components/media/DynamicVideoPlayer';
+import { useSaved } from '@/lib/saved/saved-context';
+import { useHistory } from '@/lib/history/history-context';
+import { SaveToCollectionModal } from '@/components/saved/SaveToCollectionModal';
 
 const mockReelComments = [
   { userName: 'Alex Vance', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Wow, this transition is clean!', time: '2m ago' },
@@ -23,25 +26,42 @@ const mockReelComments = [
 ];
 
 export default function ShortsPage() {
+  const { isSaved, toggleQuickSave } = useSaved();
+  const { logActivity } = useHistory();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shortsList, setShortsList] = useState<ShortVideo[]>(MOCK_SHORTS);
   
   const [showComments, setShowComments] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   
   const [activeComments, setActiveComments] = useState(mockReelComments);
   const reelCardRef = useRef<HTMLDivElement>(null);
   const activeShort = shortsList[currentIndex];
 
-  // Sync active comments on reel change
+  // Sync active comments & log reel view on reel change
   useEffect(() => {
     const timer = setTimeout(() => {
       setActiveComments(mockReelComments);
       setShowComments(false);
+
+      if (activeShort) {
+        logActivity({
+          category: 'reel',
+          title: `Watched Reel: ${activeShort.title}`,
+          subtitle: `By @${activeShort.authorUsername} • ${activeShort.category}`,
+          targetUrl: `/shorts?id=${activeShort.id}`,
+          targetId: activeShort.id,
+          avatarUrl: activeShort.authorAvatar,
+          thumbnailUrl: activeShort.videoUrl,
+          actionType: 'view',
+        });
+      }
     }, 0);
     return () => clearTimeout(timer);
-  }, [currentIndex]);
+  }, [currentIndex, activeShort, logActivity]);
 
   const animateTransition = (nextIndex: number, direction: 'up' | 'down') => {
     if (!reelCardRef.current) {
@@ -164,7 +184,7 @@ export default function ShortsPage() {
               </div>
 
               {/* Floating Right Interaction Bar */}
-              <div className="absolute right-4 bottom-24 z-20 flex flex-col items-center gap-5 text-white">
+              <div className="absolute right-4 bottom-24 z-20 flex flex-col items-center gap-4 text-white">
                 <button
                   onClick={handleToggleLike}
                   className="flex flex-col items-center gap-1 group cursor-pointer"
@@ -172,7 +192,7 @@ export default function ShortsPage() {
                   <div className={`p-3.5 rounded-full backdrop-blur-md transition-all ${
                     activeShort.isLiked ? 'bg-[#EC4899] text-white shadow-lg shadow-[#EC4899]/40 scale-110' : 'bg-black/40 hover:bg-[#EC4899]/40 text-white'
                   }`}>
-                    <Heart size={22} className={activeShort.isLiked ? 'fill-white' : ''} />
+                    <Heart size={20} className={activeShort.isLiked ? 'fill-white' : ''} />
                   </div>
                   <span className="text-xs font-bold">{activeShort.likesCount}</span>
                 </button>
@@ -182,9 +202,33 @@ export default function ShortsPage() {
                   className="flex flex-col items-center gap-1 cursor-pointer hover:text-[#EC4899] transition-colors"
                 >
                   <div className="p-3.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors">
-                    <MessageSquare size={22} />
+                    <MessageSquare size={20} />
                   </div>
                   <span className="text-xs font-bold">{activeShort.commentsCount}</span>
+                </button>
+
+                <button
+                  onClick={() => toggleQuickSave({ id: activeShort.id, type: 'reel', short: activeShort })}
+                  className="flex flex-col items-center gap-1 cursor-pointer hover:text-[#EC4899] transition-colors"
+                  title={isSaved(activeShort.id) ? "Unsave Reel" : "Save Reel"}
+                >
+                  <div className={`p-3.5 rounded-full backdrop-blur-md transition-all ${
+                    isSaved(activeShort.id) ? 'bg-[#EC4899] text-white shadow-lg shadow-[#EC4899]/40 scale-110' : 'bg-black/40 hover:bg-black/60 text-white'
+                  }`}>
+                    <Bookmark size={20} className={isSaved(activeShort.id) ? 'fill-white' : ''} />
+                  </div>
+                  <span className="text-[10px] font-bold">Saved</span>
+                </button>
+
+                <button 
+                  onClick={() => setIsSaveModalOpen(true)}
+                  className="flex flex-col items-center gap-1 cursor-pointer hover:text-[#EC4899] transition-colors"
+                  title="Save to folder / collection"
+                >
+                  <div className="p-3.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors">
+                    <FolderOutput size={20} />
+                  </div>
+                  <span className="text-[10px] font-bold">Folder</span>
                 </button>
 
                 <button 
@@ -192,7 +236,7 @@ export default function ShortsPage() {
                   className="flex flex-col items-center gap-1 cursor-pointer hover:text-[#EC4899] transition-colors"
                 >
                   <div className="p-3.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors">
-                    <Share2 size={22} />
+                    <Share2 size={20} />
                   </div>
                   <span className="text-xs font-bold">{activeShort.sharesCount}</span>
                 </button>
@@ -272,6 +316,14 @@ export default function ShortsPage() {
           </div>
         </main>
       </div>
+
+      {activeShort && (
+        <SaveToCollectionModal
+          isOpen={isSaveModalOpen}
+          onClose={() => setIsSaveModalOpen(false)}
+          item={{ id: activeShort.id, type: 'reel', short: activeShort }}
+        />
+      )}
 
       <MobileNav />
     </div>

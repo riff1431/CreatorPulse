@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     /* Dynamic Theme Color Tokens */
@@ -50,16 +52,23 @@
   }
 
   /* Dark Theme class support */
-  .dark-theme {
-    --color-bg: #0F0A1A;
-    --color-surface: #1E1433;
-    --color-surface-secondary: #2C1B4D;
-    --color-border: #4C1D95;
-    --color-text-primary: #FAF5FF;
-    --color-text-secondary: #D8B4FE;
-    --color-text-muted: #A855F7;
+  .dark-theme,
+  :root.dark,
+  html.dark {
+    --color-primary: #F472B6;
+    --color-primary-hover: #EC4899;
+    --color-soft-primary: #381A2B;
+    --color-light-primary: #24141F;
+    --color-accent: #FB7185;
+    --color-bg: #0F0A14;
+    --color-surface: #1A1222;
+    --color-surface-secondary: #241A30;
+    --color-border: #3A2A4C;
+    --color-text-primary: #FDF2F8;
+    --color-text-secondary: #D4B8D0;
+    --color-text-muted: #8E7890;
     --theme-shadow-card: 0 10px 40px rgba(0, 0, 0, 0.6);
-    --theme-shadow-button: 0 6px 24px rgba(168, 85, 247, 0.4);
+    --theme-shadow-button: 0 6px 24px rgba(244, 114, 182, 0.3);
     
     --bg-main: var(--color-bg);
     --surface: var(--color-surface);
@@ -76,18 +85,35 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-image: 
-      radial-gradient(at 10% 10%, var(--color-soft-primary, rgba(252, 231, 243, 0.65)) 0px, transparent 45%),
-      radial-gradient(at 90% 90%, var(--color-light-primary, rgba(253, 242, 248, 0.8)) 0px, transparent 45%),
-      radial-gradient(at 50% 30%, var(--color-surface-secondary, rgba(255, 241, 247, 0.5)) 0px, transparent 60%);
+      radial-gradient(at 10% 10%, rgba(252, 231, 243, 0.65) 0px, transparent 45%),
+      radial-gradient(at 90% 90%, rgba(253, 242, 248, 0.8) 0px, transparent 45%),
+      radial-gradient(at 50% 30%, rgba(255, 241, 247, 0.5) 0px, transparent 60%);
     background-attachment: fixed;
     letter-spacing: -0.01em;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark-theme body,
+  :root.dark body,
+  html.dark body {
+    background-color: var(--color-bg, #0F0A14) !important;
+    color: var(--color-text-primary, #FDF2F8) !important;
+    background-image: 
+      radial-gradient(at 10% 10%, rgba(56, 26, 43, 0.45) 0px, transparent 45%),
+      radial-gradient(at 90% 90%, rgba(36, 20, 31, 0.55) 0px, transparent 45%),
+      radial-gradient(at 50% 30%, rgba(48, 30, 62, 0.35) 0px, transparent 60%) !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.025em;
     font-weight: 700;
     color: var(--color-text-primary, #18181B);
+  }
+
+  .dark-theme h1, .dark-theme h2, .dark-theme h3, .dark-theme h4, .dark-theme h5, .dark-theme h6,
+  :root.dark h1, :root.dark h2, :root.dark h3, :root.dark h4, :root.dark h5, :root.dark h6,
+  html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+    color: var(--color-text-primary, #FDF2F8);
   }
 }
 
@@ -366,5 +392,23 @@
 
 .animate-float-reaction {
   animation: storyFloatUp 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Infinite Marquee Animation for Trust & Brand Ticker */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 

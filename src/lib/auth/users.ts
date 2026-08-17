@@ -198,30 +198,59 @@ export function registerAccount(
   category?: string
 ): UserProfile {
   const normalizedEmail = email.trim().toLowerCase();
+
+  // Strictly forbid administrative roles during public registration
+  if (role === 'admin' || role === 'super_admin' || role === 'moderator') {
+    throw new Error('Administrative roles cannot be registered through public signup.');
+  }
+
+  // Prevent overriding fixed system test accounts
+  if (AUTH_ACCOUNTS[normalizedEmail]) {
+    throw new Error('An account with this email address is already registered.');
+  }
+
+  const safeRole: UserRole = role === 'creator' ? 'creator' : 'member';
   
-  // Set default status to 'active'
+  // Set default status to 'active' and initialize onboarding flow
   const newUser: AuthUser = {
     id: `user-${Date.now()}`,
     email: normalizedEmail,
     fullName: fullName.trim(),
     username: username.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''),
     avatarUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${username.trim()}`,
-    bio: `${role === 'creator' ? 'Creator & Educator' : 'Community Member'} on CreatorPulse.`,
-    role,
-    isVerified: role === 'admin' || role === 'super_admin',
-    category: category || (role === 'creator' ? 'Education & Tech' : undefined),
+    bio: `${safeRole === 'creator' ? 'Creator & Educator' : 'Community Member'} on CreatorPulse.`,
+    role: safeRole,
+    isVerified: false,
+    category: category || (safeRole === 'creator' ? 'Education & Tech' : undefined),
     status: 'active',
     createdAt: new Date().toISOString().split('T')[0],
-    passwordHash: password
+    passwordHash: password,
+    isOnboarded: false,
+    onboardingStep: 1,
+    profileCompletionScore: 35,
+    onboardingData: {
+      interests: [],
+      followedCreators: [],
+      preferences: {
+        emailDigest: true,
+        instantDropAlerts: true,
+      }
+    }
   };
 
   if (typeof window !== 'undefined') {
     try {
       const dynamicUsersRaw = localStorage.getItem('creatorpulse_registered_users');
       const dynamicUsers: Record<string, AuthUser> = dynamicUsersRaw ? JSON.parse(dynamicUsersRaw) : {};
+      
+      if (dynamicUsers[normalizedEmail]) {
+        throw new Error('An account with this email address is already registered.');
+      }
+
       dynamicUsers[normalizedEmail] = newUser;
       localStorage.setItem('creatorpulse_registered_users', JSON.stringify(dynamicUsers));
     } catch (e) {
+      if (e instanceof Error) throw e;
       console.error('Error storing new user', e);
     }
   }

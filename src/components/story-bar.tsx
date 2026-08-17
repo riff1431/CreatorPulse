@@ -6,7 +6,7 @@ import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePlugins } from '@/lib/extensions/plugin-engine';
-import { StoriesService, PluginStory } from '@/lib/services/stories-service';
+import { StoriesService, PluginStory, getFreshInitialStories } from '@/lib/services/stories-service';
 
 const getReactionId = () => Date.now() + Math.random();
 const getReactionLeft = () => Math.floor(Math.random() * 60) + 20;
@@ -63,9 +63,15 @@ export const StoryBar: React.FC = () => {
   const refreshStories = async () => {
     try {
       const active = await StoriesService.getStories();
-      setActiveStories(active);
+      if (active && active.length > 0) {
+        setActiveStories(active);
+      } else {
+        const fresh = getFreshInitialStories();
+        setActiveStories(fresh);
+      }
     } catch (e) {
       console.error('[StoryBar] Failed to load stories:', e);
+      setActiveStories(getFreshInitialStories());
     } finally {
       setIsLoading(false);
     }

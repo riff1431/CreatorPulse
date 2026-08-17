@@ -4,7 +4,7 @@ import { CheckCircle } from 'lucide-react';
 interface AvatarProps {
   src?: string;
   alt: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   isVerified?: boolean;
   hasStory?: boolean;
   storySeen?: boolean;
@@ -21,6 +21,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   className = ''
 }) => {
   const sizeClasses = {
+    xs: 'w-6 h-6 text-[10px]',
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
     lg: 'w-14 h-14 text-base',

@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Sparkles, ArrowRight, ShieldCheck, Users, Play, Heart, 
-  Lock, Zap, CheckCircle2, Star, Database, ChevronRight, 
-  HelpCircle, Gift, DollarSign, Video, MessageSquare, Flame, Check
+  Lock, Zap, CheckCircle2, Star, ChevronRight, 
+  HelpCircle, DollarSign, Video, MessageSquare, Flame, Check
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
@@ -14,10 +14,14 @@ import { Avatar } from '../components/Avatar';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { RoleSwitcher } from '../components/RoleSwitcher';
+import { HeroSection } from '../components/HeroSection';
+import { BrandTicker } from '../components/BrandTicker';
+import { CreatorCloud } from '../components/CreatorCloud';
+import { BentoFeatures } from '../components/BentoFeatures';
+import { ProjectEstimationCalculator } from '../components/ProjectEstimationCalculator';
 import { MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
 import { useTheme } from '@/lib/extensions/theme-engine';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
-import gsap from 'gsap';
 
 export function LandingPage() {
   const { activeTheme } = useTheme();
@@ -25,19 +29,8 @@ export function LandingPage() {
   const [subscriberCount, setSubscriberCount] = useState(350);
   const [tierPrice, setTierPrice] = useState(15);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const heroRef = useRef<HTMLDivElement>(null);
 
   const monthlyEarnings = Math.round(subscriberCount * tierPrice * 0.95);
-
-  useEffect(() => {
-    if (heroRef.current) {
-      gsap.fromTo(
-        heroRef.current.querySelectorAll('.gsap-fade-up'),
-        { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: 'power2.out' }
-      );
-    }
-  }, []);
 
   const faqs = [
     {
@@ -61,72 +54,37 @@ export function LandingPage() {
   const siteName = settings.site_name || 'CreatorPulse';
 
   return (
-    <div className="min-h-screen bg-[#FFF9FC] dark:bg-[#0F0A14] text-[#18181B] dark:text-[#FDF2F8] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777] transition-colors duration-200">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col selection:bg-[var(--color-soft-primary)] selection:text-[var(--color-primary-hover)] transition-colors duration-200 overflow-x-hidden">
       <RoleSwitcher />
       <Navbar />
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        {/* Glow backdrop */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-[#EC4899]/20 to-[#F43F5E]/15 blur-3xl rounded-full pointer-events-none -z-10" />
+      {/* 1. Ultra Modern Interactive 3D Hero Section */}
+      <HeroSection />
 
-        <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="gsap-fade-up inline-flex items-center gap-2">
-            <Badge variant="gradient" size="sm">
-              <Sparkles size={12} /> Next-Gen Creator Platform
-            </Badge>
-          </div>
+      {/* 2. Brand & Partner Trust Ticker */}
+      <BrandTicker />
 
-          <h1 className="gsap-fade-up text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08]">
-            Monetize Your Audience with <span className="bg-gradient-to-r from-[#EC4899] to-[#F43F5E] bg-clip-text text-transparent">VIP Memberships</span> & Direct Drops
-          </h1>
+      {/* 3. Community Matrix: "You will find yourself among us" */}
+      <CreatorCloud />
+      
+      {/* 4. Project Estimation Calculator */}
+      <ProjectEstimationCalculator />
 
-          <p className="gsap-fade-up text-base sm:text-lg text-[#71717A] dark:text-[#D4B8D0] leading-relaxed max-w-2xl mx-auto">
-            Empower your creative community with tiered VIP subscriptions, paywalled exclusive drops, 24-hour status stories, and instant fan tips.
-          </p>
+      {/* 5. Complete Monetization Stack Bento Grid */}
+      <BentoFeatures />
 
-          <div className="gsap-fade-up flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link href="/auth/signup" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto" rightIcon={<ArrowRight size={16} />}>
-                Get Started for Free
-              </Button>
-            </Link>
-            <Link href="/explore" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Explore Creators
-              </Button>
-            </Link>
-          </div>
-
-          <div className="gsap-fade-up pt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-bold text-[#71717A] dark:text-[#D4B8D0]">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#EC4899]" />
-              <span>Instant Payouts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap size={16} className="text-amber-500" />
-              <span>95% Creator Share</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-500" />
-              <span>Zero Upfront Setup Fee</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Creators Showcase */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-8">
-        <div className="text-center space-y-2">
+      {/* 6. Featured Verified Creators Showcase */}
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8">
+        <div className="text-center space-y-2 px-2">
           <Badge variant="pink" size="sm">Top Creators</Badge>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Discover Verified Creators</h2>
-          <p className="text-xs text-[#71717A] dark:text-[#D4B8D0]">Join thousands of fans supporting their favorite artists and educators</p>
+          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight">Discover Verified Creators</h2>
+          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)]">Join thousands of fans supporting their favorite artists and educators</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {Object.values(MOCK_CREATOR_DETAILS).slice(0, 3).map((creator) => (
-            <Card key={creator.id} hoverable className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-3.5">
+            <Card key={creator.id} hoverable className="p-4 xs:p-5 sm:p-6 space-y-4 rounded-2xl sm:rounded-3xl">
+              <div className="flex items-center gap-3">
                 <Avatar
                   src={creator.avatarUrl}
                   alt={creator.fullName}
@@ -135,35 +93,35 @@ export function LandingPage() {
                   hasStory={true}
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-base truncate">{creator.fullName}</h3>
-                  <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] truncate">@{creator.username}</p>
-                  <span className="text-[10px] font-extrabold text-[#BE185D] dark:text-[#F472B6] bg-[#FCE7F3] dark:bg-[#381A2B] px-2 py-0.5 rounded-full mt-1 inline-block">
+                  <h3 className="font-bold text-sm sm:text-base truncate">{creator.fullName}</h3>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">@{creator.username}</p>
+                  <span className="text-[10px] font-extrabold text-[var(--color-primary)] bg-[var(--color-soft-primary)] px-2 py-0.5 rounded-full mt-1 inline-block">
                     {creator.category}
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-[#52525B] dark:text-[#D4B8D0] line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[#52525B] dark:text-[#D4B8D0] line-clamp-2 leading-relaxed font-medium">
                 {creator.bio}
               </p>
 
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#F3DCE8] dark:border-[#3A2A4C] text-center text-xs">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--color-border)] text-center text-xs">
                 <div>
-                  <span className="font-black block">{(creator.subscriberCount || 0).toLocaleString()}</span>
-                  <span className="text-[10px] text-[#71717A] dark:text-[#8E7890]">Subscribers</span>
+                  <span className="font-black block text-xs sm:text-sm">{(creator.subscriberCount || 0).toLocaleString()}</span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)]">Subscribers</span>
                 </div>
                 <div>
-                  <span className="font-black block">{(creator.followerCount || 0).toLocaleString()}</span>
-                  <span className="text-[10px] text-[#71717A] dark:text-[#8E7890]">Followers</span>
+                  <span className="font-black block text-xs sm:text-sm">{(creator.followerCount || 0).toLocaleString()}</span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)]">Followers</span>
                 </div>
                 <div>
-                  <span className="font-black block text-emerald-600 dark:text-emerald-400 font-extrabold">$9.99</span>
-                  <span className="text-[10px] text-[#71717A] dark:text-[#8E7890]">From /mo</span>
+                  <span className="font-black block text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-extrabold">$9.99</span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)]">From /mo</span>
                 </div>
               </div>
 
               <Link href={`/c/${creator.username}`} className="block pt-1">
-                <Button variant="outline" size="sm" className="w-full" rightIcon={<ArrowRight size={13} />}>
+                <Button variant="outline" size="sm" className="w-full min-h-[38px]" rightIcon={<ArrowRight size={13} />}>
                   View Profile & Tiers
                 </Button>
               </Link>
@@ -172,20 +130,20 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Creator Earnings Calculator */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FFF1F7]/60 to-[#FFF9FC] dark:from-[#1A1222]/60 dark:to-[#0F0A14] border-y border-[#F3DCE8] dark:border-[#3A2A4C]">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      {/* 7. Creator Earnings Calculator */}
+      <section className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FFF1F7]/60 to-[#FFF9FC] dark:from-[#1A1222]/60 dark:to-[#0F0A14] border-y border-[var(--color-border)]">
+        <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 px-2">
           <div className="space-y-2">
             <Badge variant="pink" size="sm">Revenue Potential</Badge>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Calculate Your Monthly Income</h2>
-            <p className="text-xs sm:text-sm text-[#71717A] dark:text-[#D4B8D0]">See how much you can earn based on your active fan subscriptions</p>
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-black tracking-tight">Calculate Your Monthly Income</h2>
+            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)]">See how much you can earn based on your active fan subscriptions</p>
           </div>
 
-          <div className="bg-white dark:bg-[#1A1222] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-3xl p-6 sm:p-10 space-y-6 max-w-xl mx-auto shadow-xl shadow-pink-500/5">
-            <div className="space-y-4 text-left">
-              <div className="flex justify-between text-xs font-bold">
-                <span>VIP Subscribers: <strong className="text-[#EC4899]">{subscriberCount}</strong> members</span>
-                <span className="text-[#71717A] dark:text-[#D4B8D0]">${tierPrice}/mo tier</span>
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl sm:rounded-3xl p-4 xs:p-6 sm:p-10 space-y-5 sm:space-y-6 max-w-xl mx-auto shadow-xl shadow-[var(--color-primary)]/5">
+            <div className="space-y-3 sm:space-y-4 text-left">
+              <div className="flex justify-between text-xs font-bold gap-2">
+                <span>VIP Subscribers: <strong className="text-[var(--color-primary)]">{subscriberCount}</strong> members</span>
+                <span className="text-[var(--color-text-secondary)]">${tierPrice}/mo tier</span>
               </div>
               <input
                 type="range"
@@ -194,66 +152,98 @@ export function LandingPage() {
                 step="25"
                 value={subscriberCount}
                 onChange={(e) => setSubscriberCount(Number(e.target.value))}
-                className="w-full accent-[#EC4899] bg-[#FCE7F3] dark:bg-[#381A2B] rounded-lg cursor-pointer h-2.5"
+                className="w-full accent-[#EC4899] bg-[var(--color-soft-primary)] rounded-lg cursor-pointer h-3"
+                aria-label="Subscriber count slider"
               />
             </div>
 
-            <div className="text-5xl sm:text-6xl font-black bg-gradient-to-r from-[#EC4899] to-[#F43F5E] bg-clip-text text-transparent tracking-tight">
-              ${monthlyEarnings.toLocaleString()} <span className="text-xl font-bold text-[#71717A] dark:text-[#D4B8D0]">/ mo</span>
+            <div className="space-y-3 sm:space-y-4 text-left">
+              <div className="flex justify-between text-xs font-bold gap-2">
+                <span>Monthly Tier Price: <strong className="text-[var(--color-primary)]">${tierPrice}</strong></span>
+                <span className="text-[var(--color-text-secondary)]">Per member</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="100"
+                step="5"
+                value={tierPrice}
+                onChange={(e) => setTierPrice(Number(e.target.value))}
+                className="w-full accent-[#EC4899] bg-[var(--color-soft-primary)] rounded-lg cursor-pointer h-3"
+                aria-label="Tier price slider"
+              />
             </div>
-            <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] font-medium">95% net payout directly to your creator balance</p>
 
-            <Link href="/auth/signup" className="block pt-2">
-              <Button variant="primary" size="md" className="w-full">
-                Claim Your Creator Studio
+            <div className="p-4 xs:p-6 bg-gradient-to-tr from-[var(--color-soft-primary)] to-[#FFF1F7] dark:to-[#1A1222] rounded-2xl border border-[var(--color-soft-border)] text-center space-y-1.5 sm:space-y-2">
+              <span className="text-[10px] sm:text-xs font-bold text-[var(--color-text-secondary)] block uppercase tracking-wider">Estimated Monthly Earnings</span>
+              <p className="text-3xl xs:text-4xl sm:text-5xl font-black text-[var(--color-primary)]">
+                ${monthlyEarnings.toLocaleString()}
+                <span className="text-xs sm:text-sm font-normal text-[var(--color-text-secondary)]"> /month</span>
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-[var(--color-text-secondary)]">Based on 95% creator payout rate after 5% platform fee</p>
+            </div>
+
+            <Link href="/auth/signup" className="block">
+              <Button variant="primary" size="lg" className="w-full min-h-[46px]" rightIcon={<ArrowRight size={16} />}>
+                Start Monetizing Now
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="px-4 sm:px-6 lg:px-8 py-20 max-w-3xl mx-auto w-full space-y-8">
-        <div className="text-center space-y-2">
-          <Badge variant="pink" size="sm">Got Questions?</Badge>
-          <h2 className="text-3xl font-black tracking-tight">Frequently Asked Questions</h2>
+      {/* 8. FAQs Section */}
+      <section className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full space-y-6 sm:space-y-8">
+        <div className="text-center space-y-2 px-2">
+          <Badge variant="slate" size="sm"><HelpCircle size={12} /> Got Questions?</Badge>
+          <h2 className="text-2xl xs:text-3xl font-black tracking-tight">Frequently Asked Questions</h2>
         </div>
 
         <div className="space-y-3">
           {faqs.map((faq, idx) => (
-            <Card
+            <div
               key={idx}
-              className="p-5 cursor-pointer space-y-2.5 transition-all hover:border-[#EC4899]/60"
-              onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden transition-all duration-200"
             >
-              <div className="flex items-center justify-between font-bold text-sm sm:text-base">
+              <button
+                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                className="w-full px-4 xs:px-6 py-3.5 sm:py-4 text-left flex items-center justify-between text-xs xs:text-sm sm:text-base font-bold cursor-pointer hover:text-[var(--color-primary)] gap-3"
+              >
                 <span>{faq.q}</span>
                 <ChevronRight
-                  size={18}
-                  className={`text-[#EC4899] transition-transform duration-200 shrink-0 ml-2 ${openFaq === idx ? 'rotate-90' : ''}`}
+                  size={16}
+                  className={`transition-transform duration-200 text-[var(--color-text-secondary)] shrink-0 ${openFaq === idx ? 'rotate-90 text-[var(--color-primary)]' : ''}`}
                 />
-              </div>
+              </button>
               {openFaq === idx && (
-                <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] pt-2 leading-relaxed border-t border-[#F3DCE8] dark:border-[#3A2A4C]">
+                <div className="px-4 xs:px-6 pb-4 sm:pb-5 pt-1 text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed border-t border-[var(--color-border)]/50 font-medium">
                   {faq.a}
-                </p>
+                </div>
               )}
-            </Card>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-b from-white to-[#FFF1F7] dark:from-[#1A1222] dark:to-[#0F0A14] border-t border-[#F3DCE8] dark:border-[#3A2A4C] text-center space-y-6">
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Ready to Launch Your Creator Business?</h2>
-        <p className="text-xs sm:text-sm text-[#71717A] dark:text-[#D4B8D0] max-w-lg mx-auto">
-          Start sharing exclusive content, building memberships, and earning recurring income today.
-        </p>
-        <Link href="/auth/signup">
-          <Button variant="primary" size="lg" leftIcon={<Sparkles size={18} />}>
-            Start Creating Now
-          </Button>
-        </Link>
+      {/* 9. Call to Action Banner */}
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="bg-gradient-to-r from-[#EC4899] via-[#F43F5E] to-[#FB7185] rounded-2xl sm:rounded-3xl p-6 xs:p-8 sm:p-14 text-center text-white space-y-4 sm:space-y-6 shadow-2xl shadow-pink-500/25 relative overflow-hidden">
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 relative z-10">
+            <h2 className="text-2xl xs:text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+              Ready to Turn Your Passion into a Thriving Business?
+            </h2>
+            <p className="text-xs sm:text-base text-white/90 font-medium">
+              Join thousands of creators who earn predictable income directly from their biggest fans.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-3 sm:pt-4">
+              <Link href="/auth/signup" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-[#EC4899] text-xs sm:text-sm font-black hover:bg-[#FFF1F7] hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer min-h-[46px]">
+                  Create Your Creator Account →
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       <Footer />

@@ -57,7 +57,9 @@
 
 /* Dark Mode Tokens */
 .dark-theme,
-:root.dark {
+:root.dark,
+html.dark,
+:root[data-theme-mode="dark"] {
   --theme-primary: #F472B6;
   --theme-primary-hover: #EC4899;
   --theme-soft-primary: #381A2B;

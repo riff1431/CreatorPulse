@@ -52,7 +52,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     if (hasStory) {
       return storySeen
         ? 'p-0.5 bg-slate-300 dark:bg-slate-700'
-        : 'p-0.5 bg-gradient-to-tr from-[#EC4899] via-[#F43F5E] to-amber-400';
+        : 'p-0.5 bg-gradient-to-tr from-[var(--color-primary)] via-[var(--color-accent)] to-amber-400';
     }
     return '';
   };
@@ -64,7 +64,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     >
       <div className={`rounded-full ${getStoryRing()}`}>
         <div
-          className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-bold text-[#BE185D] dark:text-[#F472B6] bg-[#FCE7F3] dark:bg-[#381A2B] border-2 border-white dark:border-[#1A1222] shadow-xs`}
+          className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center font-bold text-[var(--color-primary)] bg-[var(--color-soft-primary)] border-2 border-white dark:border-[#1A1222] shadow-xs`}
         >
           {src ? (
             <img src={src} alt={alt} className="w-full h-full object-cover" />
@@ -77,7 +77,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       {/* Verified Badge */}
       {isVerified && !isLive && (
         <CheckCircle2
-          className="absolute -bottom-0.5 -right-0.5 text-[#EC4899] fill-white dark:fill-[#1A1222] rounded-full shadow-xs"
+          className="absolute -bottom-0.5 -right-0.5 text-[var(--color-primary)] fill-white dark:fill-[#1A1222] rounded-full shadow-xs"
           size={size === 'xs' ? 10 : size === 'sm' ? 12 : size === 'md' ? 16 : size === 'lg' ? 20 : 24}
         />
       )}

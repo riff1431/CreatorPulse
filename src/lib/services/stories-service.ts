@@ -48,64 +48,83 @@ export interface PluginStory {
 const STORAGE_KEY = 'creatorpulse_stories_db';
 const NOTIFICATION_KEY = 'creatorpulse_user_notifications';
 
-// Initial Mock Seed Data mapped to active creators
-const INITIAL_STORIES: PluginStory[] = [
-  {
-    id: 'story-seed-1',
-    creatorId: 'user-creator-1',
-    creatorName: 'Sarah Jenkins',
-    creatorUsername: 'sarahdesign',
-    creatorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    mediaUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600',
-    caption: 'Workspace preview! Recording today’s design masterclass 🎨',
-    storyType: 'image',
-    visibility: 'public',
-    createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), // 3 hours ago
-    expiresAt: new Date(Date.now() + 21 * 3600 * 1000).toISOString(), // 21 hours left
-    views: [
-      { viewerId: 'user-member', viewerName: 'Alex Vance', viewerUsername: 'alexvance', viewerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString() }
-    ],
-    reactions: [
-      { id: 'react-1', storyId: 'story-seed-1', userId: 'user-member', username: 'alexvance', emoji: '🔥', createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString() }
-    ],
-    replies: [
-      { id: 'reply-1', storyId: 'story-seed-1', userId: 'user-member', username: 'alexvance', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Can’t wait for the course to launch!', createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString() }
-    ]
-  },
-  {
-    id: 'story-seed-2',
-    creatorId: 'user-creator-2',
-    creatorName: 'Marcus Vance',
-    creatorUsername: 'marcuscode',
-    creatorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150',
-    mediaUrl: '',
-    caption: 'Live Q&A starting in 30 minutes! Drop your tech career questions below 💻🔥',
-    storyType: 'text',
-    textBgGradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', // Indigo to purple
-    visibility: 'members_only',
-    createdAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(), // 6 hours ago
-    expiresAt: new Date(Date.now() + 18 * 3600 * 1000).toISOString(), // 18 hours left
-    views: [],
-    reactions: [],
-    replies: []
-  },
-  {
-    id: 'story-seed-3',
-    creatorId: 'user-creator-1',
-    creatorName: 'Sarah Jenkins',
-    creatorUsername: 'sarahdesign',
-    creatorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    mediaUrl: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600',
-    caption: 'Late night sketching session... logo design ideas ✍️',
-    storyType: 'image',
-    visibility: 'members_only',
-    createdAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
-    expiresAt: new Date(Date.now() + 14 * 3600 * 1000).toISOString(),
-    views: [],
-    reactions: [],
-    replies: []
-  }
-];
+// Generate fresh active initial stories mapped to top creators
+export function getFreshInitialStories(): PluginStory[] {
+  const now = Date.now();
+  return [
+    {
+      id: 'story-seed-1',
+      creatorId: 'user-creator-1',
+      creatorName: 'Sarah Jenkins',
+      creatorUsername: 'sarahdesign',
+      creatorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+      mediaUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600',
+      caption: 'Workspace preview! Recording today’s design masterclass 🎨',
+      storyType: 'image',
+      visibility: 'public',
+      createdAt: new Date(now - 2 * 3600 * 1000).toISOString(),
+      expiresAt: new Date(now + 22 * 3600 * 1000).toISOString(),
+      views: [
+        { viewerId: 'user-member', viewerName: 'Alex Vance', viewerUsername: 'alexvance', viewerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', createdAt: new Date(now - 1 * 3600 * 1000).toISOString() }
+      ],
+      reactions: [
+        { id: 'react-1', storyId: 'story-seed-1', userId: 'user-member', username: 'alexvance', emoji: '🔥', createdAt: new Date(now - 1 * 3600 * 1000).toISOString() }
+      ],
+      replies: [
+        { id: 'reply-1', storyId: 'story-seed-1', userId: 'user-member', username: 'alexvance', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', content: 'Can’t wait for the course to launch!', createdAt: new Date(now - 1 * 3600 * 1000).toISOString() }
+      ]
+    },
+    {
+      id: 'story-seed-2',
+      creatorId: 'user-creator-2',
+      creatorName: 'Marcus Vance',
+      creatorUsername: 'marcuscode',
+      creatorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150',
+      mediaUrl: '',
+      caption: 'Live Q&A starting in 30 minutes! Drop your tech career questions below 💻🔥',
+      storyType: 'text',
+      textBgGradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+      visibility: 'members_only',
+      createdAt: new Date(now - 4 * 3600 * 1000).toISOString(),
+      expiresAt: new Date(now + 20 * 3600 * 1000).toISOString(),
+      views: [],
+      reactions: [],
+      replies: []
+    },
+    {
+      id: 'story-seed-3',
+      creatorId: 'user-creator-3',
+      creatorName: 'Elena Rostova',
+      creatorUsername: 'elena_art',
+      creatorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      mediaUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600',
+      caption: 'New oil painting in progress! Exclusive VIP breakdown coming tonight ✨',
+      storyType: 'image',
+      visibility: 'public',
+      createdAt: new Date(now - 1 * 3600 * 1000).toISOString(),
+      expiresAt: new Date(now + 23 * 3600 * 1000).toISOString(),
+      views: [],
+      reactions: [],
+      replies: []
+    },
+    {
+      id: 'story-seed-4',
+      creatorId: 'user-creator-4',
+      creatorName: 'Sophia Chen',
+      creatorUsername: 'sophia_3d',
+      creatorAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+      mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600',
+      caption: 'Blender 4.2 procedural shader test! Look at those caustics 💎',
+      storyType: 'image',
+      visibility: 'members_only',
+      createdAt: new Date(now - 5 * 3600 * 1000).toISOString(),
+      expiresAt: new Date(now + 19 * 3600 * 1000).toISOString(),
+      views: [],
+      reactions: [],
+      replies: []
+    }
+  ];
+}
 
 export const StoriesService = {
   // Helper to read local DB
@@ -114,13 +133,14 @@ export const StoriesService = {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_STORIES));
-        return INITIAL_STORIES;
+        const fresh = getFreshInitialStories();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+        return fresh;
       }
       return JSON.parse(stored);
     } catch (e) {
       console.error('[StoriesService] Read error:', e);
-      return INITIAL_STORIES;
+      return getFreshInitialStories();
     }
   },
 
@@ -239,12 +259,15 @@ export const StoriesService = {
     }
 
     // Fallback Local Storage Mode
-    const db = this.getLocalDB();
+    let db = this.getLocalDB();
     const now = new Date().getTime();
     
     // Auto purge expired in fetch to keep client clean
-    const active = db.filter(s => new Date(s.expiresAt).getTime() > now);
-    if (active.length !== db.length) {
+    let active = db.filter(s => new Date(s.expiresAt).getTime() > now);
+    if (active.length === 0) {
+      active = getFreshInitialStories();
+      this.saveLocalDB(active);
+    } else if (active.length !== db.length) {
       this.saveLocalDB(active);
     }
     

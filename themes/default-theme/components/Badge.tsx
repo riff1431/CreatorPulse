@@ -17,7 +17,7 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const variantClasses = {
-    pink: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B]',
+    pink: 'bg-[var(--color-soft-primary)] text-[var(--color-primary)] border-[#FBCFE8] ',
     fuchsia: 'bg-[#FDF4FF] text-[#A21CAF] border-[#F5D0FE] dark:bg-[#3B154C] dark:text-[#E879F9] dark:border-[#581C87]',
     rose: 'bg-[#FFE4E6] text-[#BE123C] border-[#FECDD3] dark:bg-[#3E141D] dark:text-[#FB7185] dark:border-[#5A1C28]',
     indigo: 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE] dark:bg-[#1E1B4B] dark:text-[#A78BFA] dark:border-[#312E81]',
@@ -25,7 +25,7 @@ export const Badge: React.FC<BadgeProps> = ({
     amber: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[#78350F] dark:text-[#FBBF24] dark:border-[#92400E]',
     cyan: 'bg-[#ECFEFF] text-[#0E7490] border-[#CFFAFE] dark:bg-[#164E63] dark:text-[#22D3EE] dark:border-[#155E75]',
     slate: 'bg-[#F4F4F5] text-[#52525B] border-[#E4E4E7] dark:bg-[#27272A] dark:text-[#D4D4D8] dark:border-[#3F3F46]',
-    gradient: 'bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white border-transparent shadow-xs',
+    gradient: 'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white border-transparent shadow-xs',
   };
 
   const sizeClasses = {

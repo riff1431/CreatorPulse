@@ -41,6 +41,11 @@ interface ThemeContextType {
   rollbackToBackup: (backupId: string) => { success: boolean; error?: string };
   backups: ThemeBackup[];
   deleteBackup: (backupId: string) => void;
+
+  // Dynamic Dark Mode Feature System
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+  setDarkMode: (dark: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -125,11 +130,58 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [themes, setThemes] = useState<ThemeManifest[]>(DISCOVERED_THEMES);
   const [activeThemeId, setActiveThemeId] = useState<string>('theme-default-theme');
   const [previewTheme, setPreviewTheme] = useState<ThemeManifest | null>(null);
-
-  // Theme Update System States
   const [backups, setBackups] = useState<ThemeBackup[]>([]);
-  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [lastUpdateCheck, setLastUpdateCheck] = useState<string | null>(null);
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState<boolean>(false);
+
+  // Dynamic Dark Mode System State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('theme-mode');
+      if (savedMode === 'dark') return true;
+      if (savedMode === 'light') return false;
+      return document.documentElement.classList.contains('dark') || document.documentElement.classList.contains('dark-theme');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleThemeModeChange = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        if (typeof customEvent.detail?.isDark === 'boolean') {
+          setIsDarkMode(customEvent.detail.isDark);
+        }
+      };
+
+      window.addEventListener('theme-mode-change', handleThemeModeChange);
+      return () => {
+        window.removeEventListener('theme-mode-change', handleThemeModeChange);
+      };
+    }
+  }, []);
+
+  const setDarkMode = (dark: boolean) => {
+    setIsDarkMode(dark);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('theme-mode', dark ? 'dark' : 'light');
+        const root = document.documentElement;
+        if (dark) {
+          root.classList.add('dark', 'dark-theme');
+          root.setAttribute('data-theme-mode', 'dark');
+        } else {
+          root.classList.remove('dark', 'dark-theme');
+          root.setAttribute('data-theme-mode', 'light');
+        }
+        window.dispatchEvent(new CustomEvent('theme-mode-change', { detail: { isDark: dark } }));
+      } catch (e) {}
+    }
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!isDarkMode);
+  };
 
   // Load dynamically from /api/admin/themes and filesystem on mount
   useEffect(() => {
@@ -224,7 +276,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       root.style.setProperty('--theme-sidebar-placement', 'left');
       root.style.setProperty('--theme-header-style', 'fixed');
 
-      root.classList.remove('dark-theme');
+      root.classList.remove('dark-theme', 'dark');
       root.classList.remove('sidebar-right');
       
       // Clean up all theme slug classes and overrides
@@ -240,17 +292,43 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const tokens = effectiveTheme.tokens;
         const settings = effectiveTheme.settings || DEFAULT_THEMES[0].settings;
 
-        root.style.setProperty('--color-primary', tokens.primary);
-        root.style.setProperty('--color-primary-hover', tokens.primaryHover || tokens.primary);
-        root.style.setProperty('--color-soft-primary', tokens.softPrimary);
-        root.style.setProperty('--color-light-primary', tokens.lightPrimary);
-        root.style.setProperty('--color-accent', tokens.accent);
-        root.style.setProperty('--color-bg', tokens.background);
-        root.style.setProperty('--color-surface', tokens.surface);
-        root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
-        root.style.setProperty('--color-border', tokens.border);
-        root.style.setProperty('--color-text-primary', tokens.textPrimary);
-        root.style.setProperty('--color-text-secondary', tokens.textSecondary);
+        const isDarkActive = isDarkMode;
+
+        if (isDarkActive) {
+          root.classList.add('dark-theme', 'dark');
+          root.setAttribute('data-theme-mode', 'dark');
+
+          // Dynamic Dark Mode Design Tokens Override on :root
+          root.style.setProperty('--color-primary', '#F472B6');
+          root.style.setProperty('--color-primary-hover', '#EC4899');
+          root.style.setProperty('--color-soft-primary', '#381A2B');
+          root.style.setProperty('--color-light-primary', '#24141F');
+          root.style.setProperty('--color-accent', '#FB7185');
+          root.style.setProperty('--color-bg', '#0F0A14');
+          root.style.setProperty('--color-surface', '#1A1222');
+          root.style.setProperty('--color-surface-secondary', '#241A30');
+          root.style.setProperty('--color-border', '#3A2A4C');
+          root.style.setProperty('--color-text-primary', '#FDF2F8');
+          root.style.setProperty('--color-text-secondary', '#D4B8D0');
+          root.style.setProperty('--color-text-muted', '#8E7890');
+        } else {
+          root.classList.remove('dark-theme', 'dark');
+          root.setAttribute('data-theme-mode', 'light');
+
+          root.style.setProperty('--color-primary', tokens.primary);
+          root.style.setProperty('--color-primary-hover', tokens.primaryHover || tokens.primary);
+          root.style.setProperty('--color-soft-primary', tokens.softPrimary);
+          root.style.setProperty('--color-light-primary', tokens.lightPrimary);
+          root.style.setProperty('--color-accent', tokens.accent);
+          root.style.setProperty('--color-bg', tokens.background);
+          root.style.setProperty('--color-surface', tokens.surface);
+          root.style.setProperty('--color-surface-secondary', tokens.surfaceSecondary);
+          root.style.setProperty('--color-border', tokens.border);
+          root.style.setProperty('--color-text-primary', tokens.textPrimary);
+          root.style.setProperty('--color-text-secondary', tokens.textSecondary);
+          root.style.setProperty('--color-text-muted', tokens.textMuted || '#A1A1AA');
+        }
+
         root.style.setProperty('--radius-card', tokens.cardRadius);
         root.style.setProperty('--radius-button', tokens.buttonRadius);
         root.style.setProperty('--font-sans', tokens.fontFamily || 'Plus Jakarta Sans, sans-serif');
@@ -282,12 +360,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // Update theme-specific classes on root
         themes.forEach((t) => root.classList.remove(`theme-${t.slug}`));
         root.classList.add(`theme-${effectiveTheme.slug}`);
-
-        if (tokens.isDark) {
-          root.classList.add('dark-theme');
-        } else {
-          root.classList.remove('dark-theme');
-        }
 
         // Apply Favicon dynamically (prioritize Site Settings, then Theme settings)
         updateBrowserFavicon(siteSettings.favicon_url || settings.faviconUrl || '');
@@ -336,7 +408,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (styleTag) styleTag.remove();
       }
     }
-  }, [effectiveTheme, pathname, themes, siteSettings.favicon_url]);
+  }, [effectiveTheme, pathname, themes, siteSettings.favicon_url, isDarkMode]);
 
   const activateTheme = (themeId: string): boolean => {
     const res = activateThemeWithLicense(themeId);
@@ -960,7 +1032,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         updateThemeWithBackup,
         rollbackToBackup,
         backups,
-        deleteBackup
+        deleteBackup,
+        isDarkMode,
+        toggleDarkMode,
+        setDarkMode
       }}
     >
       {children}

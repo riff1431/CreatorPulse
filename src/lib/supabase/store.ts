@@ -20,6 +20,19 @@ export const PERMISSION_LABELS: Record<keyof RolePermissionSet, { title: string;
   view_audit_logs: { title: 'View Audit Logs', description: 'Read platform administrative security and activity trails.' }
 };
 
+export interface OnboardingData {
+  interests?: string[];
+  followedCreators?: string[];
+  headline?: string;
+  coverImageUrl?: string;
+  startingPrice?: number;
+  payoutMethod?: string;
+  payoutAccount?: string;
+  socialLinks?: Record<string, string>;
+  preferences?: Record<string, boolean>;
+  [key: string]: any;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -33,6 +46,17 @@ export interface UserProfile {
   category?: string;
   status: 'active' | 'suspended' | 'banned';
   createdAt: string;
+  isOnboarded?: boolean;
+  onboardingStep?: number;
+  onboardingData?: OnboardingData;
+  profileCompletionScore?: number;
+  dismissedReminders?: string[];
+  ftueState?: {
+    hasSeenWelcomeModal?: boolean;
+    hasCompletedTour?: boolean;
+    dismissedTooltips?: string[];
+    completedFirstActions?: string[];
+  };
 }
 
 export interface CreatorProfile extends UserProfile {
@@ -112,6 +136,8 @@ export interface Post {
   };
   visibility: 'public' | 'followers' | 'subscribers' | 'members_only' | 'vip_only';
   unlockPrice?: number;
+  isPaywalled?: boolean;
+  paywallPrice?: number;
   likesCount: number;
   commentsCount: number;
   viewsCount: number;
@@ -257,7 +283,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'member',
     isVerified: false,
     status: 'active',
-    createdAt: '2026-01-15'
+    createdAt: '2026-01-15',
+    isOnboarded: true,
+    profileCompletionScore: 85
   },
   'user-creator-1': {
     id: 'user-creator-1',
@@ -270,7 +298,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     isVerified: true,
     category: 'Art & Design',
     status: 'active',
-    createdAt: '2025-11-10'
+    createdAt: '2025-11-10',
+    isOnboarded: true,
+    profileCompletionScore: 95
   },
   'user-creator-2': {
     id: 'user-creator-2',
@@ -283,7 +313,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     isVerified: true,
     category: 'Education & Tech',
     status: 'active',
-    createdAt: '2025-08-20'
+    createdAt: '2025-08-20',
+    isOnboarded: true,
+    profileCompletionScore: 90
   },
   'user-admin': {
     id: 'user-admin',
@@ -295,7 +327,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'admin',
     isVerified: true,
     status: 'active',
-    createdAt: '2025-01-01'
+    createdAt: '2025-01-01',
+    isOnboarded: true,
+    profileCompletionScore: 100
   },
   'user-moderator': {
     id: 'user-moderator',
@@ -307,7 +341,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'moderator',
     isVerified: true,
     status: 'active',
-    createdAt: '2026-02-10'
+    createdAt: '2026-02-10',
+    isOnboarded: true,
+    profileCompletionScore: 90
   },
   'user-superadmin': {
     id: 'user-superadmin',
@@ -319,7 +355,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'super_admin',
     isVerified: true,
     status: 'active',
-    createdAt: '2025-01-01'
+    createdAt: '2025-01-01',
+    isOnboarded: true,
+    profileCompletionScore: 100
   },
   'user-suspended': {
     id: 'user-suspended',
@@ -331,7 +369,9 @@ export const MOCK_USERS: Record<string, UserProfile> = {
     role: 'member',
     isVerified: false,
     status: 'suspended',
-    createdAt: '2026-03-12'
+    createdAt: '2026-03-12',
+    isOnboarded: true,
+    profileCompletionScore: 40
   }
 };
 

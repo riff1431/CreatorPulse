@@ -38,14 +38,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {label && (
             <label
               htmlFor={textareaId}
-              className="block text-xs font-bold text-[#18181B] dark:text-[#FDF2F8]"
+              className="block text-xs font-bold text-[var(--color-text-primary)] "
             >
               {label}
             </label>
           )}
 
           {showCount && maxLength && (
-            <span className="text-[10px] text-[#A1A1AA] dark:text-[#8E7890] font-medium">
+            <span className="text-[10px] text-[var(--color-text-muted)] dark:text-[#8E7890] font-medium">
               {currentLength}/{maxLength}
             </span>
           )}
@@ -58,10 +58,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           rows={rows}
           maxLength={maxLength}
           disabled={disabled}
-          className={`w-full bg-[#FFF9FC] dark:bg-[#241A30] text-[#18181B] dark:text-[#FDF2F8] placeholder-[#A1A1AA] dark:placeholder-[#8E7890] text-xs font-medium rounded-2xl border transition-all duration-200 p-3.5 outline-none resize-none leading-relaxed ${
+          className={`w-full bg-[var(--color-bg)] text-[var(--color-text-primary)] placeholder-[#A1A1AA] dark:placeholder-[#8E7890] text-xs font-medium rounded-2xl border transition-all duration-200 p-3.5 outline-none resize-none leading-relaxed ${
             error
               ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20'
-              : 'border-[#F3DCE8] dark:border-[#3A2A4C] focus:border-[#EC4899] focus:bg-white dark:focus:bg-[#1A1222] focus:ring-2 focus:ring-pink-500/15'
+              : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] dark:focus:bg-[#1A1222] focus:ring-2 focus:ring-pink-500/15'
           } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900' : ''} ${className}`}
           {...props}
         />
@@ -72,7 +72,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             <span>{error}</span>
           </p>
         ) : helperText ? (
-          <p className="text-[11px] text-[#71717A] dark:text-[#8E7890] mt-1 font-medium">{helperText}</p>
+          <p className="text-[11px] text-[var(--color-text-secondary)] dark:text-[#8E7890] mt-1 font-medium">{helperText}</p>
         ) : null}
       </div>
     );

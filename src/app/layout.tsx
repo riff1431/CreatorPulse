@@ -9,6 +9,7 @@ import { I18nProvider } from "@/lib/i18n/i18n-context";
 import { NavigationProvider } from "@/lib/navigation/navigation-context";
 import { CMSProvider } from "@/lib/cms/cms-context";
 import { AnnouncementProvider } from "@/lib/notifications/announcement-context";
+import { NotificationPreferencesProvider } from "@/lib/notifications/notification-preferences-context";
 import { FeatureModuleProvider } from "@/lib/modules/feature-module-context";
 import { StorageProvider } from "@/lib/storage/storage-context";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -19,6 +20,11 @@ import { cookies } from 'next/headers';
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AUTH_ACCOUNTS } from "@/lib/auth/users";
 import { UserProfile } from "@/lib/supabase/store";
+
+import { AutoRouteGuard } from "@/components/auth/RouteGuards";
+import { RequireAuthProvider } from "@/components/auth/LoginRequiredModal";
+import { SavedProvider } from "@/lib/saved/saved-context";
+import { HistoryProvider } from "@/lib/history/history-context";
 
 export async function generateMetadata(): Promise<Metadata> {
   let faviconUrl = '/favicon.ico';
@@ -189,7 +195,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#FFF9FC] text-[#18181B] selection:bg-[#FCE7F3] selection:text-[#DB2777]">
+      <body className="min-h-full flex flex-col selection:bg-[var(--color-soft-primary)] selection:text-[var(--color-primary-hover)]">
         <I18nProvider>
           <SiteSettingsProvider>
             <StorageProvider>
@@ -200,12 +206,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <ThemeProvider>
                         <PluginProvider>
                           <AuthProvider initialUser={initialUser} initialRole={initialRole}>
-                            <ToastProvider>
-                              <AnnouncementBanner />
-                              <MaintenanceOverlay />
-                              <AnnouncementModal />
-                              {children}
-                            </ToastProvider>
+                            <NotificationPreferencesProvider>
+                              <RequireAuthProvider>
+                                <SavedProvider>
+                                  <HistoryProvider>
+                                    <ToastProvider>
+                                      <AnnouncementBanner />
+                                      <MaintenanceOverlay />
+                                      <AnnouncementModal />
+                                      <AutoRouteGuard>
+                                        {children}
+                                      </AutoRouteGuard>
+                                    </ToastProvider>
+                                  </HistoryProvider>
+                                </SavedProvider>
+                              </RequireAuthProvider>
+                            </NotificationPreferencesProvider>
                           </AuthProvider>
                         </PluginProvider>
                       </ThemeProvider>

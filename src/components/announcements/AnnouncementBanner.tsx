@@ -37,7 +37,11 @@ export const AnnouncementBanner: React.FC = () => {
 
           {current.isDismissible && (
             <button
-              onClick={() => dismissAnnouncement(current.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissAnnouncement(current.id);
+              }}
               className="text-white/70 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
             >
               <X size={14} />

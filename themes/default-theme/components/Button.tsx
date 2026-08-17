@@ -28,19 +28,19 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-gradient-to-r from-[#EC4899] to-[#F43F5E] text-white shadow-md shadow-pink-500/25 hover:shadow-lg hover:shadow-pink-500/35 hover:-translate-y-0.5 border border-transparent',
+      'bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white shadow-md shadow-[var(--color-primary)]/25 hover:shadow-lg hover:shadow-[var(--color-primary)]/35 hover:-translate-y-0.5 border border-transparent',
     secondary:
-      'bg-white dark:bg-[#1A1222] hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] text-[#BE185D] dark:text-[#F472B6] border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xs hover:-translate-y-0.5',
+      'bg-[var(--color-surface)] hover:bg-[var(--color-surface-secondary)] text-[var(--color-primary)] border border-[var(--color-border)] shadow-2xs hover:-translate-y-0.5',
     outline:
-      'bg-transparent hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] text-[#18181B] dark:text-[#FDF2F8] border border-[#F3DCE8] dark:border-[#3A2A4C] hover:border-[#EC4899] hover:text-[#EC4899]',
+      'bg-transparent hover:bg-[var(--color-surface-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] ',
     ghost:
-      'bg-transparent hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] text-[#71717A] dark:text-[#D4B8D0] hover:text-[#EC4899] dark:hover:text-[#F472B6]',
+      'bg-transparent hover:bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] ',
     danger:
       'bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-500/20 hover:-translate-y-0.5 border border-transparent',
     soft:
-      'bg-[#FCE7F3] dark:bg-[#381A2B] hover:bg-[#FBCFE8] dark:hover:bg-[#4C1D3B] text-[#BE185D] dark:text-[#F472B6] border border-[#FBCFE8] dark:border-[#4C1D3B]',
+      'bg-[var(--color-soft-primary)] hover:bg-[#FBCFE8] text-[var(--color-primary)] border border-[#FBCFE8] ',
     gradient:
-      'bg-gradient-to-tr from-[#EC4899] via-[#F43F5E] to-[#FB7185] text-white shadow-lg shadow-pink-500/30 hover:scale-[1.02] active:scale-[0.98]',
+      'bg-gradient-to-tr from-[var(--color-primary)] via-[var(--color-accent)] to-[#FB7185] text-white shadow-lg shadow-pink-500/30 hover:scale-[1.02] active:scale-[0.98]',
   };
 
   const sizeStyles = {

@@ -901,7 +901,7 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
                 <button
                   key={plugin.id}
                   onClick={() => alert('Virtual Gift Wallet & Store — Powered by Virtual Gifts plugin.')}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-rose-500/10 text-amber-700 border border-amber-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  className="h-9 px-3 rounded-full bg-white dark:bg-[#1A1222] text-amber-700 dark:text-amber-400 border border-[#F3DCE8] dark:border-[#3A2A4C] hover:border-amber-400 text-xs font-bold transition-all hover:scale-105 cursor-pointer shadow-2xs flex items-center gap-1.5"
                   title="Virtual Gifts Store"
                 >
                   <span>🎁 Gifts</span>
@@ -914,7 +914,7 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
                 <button
                   key={plugin.id}
                   onClick={() => alert('Creator 24h Stories Feed — Powered by Creator Stories plugin.')}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-700 border border-indigo-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  className="h-9 px-3 rounded-full bg-white dark:bg-[#1A1222] text-indigo-700 dark:text-indigo-400 border border-[#F3DCE8] dark:border-[#3A2A4C] hover:border-indigo-400 text-xs font-bold transition-all hover:scale-105 cursor-pointer shadow-2xs flex items-center gap-1.5"
                   title="24h Ephemeral Stories"
                 >
                   <span>✨ Stories</span>
@@ -927,13 +927,15 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
                 <button
                   key={plugin.id}
                   onClick={() => window.location.href = '/creator/verification'}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-300 text-xs font-bold hover:scale-105 transition-transform cursor-pointer"
+                  className="h-9 px-3 rounded-full bg-white dark:bg-[#1A1222] text-emerald-700 dark:text-emerald-400 border border-[#F3DCE8] dark:border-[#3A2A4C] hover:border-emerald-400 text-xs font-bold transition-all hover:scale-105 cursor-pointer shadow-2xs flex items-center gap-1.5"
                   title="Creator Verification Status"
                 >
                   <span>✅ Verification</span>
                 </button>
               );
             }
+
+            return null;
           }
 
           // 4. Creator Dashboard Widget Hooks
@@ -1038,22 +1040,17 @@ export const HookPoint: React.FC<HookPointProps> = ({ name, context = {}, classN
           if (name === 'sidebar_extra_links') {
             if (plugin.id === 'plugin-creator-verification') {
               return (
-                <div key={plugin.id} className="px-3 py-1.5 text-xs text-emerald-700 font-semibold flex items-center gap-2">
+                <div key={plugin.id} className="px-3.5 py-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-2">
                   <span>✅</span>
-                  <span>Verification Active</span>
+                  <span>Verified Creator</span>
                 </div>
               );
             }
+            return null;
           }
 
-          // Generic fallback for custom third-party SDK plugins
-          return (
-            <div key={plugin.id} className="inline-block p-1 text-[10px] text-[#71717A]">
-              <span className="font-mono bg-[#FFF1F7] text-[#BE185D] px-1.5 py-0.5 rounded border border-[#FBCFE8]">
-                {plugin.name}
-              </span>
-            </div>
-          );
+          // Generic fallback for custom third-party SDK plugins on non-sidebar hooks
+          return null;
         } catch (err: unknown) {
           console.error(`[Plugin Engine] Error executing hook "${name}" in plugin "${plugin.id}":`, err);
           return null;

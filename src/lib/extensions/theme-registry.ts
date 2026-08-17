@@ -39,6 +39,10 @@ export const ALL_THEME_PAGES: ThemePageName[] = [
   'ExplorePage',
   'SavedPage',
   'BalancePage',
+  'SettingsPage',
+  'MemberDashboardPage',
+  'OnboardingPage',
+  'ConnectionsPage',
 ];
 
 export const ALL_THEME_LAYOUTS: ThemeLayoutName[] = [
@@ -92,6 +96,10 @@ const DEFAULT_THEME_MODULE: ThemeModulePackage = {
     ExplorePage: (DefaultThemePages as any).ExplorePage,
     SavedPage: (DefaultThemePages as any).SavedPage,
     BalancePage: (DefaultThemePages as any).BalancePage,
+    SettingsPage: (DefaultThemePages as any).SettingsPage,
+    MemberDashboardPage: (DefaultThemePages as any).MemberDashboardPage,
+    OnboardingPage: (DefaultThemePages as any).OnboardingPage,
+    ConnectionsPage: (DefaultThemePages as any).ConnectionsPage,
   },
   layouts: {
     MainLayout: DefaultMainLayout,

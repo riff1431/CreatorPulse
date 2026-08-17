@@ -1,706 +1,355 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Sparkles, Clock, ChevronLeft, ChevronRight, Send, AlertCircle, Lock, Eye, CheckCircle2 } from 'lucide-react';
+import { Plus, X, Sparkles, Clock, ChevronLeft, ChevronRight, Send, AlertCircle, Lock, Eye, CheckCircle2, Radio, Heart } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Button } from './Button';
 import { useAuth } from '@/lib/auth/auth-context';
-import { usePlugins } from '@/lib/extensions/plugin-engine';
-import { StoriesService, PluginStory } from '@/lib/services/stories-service';
 
-const getReactionId = () => Date.now() + Math.random();
-const getReactionLeft = () => Math.floor(Math.random() * 60) + 20;
+export interface StoryCircleItem {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorUsername: string;
+  creatorAvatar: string;
+  isLive?: boolean;
+  isYourStory?: boolean;
+  hasStory?: boolean;
+  storyMediaUrl?: string;
+  caption?: string;
+  gradientBorder?: string;
+}
+
+const MOCK_STORIES_DATA: StoryCircleItem[] = [
+  {
+    id: 'story-your',
+    creatorId: 'user-member',
+    creatorName: 'Your story',
+    creatorUsername: 'abhi_navkhare',
+    creatorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+    isYourStory: true,
+    hasStory: false,
+  },
+  {
+    id: 'story-sonya',
+    creatorId: 'c-sonya',
+    creatorName: 'Sonya',
+    creatorUsername: 'sonyaleena',
+    creatorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+    isLive: true,
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
+    caption: 'Live streaming from Dubai studio! Join the chat 🌆',
+    gradientBorder: 'from-[#FF0844] to-[#FFB199]',
+  },
+  {
+    id: 'story-adam',
+    creatorId: 'c-adam',
+    creatorName: 'Adam',
+    creatorUsername: 'adamaddisin',
+    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800',
+    caption: 'Street photography session at golden hour 📸',
+    gradientBorder: 'from-[#FF8A00] to-[#E52E71]',
+  },
+  {
+    id: 'story-andrew',
+    creatorId: 'c-andrew',
+    creatorName: 'Andrew',
+    creatorUsername: 'andrewdewitt',
+    creatorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
+    caption: 'Landscape editing masterclass teaser ✨',
+    gradientBorder: 'from-[#EC4899] to-[#8B5CF6]',
+  },
+  {
+    id: 'story-nicole',
+    creatorId: 'c-nicole',
+    creatorName: 'Nicole',
+    creatorUsername: 'nicolesegall',
+    creatorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800',
+    caption: 'Exploring architectural geometry in New Delhi 🏛️',
+    gradientBorder: 'from-[#F43F5E] to-[#FB7185]',
+  },
+  {
+    id: 'story-ashley',
+    creatorId: 'c-ashley',
+    creatorName: 'Ashley',
+    creatorUsername: 'ashleyvance',
+    creatorAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800',
+    caption: 'Nature walk & macro lens experiments 🌿',
+    gradientBorder: 'from-[#10B981] to-[#06B6D4]',
+  },
+  {
+    id: 'story-michael',
+    creatorId: 'c-michael',
+    creatorName: 'Michael',
+    creatorUsername: 'michaelgilmore',
+    creatorAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+    caption: 'Backstage film production moments 🎬',
+    gradientBorder: 'from-[#6366F1] to-[#EC4899]',
+  },
+  {
+    id: 'story-damian',
+    creatorId: 'c-damian',
+    creatorName: 'Damian',
+    creatorUsername: 'damianefron',
+    creatorAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200',
+    hasStory: true,
+    storyMediaUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
+    caption: 'Wilderness camping & night sky timelapses 🌌',
+    gradientBorder: 'from-[#F59E0B] to-[#EF4444]',
+  },
+];
 
 export const StoryBar: React.FC = () => {
-  const { user, role } = useAuth();
-  const { activePlugins } = usePlugins();
-
-  // 1. Check if stories plugin is active
-  const storiesPlugin = activePlugins.find((p) => p.id === 'plugin-creator-stories');
-
-  const [activeStories, setActiveStories] = useState<PluginStory[]>([]);
-  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
-  const [selectedStoryIndex, setSelectedStoryIndex] = useState<number>(0);
-  const [showAddStory, setShowAddStory] = useState(false);
+  const { user } = useAuth();
+  const [stories, setStories] = useState<StoryCircleItem[]>(MOCK_STORIES_DATA);
+  const [activeStory, setActiveStory] = useState<StoryCircleItem | null>(null);
+  const [showAddStoryModal, setShowAddStoryModal] = useState(false);
   const [newCaption, setNewCaption] = useState('');
-  const [newMediaUrl, setNewMediaUrl] = useState('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600');
-  const [newStoryType, setNewStoryType] = useState<'image' | 'video' | 'text'>('image');
-  const [newTextGradient, setNewTextGradient] = useState('linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)');
-  const [newVisibility, setNewVisibility] = useState<'public' | 'members_only'>('public');
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reactions, setReactions] = useState<{ id: number; emoji: string; left: number }[]>([]);
-  const [replyText, setReplyText] = useState('');
-  
-  // Custom tracking for simulated subscriptions
-  const [subscribedCreators, setSubscribedCreators] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [storyProgress, setStoryProgress] = useState(0);
 
-  // Load simulated subscriptions
+  // Auto-progress story timer when viewing
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('creatorpulse_memberships');
-        if (stored) {
-          setSubscribedCreators(JSON.parse(stored));
+    if (!activeStory) {
+      setStoryProgress(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setStoryProgress((prev) => {
+        if (prev >= 100) {
+          // Advance to next story or close
+          const currentIndex = stories.findIndex((s) => s.id === activeStory.id);
+          if (currentIndex < stories.length - 1) {
+            setActiveStory(stories[currentIndex + 1]);
+            return 0;
+          } else {
+            setActiveStory(null);
+            return 0;
+          }
         }
-      } catch (e) {}
-    }
-  }, []);
+        return prev + 2;
+      });
+    }, 100);
 
-  // Return null if stories plugin is deactivated
-  if (!storiesPlugin) {
-    return null;
-  }
+    return () => clearInterval(interval);
+  }, [activeStory, stories]);
 
-  const settings = storiesPlugin.settingsValues || {};
-  const maxStoryDuration = Number(settings.maxDuration || 24);
-  const isViewerTrackingEnabled = settings.enableViewerTracking !== false;
-  const isRepliesReactionsEnabled = settings.enableRepliesReactions !== false;
-  const requireSubscriptionAll = settings.requireSubscriptionForStories === true;
-
-  // Load and refresh stories
-  const refreshStories = async () => {
-    try {
-      const active = await StoriesService.getStories();
-      setActiveStories(active);
-    } catch (e) {
-      console.error('[StoryBar] Failed to load stories:', e);
-    } finally {
-      setIsLoading(false);
+  const handleStoryClick = (item: StoryCircleItem) => {
+    if (item.isYourStory) {
+      setShowAddStoryModal(true);
+    } else {
+      setActiveStory(item);
+      setStoryProgress(0);
     }
   };
 
-  useEffect(() => {
-    refreshStories();
-    // Listen to changes in the stories service
-    window.addEventListener('creatorpulse_stories_updated', refreshStories);
-    return () => {
-      window.removeEventListener('creatorpulse_stories_updated', refreshStories);
+  const handleAddStorySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newImageUrl.trim()) return;
+
+    const newStory: StoryCircleItem = {
+      id: `story-custom-${Date.now()}`,
+      creatorId: 'user-member',
+      creatorName: 'You',
+      creatorUsername: user?.username || 'abhi_navkhare',
+      creatorAvatar: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+      hasStory: true,
+      storyMediaUrl: newImageUrl.trim(),
+      caption: newCaption.trim() || 'My new story snapshot ✨',
+      gradientBorder: 'from-[#FF8A00] to-[#E52E71]',
     };
-  }, []);
 
-  // Group stories by creator
-  const creatorsMap: Record<string, {
-    creatorId: string;
-    creatorName: string;
-    creatorUsername: string;
-    creatorAvatar: string;
-    stories: PluginStory[];
-    allSeen: boolean;
-  }> = {};
-
-  activeStories.forEach((story) => {
-    if (!creatorsMap[story.creatorId]) {
-      creatorsMap[story.creatorId] = {
-        creatorId: story.creatorId,
-        creatorName: story.creatorName,
-        creatorUsername: story.creatorUsername,
-        creatorAvatar: story.creatorAvatar,
-        stories: [],
-        allSeen: true
-      };
-    }
-    creatorsMap[story.creatorId].stories.push(story);
-  });
-
-  // Determine seen states for each creator group
-  Object.keys(creatorsMap).forEach((cId) => {
-    const group = creatorsMap[cId];
-    if (user) {
-      const hasUnseen = group.stories.some((s) => {
-        const views = s.views || [];
-        return !views.some((v) => v.viewerId === user.id);
-      });
-      group.allSeen = !hasUnseen;
-    }
-  });
-
-  const creatorsList = Object.values(creatorsMap);
-
-  // Stories navigation within the active creator
-  const activeCreator = selectedCreatorId ? creatorsMap[selectedCreatorId] : null;
-  const activeStory = activeCreator ? activeCreator.stories[selectedStoryIndex] : null;
-
-  // Mark active story as read
-  useEffect(() => {
-    if (activeStory && user && user.id !== activeStory.creatorId) {
-      const hasSeen = activeStory.views?.some(v => v.viewerId === user.id);
-      if (!hasSeen) {
-        StoriesService.markAsSeen(activeStory.id, {
-          id: user.id,
-          fullName: user.fullName || 'Anonymous User',
-          username: user.username || 'anonymous',
-          avatarUrl: user.avatarUrl || ''
-        });
-      }
-    }
-  }, [activeStory, user]);
-
-  // Story auto-progress handler (5 seconds)
-  useEffect(() => {
-    if (!activeStory || isStoryLocked(activeStory)) return;
-
-    const timer = setTimeout(() => {
-      handleNext();
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [activeStory, selectedStoryIndex]);
-
-  const handleNext = () => {
-    if (!activeCreator) return;
-    if (selectedStoryIndex < activeCreator.stories.length - 1) {
-      setSelectedStoryIndex(selectedStoryIndex + 1);
-    } else {
-      // Find the next creator's stories
-      const currentIdx = creatorsList.findIndex((c) => c.creatorId === selectedCreatorId);
-      if (currentIdx < creatorsList.length - 1) {
-        const nextCreator = creatorsList[currentIdx + 1];
-        setSelectedCreatorId(nextCreator.creatorId);
-        
-        // Find first unseen story index or default to 0
-        const firstUnseenIdx = nextCreator.stories.findIndex(s => {
-          const views = s.views || [];
-          return !views.some(v => v.viewerId === user?.id);
-        });
-        setSelectedStoryIndex(firstUnseenIdx >= 0 ? firstUnseenIdx : 0);
-      } else {
-        // End of all stories
-        setSelectedCreatorId(null);
-      }
-    }
-  };
-
-  const handlePrev = () => {
-    if (!activeCreator) return;
-    if (selectedStoryIndex > 0) {
-      setSelectedStoryIndex(selectedStoryIndex - 1);
-    } else {
-      // Go to previous creator's last story
-      const currentIdx = creatorsList.findIndex((c) => c.creatorId === selectedCreatorId);
-      if (currentIdx > 0) {
-        const prevCreator = creatorsList[currentIdx - 1];
-        setSelectedCreatorId(prevCreator.creatorId);
-        setSelectedStoryIndex(prevCreator.stories.length - 1);
-      }
-    }
-  };
-
-  const handleReact = async (emoji: string) => {
-    if (!activeStory || !user) return;
-    const id = getReactionId();
-    const left = getReactionLeft();
-    setReactions((prev) => [...prev, { id, emoji, left }]);
-
-    // Persist reaction
-    await StoriesService.addReaction(activeStory.id, {
-      id: user.id,
-      username: user.username || 'member',
-      fullName: user.fullName || 'Anonymous'
-    }, emoji);
-
-    setTimeout(() => {
-      setReactions((prev) => prev.filter((r) => r.id !== id));
-    }, 1200);
-  };
-
-  const handleSendReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!replyText.trim() || !activeStory || !user) return;
-
-    await StoriesService.addReply(activeStory.id, {
-      id: user.id,
-      username: user.username || 'member',
-      fullName: user.fullName || 'Anonymous',
-      avatarUrl: user.avatarUrl || ''
-    }, replyText);
-
-    setReplyText('');
-    alert('Reply sent to creator!');
-  };
-
-  const isStoryLocked = (story: PluginStory) => {
-    if (role === 'admin') return false;
-    if (user?.id === story.creatorId) return false;
-
-    const needsSub = story.visibility === 'members_only' || requireSubscriptionAll;
-    if (!needsSub) return false;
-
-    // Check default subscribers
-    if (user?.id === 'user-member' && story.creatorId === 'user-creator-1') return false;
-
-    // Check custom simulated subscription list
-    if (subscribedCreators.includes(story.creatorId)) return false;
-
-    return true;
-  };
-
-  const handleSimulateSubscribe = (creatorId: string) => {
-    const updated = [...subscribedCreators, creatorId];
-    setSubscribedCreators(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('creatorpulse_memberships', JSON.stringify(updated));
-    }
-    // Record transaction logic simulation
-    const transactionsRaw = localStorage.getItem('creatorpulse_transactions_db') || '[]';
-    try {
-      const txs = JSON.parse(transactionsRaw);
-      txs.unshift({
-        id: `TX-${Date.now().toString().slice(-4)}`,
-        date: new Date().toISOString().split('T')[0],
-        type: 'Membership',
-        from: user?.fullName || 'Alex Vance',
-        to: activeCreator?.creatorName || 'Sarah Jenkins',
-        amount: '$15.00',
-        fee: '$0.75',
-        net: '$14.25',
-        status: 'Completed'
-      });
-      localStorage.setItem('creatorpulse_transactions_db', JSON.stringify(txs));
-    } catch(e){}
-  };
-
-  const handleAddStorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setIsSubmitting(true);
-
-    try {
-      await StoriesService.createStory({
-        creatorId: user.id,
-        creatorName: user.fullName || 'Sarah Jenkins',
-        creatorUsername: user.username || 'sarahdesign',
-        creatorAvatar: user.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-        mediaUrl: newStoryType === 'text' ? '' : newMediaUrl,
-        caption: newCaption,
-        storyType: newStoryType,
-        textBgGradient: newStoryType === 'text' ? newTextGradient : undefined,
-        visibility: newVisibility
-      }, maxStoryDuration);
-
-      setNewCaption('');
-      setShowAddStory(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setStories([stories[0], newStory, ...stories.slice(1)]);
+    setShowAddStoryModal(false);
+    setNewCaption('');
+    setNewImageUrl('');
   };
 
   return (
-    <div className="space-y-3 bg-white/70 backdrop-blur-md border border-[#F3DCE8] p-4 rounded-[24px] shadow-sm shadow-[#EC4899]/5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="text-[#EC4899] animate-pulse" size={16} />
-          <h3 className="text-xs font-black text-[#18181B] tracking-tight uppercase">24-Hour Creator Stories</h3>
-        </div>
-        <span className="text-[10px] text-[#71717A] bg-[#FFF1F7] border border-[#F3DCE8] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5">
-          <Clock size={11} className="text-[#EC4899]" /> Active Add-on
-        </span>
-      </div>
+    <div className="space-y-3 select-none">
+      {/* Section Title matching the Mockup */}
+      <h3 className="font-black text-base text-[#18181B] dark:text-[#FDF2F8] px-1">
+        Stories
+      </h3>
 
-      <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-none">
-        {/* Add Story Button (Visible to Creators) */}
-        {role === 'creator' && (
+      {/* Horizontal Carousel */}
+      <div className="flex items-center gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar py-1 px-1">
+        {stories.map((item) => (
           <button
-            onClick={() => setShowAddStory(true)}
-            className="flex flex-col items-center gap-2 shrink-0 group cursor-pointer"
+            key={item.id}
+            onClick={() => handleStoryClick(item)}
+            className="flex flex-col items-center gap-1.5 shrink-0 group cursor-pointer"
           >
-            <div className="w-14 h-14 rounded-full bg-white border-2 border-dashed border-[#F472B6] hover:border-[#EC4899] flex items-center justify-center text-[#EC4899] group-hover:scale-105 transition-all shadow-sm shadow-[#EC4899]/5">
-              <Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" />
-            </div>
-            <span className="text-[10px] font-extrabold text-[#52525B]">Add Story</span>
-          </button>
-        )}
-
-        {/* Loading Skeletons */}
-        {isLoading && (
-          <>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 shrink-0">
-                <div className="w-14 h-14 rounded-full skeleton-shimmer border border-[#F3DCE8]" />
-                <div className="w-12 h-3 skeleton-shimmer rounded-full" />
+            <div className="relative">
+              {/* Outer Ring */}
+              <div
+                className={`p-0.75 rounded-full transition-all duration-300 group-hover:scale-105 ${
+                  item.isYourStory
+                    ? 'bg-[#E4E4E7] dark:bg-[#3A2A4C]'
+                    : item.isLive
+                    ? 'bg-gradient-to-tr from-[#FF0844] via-[#EC4899] to-[#FFB199] shadow-sm animate-pulse'
+                    : `bg-gradient-to-tr ${item.gradientBorder || 'from-[#FF8A00] to-[#E52E71]'} shadow-sm`
+                }`}
+              >
+                <img
+                  src={item.creatorAvatar}
+                  alt={item.creatorName}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white dark:border-[#150D1E]"
+                />
               </div>
-            ))}
-          </>
-        )}
 
-        {/* Empty Stories State */}
-        {!isLoading && creatorsList.length === 0 && (
-          <div className="flex items-center gap-2 text-[#71717A] text-[11px] font-semibold py-2">
-            <AlertCircle size={14} className="text-[#A1A1AA]" />
-            <span>No creator stories active right now.</span>
-          </div>
-        )}
+              {/* Blue Plus Badge for Your Story */}
+              {item.isYourStory && (
+                <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#0095F6] text-white flex items-center justify-center border-2 border-white dark:border-[#150D1E] shadow-2xs">
+                  <Plus size={13} strokeWidth={3} />
+                </span>
+              )}
 
-        {/* Active Stories Creator List */}
-        {!isLoading && creatorsList.map((c) => (
-          <button
-            key={c.creatorId}
-            onClick={() => {
-              setSelectedCreatorId(c.creatorId);
-              // Start from the first unseen story
-              const firstUnseen = c.stories.findIndex(s => {
-                const views = s.views || [];
-                return !views.some(v => v.viewerId === user?.id);
-              });
-              setSelectedStoryIndex(firstUnseen >= 0 ? firstUnseen : 0);
-            }}
-            className="flex flex-col items-center gap-2 shrink-0 group cursor-pointer text-left focus:outline-none"
-          >
-            <Avatar
-              alt={c.creatorName}
-              src={c.creatorAvatar}
-              size="lg"
-              hasStory={true}
-              storySeen={c.allSeen}
-              className="group-hover:scale-105 transition-transform shadow-md duration-300"
-            />
-            <span className="text-[10px] font-bold text-[#52525B] truncate max-w-[72px]">
-              @{c.creatorUsername}
+              {/* Red LIVE Badge */}
+              {item.isLive && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 bg-gradient-to-r from-rose-600 to-pink-600 text-white font-black text-[8px] rounded-full uppercase tracking-wider shadow-xs border border-white dark:border-[#150D1E]">
+                  LIVE
+                </span>
+              )}
+            </div>
+
+            {/* Label */}
+            <span className="text-[11px] font-bold text-[#18181B] dark:text-[#FDF2F8] truncate max-w-[64px]">
+              {item.creatorName}
             </span>
           </button>
         ))}
       </div>
 
-      {/* Story Viewer Modal */}
-      {selectedCreatorId && activeStory && activeCreator && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="absolute inset-0 cursor-zoom-out" onClick={() => setSelectedCreatorId(null)}></div>
-
-          <div className="relative max-w-sm w-full h-[640px] bg-[#121214] rounded-[32px] overflow-hidden shadow-2xl border border-white/10 flex flex-col justify-between z-10">
-            
-            {/* Story Auto Progress Indicator Strip */}
-            <div className="absolute top-3 left-4 right-4 z-30 flex gap-1.5">
-              {activeCreator.stories.map((story, index) => {
-                const isCurrent = index === selectedStoryIndex;
-                const isPast = index < selectedStoryIndex;
-                return (
-                  <div key={story.id} className="h-[3px] flex-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      key={`${story.id}-${isCurrent}`}
-                      className={`h-full bg-white rounded-full ${
-                        isCurrent ? 'animate-story-progress' : isPast ? 'w-full' : 'w-0'
-                      }`}
-                    />
-                  </div>
-                );
-              })}
+      {/* Story Player Lightbox Modal */}
+      {activeStory && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setActiveStory(null)}
+        >
+          <div
+            className="relative max-w-sm w-full bg-[#150D1E] rounded-3xl overflow-hidden border border-white/20 shadow-2xl space-y-3 p-4 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Progress Bar */}
+            <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+              <div
+                style={{ width: `${storyProgress}%` }}
+                className="bg-white h-full transition-all duration-100 ease-linear rounded-full"
+              />
             </div>
 
-            {/* Header overlay */}
-            <div className="p-4 pt-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent flex items-center justify-between absolute top-0 left-0 right-0 z-20">
+            {/* Top Bar Header */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <Avatar alt={activeCreator.creatorName} src={activeCreator.creatorAvatar} size="sm" />
-                <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    {activeCreator.creatorName}
-                    {activeStory.visibility === 'members_only' && (
-                      <span className="text-[8px] bg-pink-600 text-white font-extrabold uppercase px-1.5 py-0.5 rounded border border-pink-400/30 flex items-center gap-0.5">
-                        <Lock size={8} /> VIP
-                      </span>
-                    )}
-                  </h4>
-                  <div className="flex items-center gap-1 text-[9px] text-pink-300 font-bold mt-0.5">
-                    <Clock size={10} />
-                    <span>24h Ephemeral Update</span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedCreatorId(null)}
-                className="text-white bg-white/10 p-2 rounded-full hover:bg-white/25 transition-colors cursor-pointer border border-white/10"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* Story Navigation Zones (Left / Right Chevron overlays) */}
-            <div className="absolute inset-y-0 left-0 w-16 flex items-center justify-start pl-2 z-20 opacity-0 hover:opacity-100 transition-opacity">
-              <button
-                onClick={handlePrev}
-                disabled={selectedStoryIndex === 0 && creatorsList.findIndex(c => c.creatorId === selectedCreatorId) === 0}
-                className="p-2 bg-black/50 text-white rounded-full hover:bg-black/80 transition-colors disabled:opacity-0 cursor-pointer"
-              >
-                <ChevronLeft size={20} />
-              </button>
-            </div>
-            <div className="absolute inset-y-0 right-0 w-16 flex items-center justify-end pr-2 z-20 opacity-0 hover:opacity-100 transition-opacity">
-              <button
-                onClick={handleNext}
-                className="p-2 bg-black/50 text-white rounded-full hover:bg-black/80 transition-colors cursor-pointer"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-
-            {/* Content Container (Gated / Text / Image) */}
-            <div className="flex-1 w-full h-full relative bg-black flex items-center justify-center">
-              
-              {isStoryLocked(activeStory) ? (
-                /* Paywall locked overlay screen */
-                <div className="p-8 text-center flex flex-col items-center justify-center space-y-4 bg-gradient-to-b from-[#1E112A] to-[#121214] w-full h-full text-white z-10">
-                  <div className="w-16 h-16 rounded-full bg-pink-900/40 border border-pink-500/30 flex items-center justify-center text-pink-500 animate-pulse">
-                    <Lock size={32} />
-                  </div>
-                  <h3 className="font-black text-lg tracking-tight">🔒 Exclusive VIP Story</h3>
-                  <p className="text-xs text-slate-350 leading-relaxed max-w-[240px]">
-                    Subscribe to {activeStory.creatorName} to instantly unlock all of their VIP stories, premium posts, and comments.
-                  </p>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-full max-w-[200px]"
-                    onClick={() => {
-                      handleSimulateSubscribe(activeStory.creatorId);
-                      alert('Simulated Subscription successful! Story unlocked.');
-                    }}
-                  >
-                    Subscribe $15.00/mo
-                  </Button>
-                </div>
-              ) : activeStory.storyType === 'text' ? (
-                /* Text Story with Stylized Background */
-                <div
-                  style={{ background: activeStory.textBgGradient || 'linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)' }}
-                  className="w-full h-full flex flex-col items-center justify-center px-8 text-center text-white"
-                  onClick={handleNext}
-                >
-                  <h2 className="text-lg font-black tracking-tight leading-relaxed max-w-[280px] drop-shadow-md">
-                    {activeStory.caption}
-                  </h2>
-                </div>
-              ) : (
-                /* Image story */
                 <img
-                  src={activeStory.mediaUrl}
-                  alt="Story content"
-                  className="w-full h-full object-cover select-none"
-                  onClick={handleNext}
+                  src={activeStory.creatorAvatar}
+                  alt={activeStory.creatorName}
+                  className="w-8 h-8 rounded-full object-cover border border-white/40"
                 />
-              )}
-
-              {/* Floating Emojis */}
-              {reactions.map((r) => (
-                <span
-                  key={r.id}
-                  style={{ left: `${r.left}%` }}
-                  className="absolute bottom-28 text-5xl select-none pointer-events-none z-30 animate-float-reaction"
-                >
-                  {r.emoji}
-                </span>
-              ))}
+                <div>
+                  <p className="font-bold text-xs">{activeStory.creatorName}</p>
+                  <p className="text-[10px] text-white/70">@{activeStory.creatorUsername}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveStory(null)}
+                className="p-1 rounded-full text-white/80 hover:text-white"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            {/* Interactive Emoji Bar & Caption Footer */}
-            {activeStory && !isStoryLocked(activeStory) && (
-              <div className="p-4 pt-12 bg-gradient-to-t from-black/95 via-black/75 to-transparent absolute bottom-0 left-0 right-0 z-20 space-y-4">
-                
-                {activeStory.storyType !== 'text' && activeStory.caption && (
-                  <div className="text-center px-4">
-                    <p className="text-white text-xs font-bold leading-relaxed drop-shadow-md">
-                      {activeStory.caption}
-                    </p>
-                  </div>
-                )}
+            {/* Story Image */}
+            <div className="relative rounded-2xl overflow-hidden h-96">
+              <img
+                src={activeStory.storyMediaUrl || activeStory.creatorAvatar}
+                alt="Story View"
+                className="w-full h-full object-cover"
+              />
+              {activeStory.caption && (
+                <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/80 to-transparent text-xs font-semibold text-white">
+                  {activeStory.caption}
+                </div>
+              )}
+            </div>
 
-                {/* Engagement Area: Quick Reactions and Replies */}
-                {isRepliesReactionsEnabled && (
-                  <div className="space-y-3 pt-2 border-t border-white/10">
-                    
-                    {/* Emoji Reaction Pills */}
-                    <div className="flex items-center justify-between px-2">
-                      {['❤️', '🔥', '😂', '😮', '😢', '🎉'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleReact(emoji)}
-                          className="text-2xl hover:scale-125 transition-transform duration-200 focus:outline-none cursor-pointer"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Text Reply Box */}
-                    <form onSubmit={handleSendReply} className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Send reply to creator..."
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!replyText.trim()}
-                        className="bg-pink-600 hover:bg-pink-700 text-white rounded-full p-2 disabled:opacity-50 transition-colors cursor-pointer"
-                      >
-                        <Send size={14} />
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Bottom Quick Reply */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                placeholder={`Reply to ${activeStory.creatorName}...`}
+                className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-xs text-white placeholder-white/60 focus:outline-none focus:border-pink-500"
+              />
+              <button
+                onClick={() => setActiveStory(null)}
+                className="p-2 rounded-full bg-pink-600 text-white hover:bg-pink-500"
+              >
+                <Heart size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Add Story Modal */}
-      {showAddStory && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[24px] max-w-md w-full p-6 border border-[#F3DCE8] shadow-2xl relative">
-            <button
-              onClick={() => setShowAddStory(false)}
-              className="absolute top-4 right-4 text-[#71717A] hover:text-[#18181B]"
-            >
-              <X size={18} />
-            </button>
+      {showAddStoryModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowAddStoryModal(false)}
+        >
+          <div
+            className="relative max-w-md w-full bg-white dark:bg-[#150D1E] rounded-3xl p-6 border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#F3DCE8] dark:border-[#3A2A4C] pb-3">
+              <h4 className="font-black text-sm text-[#18181B] dark:text-[#FDF2F8]">
+                Add to Your Story
+              </h4>
+              <button
+                onClick={() => setShowAddStoryModal(false)}
+                className="text-[#71717A] hover:text-[#18181B] dark:hover:text-[#FDF2F8]"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            <h3 className="text-base font-black text-[#18181B] border-b border-[#F3DCE8] pb-3 flex items-center gap-2">
-              📸 Create 24h Ephemeral Story
-            </h3>
+            <form onSubmit={handleAddStorySubmit} className="space-y-3">
+              <input
+                type="url"
+                required
+                placeholder="Story Image URL (e.g. https://images.unsplash.com/...)"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                className="w-full bg-[#FFF9FC] dark:bg-[#22152E] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-2xl px-4 py-2.5 text-xs text-[#18181B] dark:text-[#FDF2F8] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899]"
+              />
 
-            <form onSubmit={handleAddStorySubmit} className="space-y-4 pt-4 text-xs font-semibold">
-              
-              {/* Type Select */}
-              <div className="space-y-1">
-                <label className="text-[#52525B]">Story Type</label>
-                <div className="flex gap-2">
-                  {(['image', 'text'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setNewStoryType(t)}
-                      className={`flex-1 py-2 rounded-xl border text-center font-bold capitalize transition-all cursor-pointer ${
-                        newStoryType === t
-                          ? 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]'
-                          : 'bg-white text-[#71717A] border-[#F3DCE8]'
-                      }`}
-                    >
-                      {t} Story
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <input
+                type="text"
+                placeholder="Story caption / sticker note..."
+                value={newCaption}
+                onChange={(e) => setNewCaption(e.target.value)}
+                className="w-full bg-[#FFF9FC] dark:bg-[#22152E] border border-[#F3DCE8] dark:border-[#3A2A4C] rounded-2xl px-4 py-2.5 text-xs text-[#18181B] dark:text-[#FDF2F8] placeholder-[#A1A1AA] focus:outline-none focus:border-[#EC4899]"
+              />
 
-              {/* Visibility Settings */}
-              <div className="space-y-1">
-                <label className="text-[#52525B]">Access Tier</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewVisibility('public')}
-                    className={`flex-1 py-2 rounded-xl border text-center font-bold transition-all cursor-pointer ${
-                      newVisibility === 'public'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : 'bg-white text-[#71717A] border-[#F3DCE8]'
-                    }`}
-                  >
-                    🌍 Public (All Followers)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewVisibility('members_only')}
-                    className={`flex-1 py-2 rounded-xl border text-center font-bold transition-all cursor-pointer ${
-                      newVisibility === 'members_only'
-                        ? 'bg-rose-50 text-[#BE185D] border-[#FBCFE8]'
-                        : 'bg-white text-[#71717A] border-[#F3DCE8]'
-                    }`}
-                  >
-                    🔒 VIP Members Only
-                  </button>
-                </div>
-              </div>
-
-              {newStoryType === 'image' ? (
-                <>
-                  {/* Media URL Input */}
-                  <div className="space-y-1">
-                    <label className="text-[#52525B]">Story Image URL</label>
-                    <input
-                      type="text"
-                      value={newMediaUrl}
-                      onChange={(e) => setNewMediaUrl(e.target.value)}
-                      placeholder="Paste image URL here"
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#EC4899]"
-                      required
-                    />
-                  </div>
-
-                  {/* Caption Input */}
-                  <div className="space-y-1">
-                    <label className="text-[#52525B]">Caption (Optional)</label>
-                    <textarea
-                      value={newCaption}
-                      onChange={(e) => setNewCaption(e.target.value)}
-                      placeholder="Write a caption to overlay..."
-                      rows={2}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#EC4899] resize-none"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Background Gradient Pick */}
-                  <div className="space-y-1">
-                    <label className="text-[#52525B]">Gradient Theme</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: 'Rose Pink', value: 'linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)' },
-                        { label: 'Cyber Violet', value: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' },
-                        { label: 'Tech Indigo', value: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }
-                      ].map((grad) => (
-                        <button
-                          key={grad.label}
-                          type="button"
-                          onClick={() => setNewTextGradient(grad.value)}
-                          style={{ background: grad.value }}
-                          className={`h-10 rounded-xl border text-[9px] font-black text-white text-center flex items-center justify-center leading-none p-1 cursor-pointer transition-transform ${
-                            newTextGradient === grad.value ? 'scale-105 ring-2 ring-pink-500' : 'opacity-85'
-                          }`}
-                        >
-                          {grad.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Text Status Update */}
-                  <div className="space-y-1">
-                    <label className="text-[#52525B]">Story Text Update</label>
-                    <textarea
-                      value={newCaption}
-                      onChange={(e) => setNewCaption(e.target.value)}
-                      placeholder="Write your text status update..."
-                      rows={3}
-                      className="w-full bg-[#FFF9FC] border border-[#F3DCE8] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#EC4899] resize-none"
-                      required
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Form Action Buttons */}
-              <div className="flex gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="flex-1 border border-[#F3DCE8]"
-                  onClick={() => setShowAddStory(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="flex-1"
-                  isLoading={isSubmitting}
-                >
-                  Publish Story
-                </Button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-[#FF8A00] to-[#E52E71] text-white font-black text-xs shadow-md hover:opacity-95 transition-opacity cursor-pointer"
+              >
+                Publish to Story
+              </button>
             </form>
           </div>
         </div>
@@ -708,3 +357,5 @@ export const StoryBar: React.FC = () => {
     </div>
   );
 };
+
+export default StoryBar;

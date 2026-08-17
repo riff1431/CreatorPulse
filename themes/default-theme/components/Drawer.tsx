@@ -56,7 +56,7 @@ export const Drawer: React.FC<DrawerProps> = ({
       {/* Drawer Card */}
       <div
         ref={drawerRef}
-        className={`relative z-10 bg-white dark:bg-[#1A1222] border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl flex flex-col ${positionStyles[position]} ${className}`}
+        className={`relative z-10 bg-[var(--color-surface)] border-[var(--color-border)] shadow-2xl flex flex-col ${positionStyles[position]} ${className}`}
       >
         {/* Mobile Pull Handle (if bottom sheet) */}
         {position === 'bottom' && (
@@ -64,21 +64,21 @@ export const Drawer: React.FC<DrawerProps> = ({
         )}
 
         {/* Drawer Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F3DCE8] dark:border-[#3A2A4C] shrink-0">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] shrink-0">
           <div>
             {title && (
-              <h3 className="font-black text-sm sm:text-base text-[#18181B] dark:text-[#FDF2F8] tracking-tight">
+              <h3 className="font-black text-sm sm:text-base text-[var(--color-text-primary)] tracking-tight">
                 {title}
               </h3>
             )}
             {description && (
-              <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] mt-0.5">{description}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] text-[#71717A] hover:text-[#EC4899] transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
             aria-label="Close drawer"
           >
             <X size={18} />
@@ -86,13 +86,13 @@ export const Drawer: React.FC<DrawerProps> = ({
         </div>
 
         {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 text-xs text-[#52525B] dark:text-[#D4B8D0] leading-relaxed">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 text-xs text-[#52525B] leading-relaxed">
           {children}
         </div>
 
         {/* Drawer Footer */}
         {footer && (
-          <div className="p-4 sm:p-5 border-t border-[#F3DCE8] dark:border-[#3A2A4C] bg-[#FFF9FC] dark:bg-[#241A30] shrink-0">
+          <div className="p-4 sm:p-5 border-t border-[var(--color-border)] bg-[var(--color-bg)] shrink-0">
             {footer}
           </div>
         )}

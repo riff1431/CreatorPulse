@@ -81,12 +81,12 @@ export const CreatorSidebar: React.FC = () => {
   })).filter((group) => group.items.length > 0);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white/60 dark:bg-[#1A1222]/60 backdrop-blur-xl">
+    <div className="flex flex-col h-full bg-[var(--color-surface)] /60 /60 backdrop-blur-xl">
       <div className="flex-1 overflow-y-auto py-5 px-3 space-y-5">
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-1">
             {!collapsed && (
-              <p className="text-[10px] font-black uppercase tracking-wider text-[#A1A1AA] dark:text-[#8E7890] px-3 mb-1.5">
+              <p className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-muted)] dark:text-[#8E7890] px-3 mb-1.5">
                 {group.title}
               </p>
             )}
@@ -103,22 +103,22 @@ export const CreatorSidebar: React.FC = () => {
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all relative group ${
                       isActive
-                        ? 'bg-[#FCE7F3] text-[#BE185D] border border-[#FBCFE8] dark:bg-[#381A2B] dark:text-[#F472B6] dark:border-[#4C1D3B] shadow-xs'
-                        : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#FFF1F7] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8] dark:hover:bg-[#241A30]'
+                        ? 'bg-[var(--color-soft-primary)] text-[var(--color-primary)] border border-[#FBCFE8] shadow-xs'
+                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] dark:hover:text-[#FDF2F8] '
                     }`}
                   >
                     <div className="flex items-center gap-2.5 z-10 min-w-0">
                       <Icon
                         size={16}
                         className={`shrink-0 transition-colors duration-200 ${
-                          isActive ? 'text-[#EC4899]' : 'text-[#A1A1AA] group-hover:text-[#EC4899]'
+                          isActive ? 'text-[var(--color-primary)] ' : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] '
                         }`}
                       />
                       {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
 
                     {!collapsed && item.badge && item.badge > 0 && (
-                      <span className="text-[10px] font-black bg-[#FFF1F7] dark:bg-[#241A30] text-[#BE185D] dark:text-[#F472B6] px-2 py-0.5 rounded-full border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xs shrink-0">
+                      <span className="text-[10px] font-black bg-[var(--color-surface-secondary)] text-[var(--color-primary)] px-2 py-0.5 rounded-full border border-[var(--color-border)] shadow-2xs shrink-0">
                         {formatBadge(item.badge)}
                       </span>
                     )}
@@ -131,10 +131,10 @@ export const CreatorSidebar: React.FC = () => {
       </div>
 
       {/* Collapse Toggle (Desktop) */}
-      <div className="hidden lg:block border-t border-[#F3DCE8] dark:border-[#3A2A4C] p-3 bg-white/40 dark:bg-[#1A1222]/40">
+      <div className="hidden lg:block border-t border-[var(--color-border)] p-3 bg-[var(--color-surface)] /40 /40">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 text-xs font-bold text-[#71717A] hover:text-[#18181B] dark:text-[#D4B8D0] dark:hover:text-[#FDF2F8] py-2 rounded-xl hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 text-xs font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] dark:hover:text-[#FDF2F8] py-2 rounded-xl hover:bg-[var(--color-surface-secondary)] transition-all cursor-pointer"
         >
           {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           {!collapsed && <span>Collapse Sidebar</span>}
@@ -148,7 +148,7 @@ export const CreatorSidebar: React.FC = () => {
       {/* Mobile Drawer Trigger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-20 right-4 z-40 w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F43F5E] text-white shadow-xl shadow-pink-500/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+        className="lg:hidden fixed bottom-20 right-4 z-40 w-11 h-11 rounded-2xl bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-accent)] text-white shadow-xl shadow-pink-500/30 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
         aria-label="Open Studio Menu"
       >
         <Menu size={20} />
@@ -164,18 +164,18 @@ export const CreatorSidebar: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full bg-white dark:bg-[#1A1222] border-r border-[#F3DCE8] dark:border-[#3A2A4C] z-50 transition-transform duration-300 w-72 shadow-2xl ${
+        className={`lg:hidden fixed top-0 left-0 h-full bg-[var(--color-surface)] border-r border-[var(--color-border)] z-50 transition-transform duration-300 w-72 shadow-2xl ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#F3DCE8] dark:border-[#3A2A4C]">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--color-border)] ">
           <div className="flex items-center gap-2">
-            <Sparkles className="text-[#EC4899]" size={18} />
-            <span className="text-sm font-black text-[#18181B] dark:text-[#FDF2F8] tracking-tight">Creator Studio</span>
+            <Sparkles className="text-[var(--color-primary)] " size={18} />
+            <span className="text-sm font-black text-[var(--color-text-primary)] tracking-tight">Creator Studio</span>
           </div>
           <button
             onClick={() => setMobileOpen(false)}
-            className="p-1 rounded-lg text-[#71717A] hover:bg-[#FFF1F7]"
+            className="p-1 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] "
           >
             <X size={18} />
           </button>
@@ -185,7 +185,7 @@ export const CreatorSidebar: React.FC = () => {
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] dark:border-[#3A2A4C] bg-white/40 dark:bg-[#1A1222]/40 shrink-0 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] /40 /40 shrink-0 transition-all duration-300 ${
           collapsed ? 'w-16' : 'w-60'
         }`}
       >

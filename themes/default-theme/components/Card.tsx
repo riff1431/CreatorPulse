@@ -23,12 +23,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     const variantStyles = {
-      default: 'bg-white dark:bg-[#1A1222] border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-xs',
-      glass: 'bg-white/85 dark:bg-[#1A1222]/85 backdrop-blur-xl border border-[#F3DCE8]/80 dark:border-[#3A2A4C]/80 shadow-md',
-      elevated: 'bg-white dark:bg-[#1A1222] border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-lg shadow-pink-500/5',
-      outline: 'bg-transparent border border-[#F3DCE8] dark:border-[#3A2A4C]',
-      soft: 'bg-[#FFF9FC] dark:bg-[#241A30] border border-[#FCE7F3] dark:border-[#381A2B]',
-      glow: 'bg-white/90 dark:bg-[#1A1222]/90 backdrop-blur-xl border border-[#EC4899]/30 shadow-xl shadow-pink-500/15',
+      default: 'bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xs',
+      glass: 'bg-[var(--color-surface)] /85 /85 backdrop-blur-xl border border-[var(--color-border)] /80 /80 shadow-md',
+      elevated: 'bg-[var(--color-surface)] border border-[var(--color-border)] shadow-lg shadow-[var(--color-primary)]/5 ',
+      outline: 'bg-transparent border border-[var(--color-border)] ',
+      soft: 'bg-[var(--color-bg)] border border-[#FCE7F3] dark:border-[#381A2B]',
+      glow: 'bg-[var(--color-surface)] /90 /90 backdrop-blur-xl border border-[var(--color-primary)] /30 shadow-xl shadow-pink-500/15',
     };
 
     const paddingStyles = {
@@ -39,7 +39,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     };
 
     const hoverStyles = hoverable
-      ? 'hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/15 hover:border-[#EC4899]/50 cursor-pointer transition-all duration-300 active:scale-[0.99]'
+      ? 'hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/15 hover:border-[var(--color-primary)] /50 cursor-pointer transition-all duration-300 active:scale-[0.99]'
       : 'transition-all duration-200';
 
     return (

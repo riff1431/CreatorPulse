@@ -16,6 +16,7 @@ export interface AppConfig {
     defaultRedirectRoute: string;
     adminRedirectRoute: string;
     creatorRedirectRoute: string;
+    moderatorRedirectRoute: string;
   };
   pagination: {
     defaultPageSize: number;
@@ -58,7 +59,8 @@ export const APP_CONFIG: AppConfig = {
     sessionDurationDays: 30,
     defaultRedirectRoute: '/feed',
     adminRedirectRoute: '/admin/dashboard',
-    creatorRedirectRoute: '/creator/dashboard',
+    creatorRedirectRoute: '/feed',
+    moderatorRedirectRoute: '/admin/dashboard',
   },
   pagination: {
     defaultPageSize: 20,

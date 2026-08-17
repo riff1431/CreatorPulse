@@ -275,8 +275,7 @@ export const AdminHeader: React.FC = () => {
   );
 
   const handleLogout = () => {
-    logout();
-    router.push('/auth/login');
+    logout('/admin/login');
   };
 
   return (
