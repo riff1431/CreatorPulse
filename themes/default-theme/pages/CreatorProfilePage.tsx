@@ -22,6 +22,9 @@ import {
   MOCK_CREATOR_DETAILS, MOCK_POSTS, MOCK_MEMBERSHIP_PLANS, 
   CreatorProfile, MembershipPlan 
 } from '@/lib/supabase/store';
+import { getStoredCreatorTiers, CreatorTier } from '@/lib/memberships/membership-store';
+import { TierComparisonMatrix } from '../components/TierComparisonMatrix';
+import { subscribeUserToTier, getUserSubscription } from '@/lib/memberships/entitlement-service';
 import { prefersReducedMotion } from '../utils/animations';
 
 export function CreatorProfilePage() {
@@ -34,11 +37,50 @@ export function CreatorProfilePage() {
   ) || 'user-creator-1';
 
   const creator: CreatorProfile = MOCK_CREATOR_DETAILS[creatorKey] || MOCK_CREATOR_DETAILS['user-creator-1'];
-  const plans: MembershipPlan[] = MOCK_MEMBERSHIP_PLANS[creatorKey] || [
-    { id: 'p1', creatorId: creatorKey, name: 'Starter VIP Community', priceMonthly: 5.00, description: 'Access to starter posts & community chat', benefits: ['Starter Exclusive Posts', 'Community Access', 'Direct Messaging'] },
-    { id: 'p2', creatorId: creatorKey, name: 'Pro VIP Studio Tier', priceMonthly: 12.00, description: 'Full access to masterclasses & source files', benefits: ['All Starter Benefits', 'Source Code Downloads', 'Monthly Q&A Masterclass'], popular: true },
-    { id: 'p3', creatorId: creatorKey, name: 'Inner Circle Patron', priceMonthly: 29.00, description: '1-on-[1] mentorship & early draft previews', benefits: ['All Pro Tier Benefits', '1-on-1 Monthly Call', 'Early Access Builds'] }
-  ];
+  
+  const [rawTiers, setRawTiers] = useState<CreatorTier[]>(() => {
+    return getStoredCreatorTiers(creatorKey) || [];
+  });
+
+  const [plans, setPlans] = useState<MembershipPlan[]>(() => {
+    const stored = getStoredCreatorTiers(creatorKey);
+    if (stored && stored.length > 0) {
+      return stored.filter((t) => t.status === 'active').map((t) => ({
+        id: t.id,
+        creatorId: t.creatorId,
+        name: t.name,
+        priceMonthly: t.priceMonthly,
+        description: t.description,
+        benefits: t.benefits,
+        popular: t.popular
+      }));
+    }
+    return MOCK_MEMBERSHIP_PLANS[creatorKey] || [];
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      const stored = getStoredCreatorTiers(creatorKey);
+      if (stored && stored.length > 0) {
+        setRawTiers(stored);
+        setPlans(stored.filter((t) => t.status === 'active').map((t) => ({
+          id: t.id,
+          creatorId: t.creatorId,
+          name: t.name,
+          priceMonthly: t.priceMonthly,
+          description: t.description,
+          benefits: t.benefits,
+          popular: t.popular
+        })));
+      }
+    };
+    window.addEventListener('creatorpulse_memberships_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('creatorpulse_memberships_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [creatorKey]);
   
   const {
     isFollowing,
@@ -486,50 +528,70 @@ export function CreatorProfilePage() {
 
               {/* Membership Tiers Tab */}
               {activeTab === 'memberships' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {plans.map((plan) => (
-                    <Card
-                      key={plan.id}
-                      className={`p-6 space-y-4 relative flex flex-col justify-between border ${
-                        plan.popular ? 'border-[var(--color-primary)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-surface-secondary)] shadow-md shadow-[#EC4899]/10' : 'border-[var(--color-border)]'
-                      }`}
-                    >
-                      {plan.popular && (
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] uppercase font-black bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white px-3 py-0.5 rounded-full shadow-sm">
-                          Most Popular
-                        </span>
-                      )}
-
-                      <div className="space-y-3">
-                        <h3 className="font-extrabold text-base text-[var(--color-text-primary)]">{plan.name}</h3>
-                        <div className="text-2xl font-black text-[var(--color-primary)]">
-                          ${plan.priceMonthly.toFixed(2)} <span className="text-xs text-[var(--color-text-secondary)] font-bold">/mo</span>
-                        </div>
-                        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed font-semibold">{plan.description}</p>
-                        
-                        <ul className="space-y-2 text-xs text-[var(--color-text-primary)] pt-3 border-t border-[var(--color-border)]">
-                          {plan.benefits.map((b, i) => (
-                            <li key={i} className="flex items-center gap-2">
-                              <CheckCircle2 size={14} className="text-[var(--color-primary)] shrink-0" />
-                              <span className="font-semibold text-xs">{b}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <Button
-                        variant={plan.popular ? 'primary' : 'outline'}
-                        size="sm"
-                        className="w-full mt-4"
-                        onClick={() => {
-                          setSelectedPlan(plan);
-                          setShowSubModal(true);
-                        }}
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {plans.map((plan) => (
+                      <Card
+                        key={plan.id}
+                        className={`p-6 space-y-4 relative flex flex-col justify-between border ${
+                          plan.popular ? 'border-[var(--color-primary)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-surface-secondary)] shadow-md shadow-[#EC4899]/10' : 'border-[var(--color-border)]'
+                        }`}
                       >
-                        Select Tier
-                      </Button>
-                    </Card>
-                  ))}
+                        {plan.popular && (
+                          <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] uppercase font-black bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white px-3 py-0.5 rounded-full shadow-sm">
+                            Most Popular
+                          </span>
+                        )}
+
+                        <div className="space-y-3">
+                          <h3 className="font-extrabold text-base text-[var(--color-text-primary)]">{plan.name}</h3>
+                          <div className="text-2xl font-black text-[var(--color-primary)]">
+                            ${plan.priceMonthly.toFixed(2)} <span className="text-xs text-[var(--color-text-secondary)] font-bold">/mo</span>
+                          </div>
+                          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed font-semibold">{plan.description}</p>
+                          
+                          <ul className="space-y-2 text-xs text-[var(--color-text-primary)] pt-3 border-t border-[var(--color-border)]">
+                            {plan.benefits.map((b, i) => (
+                              <li key={i} className="flex items-center gap-2">
+                                <CheckCircle2 size={14} className="text-[var(--color-primary)] shrink-0" />
+                                <span className="font-semibold text-xs">{b}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <Button
+                          variant={plan.popular ? 'primary' : 'outline'}
+                          size="sm"
+                          className="w-full mt-4"
+                          onClick={() => {
+                            setSelectedPlan(plan);
+                            setShowSubModal(true);
+                          }}
+                        >
+                          Select Tier
+                        </Button>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Advantages & Disadvantages Breakdown Matrix */}
+                  <TierComparisonMatrix
+                    tiers={rawTiers}
+                    activeTierId={selectedPlan?.id}
+                    onSelectTier={(tier) => {
+                      setSelectedPlan({
+                        id: tier.id,
+                        creatorId: tier.creatorId,
+                        name: tier.name,
+                        priceMonthly: tier.priceMonthly,
+                        description: tier.description,
+                        benefits: tier.benefits,
+                        popular: tier.popular
+                      });
+                      setShowSubModal(true);
+                    }}
+                  />
                 </div>
               )}
 
@@ -748,9 +810,20 @@ export function CreatorProfilePage() {
           autoRenew={autoRenew}
           onClose={() => setShowCheckoutModal(false)}
           onSuccess={() => {
+            subscribeUserToTier({
+              userId: 'user-member-1',
+              userName: 'Alex Rivers',
+              userUsername: 'alexrivers',
+              creatorId: creatorKey,
+              creatorName: creator.fullName,
+              creatorUsername: creator.username,
+              creatorAvatar: creator.avatarUrl,
+              tierId: selectedPlan.id,
+              billingCycle: durationMonths === 12 ? 'annual' : 'monthly',
+            });
             setIsSubscribed(true);
             setShowCheckoutModal(false);
-            showToast(`VIP Subscription active for @${creator.username}!`);
+            showToast(`VIP Subscription active for @${creator.username}! Unlocked all tier perks.`);
           }}
         />
       )}

@@ -1,11 +1,10 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Lock, Unlock, Sparkles, CheckCircle2, 
   Wallet, ShieldCheck, Download, Eye
 } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar } from './Avatar';
 
 interface UnlockDropModalProps {
   isOpen: boolean;
@@ -30,8 +29,13 @@ export function UnlockDropModal({
 }: UnlockDropModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
 
   const walletBalance = 240.50;
 
@@ -48,10 +52,10 @@ export function UnlockDropModal({
     }, 800);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200" onClick={onClose}>
       <div 
-        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative"
+        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-t-[32px] sm:rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200 relative max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -167,6 +171,8 @@ export function UnlockDropModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+

@@ -3,9 +3,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { UserProfile, UserRole, MOCK_USERS } from '../supabase/store';
-import { authenticateUser, registerAccount } from './users';
+import { authenticateUser, registerAccount, resetUserPassword } from './users';
+import { SecurityAudit } from './security';
 import { createClient, isSupabaseConfigured } from '../supabase/client';
 import { getRoleById } from './role-store';
+import { GuestAuthModal } from '@/components/auth/GuestAuthModal';
+
+export interface RequireAuthOptions {
+  title?: string;
+  subtitle?: string;
+}
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -13,17 +20,21 @@ interface AuthContextType {
   permissions: Record<string, boolean>;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string; user?: UserProfile }>;
+  isAuthModalOpen: boolean;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string; user?: UserProfile; isLocked?: boolean; remainingSeconds?: number }>;
   signup: (fullName: string, username: string, email: string, password: string, role?: UserRole, category?: string) => Promise<{ success: boolean; error?: string; user?: UserProfile }>;
   logout: (targetRedirect?: string) => Promise<void> | void;
   switchRole: (newRole: UserRole) => void;
   hasRole: (allowedRoles: UserRole | UserRole[]) => boolean;
   hasPermission: (permission: string) => boolean;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (password: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   saveOnboardingProgress: (step: number, data: Partial<any>) => Promise<{ success: boolean; error?: string }>;
   completeOnboarding: (finalData?: Partial<any>) => Promise<{ success: boolean; error?: string }>;
+  openAuthModal: (options?: RequireAuthOptions) => void;
+  closeAuthModal: () => void;
+  requireAuth: (callback: () => void, options?: RequireAuthOptions) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,13 +60,17 @@ function setCookie(name: string, value: string, days?: number) {
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
     expires = '; expires=' + date.toUTCString();
   }
-  document.cookie = `${name}=${value || ''}${expires}; path=/; SameSite=Lax; Secure`;
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const secureFlag = isHttps ? '; Secure' : '';
+  document.cookie = `${name}=${value || ''}${expires}; path=/; SameSite=Lax${secureFlag}`;
 }
 
 // Helper to remove cookie
 function deleteCookie(name: string) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure`;
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const secureFlag = isHttps ? '; Secure' : '';
+  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
 }
 
 // Compute permissions synchronously from role to prevent state tearing
@@ -206,23 +221,28 @@ export const AuthProvider: React.FC<{
   useEffect(() => {
     const isLive = isSupabaseConfigured();
 
+    // Safety watchdog timer: never let loading hang indefinitely
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
     if (isLive) {
       const supabase = createClient();
       if (!supabase) {
         setIsLoading(false);
+        clearTimeout(safetyTimer);
         return;
       }
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          // Skip redundant fetch if user is already hydrated with matching ID
-          if (userRef.current && userRef.current.id === session.user.id) {
-            setIsLoading(false);
-            return;
-          }
+        try {
+          if (session?.user) {
+            // Skip redundant fetch if user is already hydrated with matching ID
+            if (userRef.current && userRef.current.id === session.user.id) {
+              setIsLoading(false);
+              return;
+            }
 
-          setIsLoading(true);
-          try {
             const { data: profile, error } = await supabase
               .from('profiles')
               .select('*')
@@ -263,32 +283,35 @@ export const AuthProvider: React.FC<{
               syncCookiesAndStorage(userProfile, true);
               broadcastSync({ type: 'LOGIN', user: userProfile });
             }
-          } catch (e) {
-            console.error('Auth sync exception', e);
-          }
-        } else {
-          // Check for active mock session before clearing
-          const sessionCookieVal = typeof document !== 'undefined' 
-            ? document.cookie.split('; ').find(row => row.trim().startsWith('creatorpulse_session='))?.split('=')[1]
-            : undefined;
-          const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_USER_KEY) : null;
+          } else {
+            // Check for active mock session before clearing
+            const sessionCookieVal = typeof document !== 'undefined' 
+              ? document.cookie.split('; ').find(row => row.trim().startsWith('creatorpulse_session='))?.split('=')[1]
+              : undefined;
+            const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_USER_KEY) : null;
 
-          if (sessionCookieVal && sessionCookieVal.startsWith('user-') && storedUser) {
-            try {
-              const parsed = JSON.parse(storedUser) as UserProfile;
-              setAuthState(parsed);
-              setIsLoading(false);
-              return;
-            } catch (e) {}
-          }
+            if (sessionCookieVal && sessionCookieVal.startsWith('user-') && storedUser) {
+              try {
+                const parsed = JSON.parse(storedUser) as UserProfile;
+                setAuthState(parsed);
+                setIsLoading(false);
+                return;
+              } catch (e) {}
+            }
 
-          setAuthState(null, 'guest');
-          clearLocalSession();
+            setAuthState(null, 'guest');
+            clearLocalSession();
+          }
+        } catch (e) {
+          console.error('Auth sync exception', e);
+        } finally {
+          setIsLoading(false);
+          clearTimeout(safetyTimer);
         }
-        setIsLoading(false);
       });
 
       return () => {
+        clearTimeout(safetyTimer);
         subscription.unsubscribe();
       };
     } else {
@@ -348,7 +371,13 @@ export const AuthProvider: React.FC<{
     }
   }, [router]);
 
-  const login = async (email: string, password: string, rememberMe = true): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
+  const login = async (email: string, password: string, rememberMe = true): Promise<{ 
+    success: boolean; 
+    error?: string; 
+    user?: UserProfile;
+    isLocked?: boolean;
+    remainingSeconds?: number;
+  }> => {
     setIsLoading(true);
 
     if (isSupabaseConfigured()) {
@@ -359,7 +388,7 @@ export const AuthProvider: React.FC<{
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error || !data.user) {
           const normalizedEmail = email.trim().toLowerCase();
-          const { user: authedUser, error: localErr } = authenticateUser(normalizedEmail, password);
+          const { user: authedUser, error: localErr, isLocked, remainingSeconds } = authenticateUser(normalizedEmail, password);
           if (authedUser && !localErr) {
             setAuthState(authedUser);
             syncCookiesAndStorage(authedUser, rememberMe);
@@ -369,7 +398,7 @@ export const AuthProvider: React.FC<{
           }
 
           setIsLoading(false);
-          return { success: false, error: error?.message || 'Login failed.' };
+          return { success: false, error: localErr || error?.message || 'Login failed.', isLocked, remainingSeconds };
         }
 
         const { data: profile, error: profileErr } = await supabase
@@ -417,11 +446,11 @@ export const AuthProvider: React.FC<{
     } else {
       try {
         await new Promise((res) => setTimeout(res, 400));
-        const { user: authedUser, error } = authenticateUser(email, password);
+        const { user: authedUser, error, isLocked, remainingSeconds } = authenticateUser(email, password);
 
         if (error || !authedUser) {
           setIsLoading(false);
-          return { success: false, error: error || 'Authentication failed' };
+          return { success: false, error: error || 'Authentication failed', isLocked, remainingSeconds };
         }
 
         setAuthState(authedUser);
@@ -600,12 +629,23 @@ export const AuthProvider: React.FC<{
 
   const forgotPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    SecurityAudit.logEvent({
+      category: 'security_events',
+      action: 'PASSWORD_RESET_REQUESTED',
+      targetEntity: `Account: ${normalizedEmail}`,
+      details: 'Password recovery flow triggered for email address',
+      role: 'unauthenticated',
+      severity: 'info',
+    });
+
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (!supabase) return { success: false, error: 'Supabase client failed to load.' };
 
       try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
           redirectTo: `${window.location.origin}/auth/reset-password`,
         });
 
@@ -623,8 +663,9 @@ export const AuthProvider: React.FC<{
     }
   };
 
-  const resetPassword = async (password: string): Promise<{ success: boolean; error?: string }> => {
+  const resetPassword = async (password: string, email?: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (!supabase) return { success: false, error: 'Supabase client failed to load.' };
@@ -633,6 +674,16 @@ export const AuthProvider: React.FC<{
         const { error } = await supabase.auth.updateUser({ password });
         setIsLoading(false);
         if (error) return { success: false, error: error.message };
+
+        SecurityAudit.logEvent({
+          category: 'security_events',
+          action: 'PASSWORD_RESET_COMPLETED',
+          targetEntity: 'Authenticated Supabase User',
+          details: 'User password successfully updated',
+          role: role,
+          severity: 'info',
+        });
+
         return { success: true };
       } catch (err) {
         setIsLoading(false);
@@ -640,8 +691,10 @@ export const AuthProvider: React.FC<{
       }
     } else {
       await new Promise((res) => setTimeout(res, 500));
+      const targetEmail = email || user?.email || 'fan@creatorpulse.com';
+      const result = resetUserPassword(targetEmail, password);
       setIsLoading(false);
-      return { success: true };
+      return result;
     }
   };
 
@@ -737,6 +790,30 @@ export const AuthProvider: React.FC<{
     return updateProfile(updates);
   };
 
+  // Gated Content & Friendly Interception Modal States
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalOptions, setAuthModalOptions] = useState<RequireAuthOptions>({});
+  const pendingActionRef = useRef<(() => void) | null>(null);
+
+  const openAuthModal = (options?: RequireAuthOptions) => {
+    if (options) setAuthModalOptions(options);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    pendingActionRef.current = null;
+  };
+
+  const requireAuth = (callback: () => void, options?: RequireAuthOptions) => {
+    if (user && role !== 'guest') {
+      callback();
+    } else {
+      pendingActionRef.current = callback;
+      openAuthModal(options);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -745,6 +822,7 @@ export const AuthProvider: React.FC<{
         permissions,
         isAuthenticated: !!user && role !== 'guest',
         isLoading,
+        isAuthModalOpen,
         login,
         signup,
         logout,
@@ -756,9 +834,25 @@ export const AuthProvider: React.FC<{
         updateProfile,
         saveOnboardingProgress,
         completeOnboarding,
+        openAuthModal,
+        closeAuthModal,
+        requireAuth,
       }}
     >
       {children}
+      <GuestAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        title={authModalOptions.title}
+        subtitle={authModalOptions.subtitle}
+        onSuccess={() => {
+          if (pendingActionRef.current) {
+            const action = pendingActionRef.current;
+            pendingActionRef.current = null;
+            action();
+          }
+        }}
+      />
     </AuthContext.Provider>
   );
 };

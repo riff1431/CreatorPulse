@@ -75,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const profileCookieVal = cookieStore.get('creatorpulse_user_profile')?.value;
   const sessionCookieVal = cookieStore.get('creatorpulse_session')?.value;
+  const roleCookieVal = cookieStore.get('creatorpulse_role')?.value;
 
   let initialUser: UserProfile | null = null;
   let initialRole = 'guest';
@@ -142,15 +143,41 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
 
-  // 3. Fallback to default member autologin (mock mode sandbox only)
+  // 3. If role cookie is set without session cookie, resolve corresponding role template
+  if (!initialUser && roleCookieVal && roleCookieVal !== 'guest') {
+    const roleAccount = roleCookieVal === 'creator'
+      ? AUTH_ACCOUNTS['creator@creatorpulse.com']
+      : roleCookieVal === 'admin'
+      ? AUTH_ACCOUNTS['admin@creatorpulse.com']
+      : roleCookieVal === 'super_admin'
+      ? AUTH_ACCOUNTS['superadmin@creatorpulse.com']
+      : roleCookieVal === 'moderator'
+      ? AUTH_ACCOUNTS['moderator@creatorpulse.com']
+      : AUTH_ACCOUNTS['fan@creatorpulse.com'];
+
+    if (roleAccount) {
+      initialUser = {
+        id: roleAccount.id,
+        email: roleAccount.email,
+        fullName: roleAccount.fullName,
+        username: roleAccount.username,
+        avatarUrl: roleAccount.avatarUrl,
+        coverUrl: roleAccount.coverUrl,
+        bio: roleAccount.bio,
+        role: roleAccount.role,
+        isVerified: roleAccount.isVerified,
+        status: roleAccount.status,
+        createdAt: roleAccount.createdAt
+      };
+      initialRole = roleAccount.role;
+    }
+  }
+
+  // 4. Fallback to default member autologin when no live session and not logged out
   if (!initialUser) {
     const loggedOut = cookieStore.get('creatorpulse_logged_out')?.value;
-    const hasSupabase = Boolean(
-      process.env.NEXT_PUBLIC_SUPABASE_URL && 
-      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-supabase')
-    );
 
-    if (!hasSupabase && loggedOut !== 'true') {
+    if (loggedOut !== 'true') {
       const defaultMember = AUTH_ACCOUNTS['fan@creatorpulse.com'] || AUTH_ACCOUNTS['alex@community.io'];
       if (defaultMember) {
         initialUser = {

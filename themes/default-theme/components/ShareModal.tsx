@@ -1,6 +1,5 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Copy, Check, Share2, Send, 
   MessageCircle, Link2, Globe
@@ -20,8 +19,13 @@ export function ShareModal({
   url = typeof window !== 'undefined' ? window.location.href : 'https://creatorpulse.com'
 }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
@@ -56,12 +60,13 @@ export function ShareModal({
     },
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200" onClick={onClose}>
       <div 
-        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative p-6 space-y-5"
+        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-t-[32px] sm:rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200 relative p-5 sm:p-6 space-y-4 sm:space-y-5 max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="sm:hidden w-10 h-1.5 bg-[#E4E4E7] dark:bg-[#3A2A4C] rounded-full mx-auto -mt-1 mb-1 shrink-0" />
         <div className="flex items-center justify-between pb-2 border-b border-[#F3DCE8] dark:border-[#3A2A4C]">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-pink-100 dark:bg-pink-950/60 text-[#EC4899]">
@@ -139,6 +144,8 @@ export function ShareModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+

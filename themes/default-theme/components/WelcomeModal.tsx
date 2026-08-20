@@ -41,13 +41,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none animate-in fade-in duration-300"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-in fade-in duration-300"
       onClick={handleDismiss}
     >
       <div
-        className="relative max-w-lg w-full bg-white dark:bg-[#150D1E] rounded-[36px] p-6 sm:p-8 border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl space-y-6 animate-in zoom-in-95 duration-400"
+        className="relative max-w-lg w-full bg-white dark:bg-[#150D1E] rounded-t-[36px] sm:rounded-[36px] p-5 sm:p-8 border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl space-y-5 sm:space-y-6 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 max-h-[92vh] overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="sm:hidden w-10 h-1.5 bg-[#E4E4E7] dark:bg-[#3A2A4C] rounded-full mx-auto -mt-1 mb-1 shrink-0" />
         {/* Top Header Badge & Close Button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

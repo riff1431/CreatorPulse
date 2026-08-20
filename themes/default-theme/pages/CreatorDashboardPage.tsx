@@ -7,7 +7,7 @@ import {
   Users, Star, Eye, DollarSign, TrendingUp, Clock,
   Sparkles, ArrowRight, PlusSquare, Wallet, Radio, ArrowUpRight
 } from 'lucide-react';
-import { CreatorLayout } from '../layouts/CreatorLayout';
+
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
@@ -105,8 +105,7 @@ export function CreatorDashboardPage() {
   const pathArea = `${pathLine} L ${points[points.length - 1].x} ${graphHeight - padding} L ${points[0].x} ${graphHeight - padding} Z`;
 
   return (
-    <CreatorLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -468,8 +467,7 @@ export function CreatorDashboardPage() {
           </div>
         </Card>
       </div>
-      </div>
-    </CreatorLayout>
+    </div>
   );
 }
 

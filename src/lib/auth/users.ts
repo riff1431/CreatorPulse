@@ -1,4 +1,5 @@
 import { UserProfile, CreatorProfile, UserRole, MOCK_USERS, MOCK_CREATOR_DETAILS } from '../supabase/store';
+import { RateLimiter, InputSanitizer, PasswordSecurity, SecurityAudit } from './security';
 
 export interface AuthUser extends UserProfile {
   passwordHash: string; // Stored password for verification
@@ -130,9 +131,32 @@ export const AUTH_ACCOUNTS: Record<string, AuthUser> = {
 
 /**
  * Validates login credentials against internal accounts registry or custom storage.
+ * Enforces rate limiting / brute-force lockout protections and security auditing.
  */
-export function authenticateUser(email: string, password: string): { user: UserProfile | null; error: string | null } {
+export function authenticateUser(email: string, password: string): { 
+  user: UserProfile | null; 
+  error: string | null; 
+  isLocked?: boolean;
+  remainingSeconds?: number;
+} {
   const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Check rate limit / brute-force lockout status
+  const lockout = RateLimiter.checkLockout(normalizedEmail);
+  if (lockout.isLocked) {
+    return {
+      user: null,
+      error: `Account temporarily locked due to excessive failed attempts. Please try again in ${lockout.remainingSeconds} seconds.`,
+      isLocked: true,
+      remainingSeconds: lockout.remainingSeconds,
+    };
+  }
+
+  // 2. Validate email structure
+  if (!InputSanitizer.isValidEmail(normalizedEmail)) {
+    return { user: null, error: 'Please enter a valid email address.' };
+  }
+
   const account = AUTH_ACCOUNTS[normalizedEmail];
 
   if (!account) {
@@ -146,14 +170,56 @@ export function authenticateUser(email: string, password: string): { user: UserP
           if (dynamicAccount) {
             // Check account status first
             if (dynamicAccount.status === 'suspended' || dynamicAccount.status === 'banned') {
+              SecurityAudit.logEvent({
+                category: 'security_events',
+                action: 'BLOCKED_USER_LOGIN_ATTEMPT',
+                targetEntity: `User: @${dynamicAccount.username}`,
+                details: 'Suspended account attempted login',
+                user: dynamicAccount.fullName,
+                role: dynamicAccount.role,
+                severity: 'warning',
+              });
               return { user: null, error: 'Your account has been suspended or banned. Please contact support.' };
             }
 
             if (dynamicAccount.passwordHash === password || password === 'password123' || password === 'Pass123!') {
+              RateLimiter.recordSuccess(normalizedEmail);
+              SecurityAudit.logEvent({
+                category: 'login_activity',
+                action: 'USER_LOGIN',
+                targetEntity: `User: @${dynamicAccount.username}`,
+                details: 'Successful user authentication session initialized',
+                user: dynamicAccount.fullName,
+                role: dynamicAccount.role,
+                severity: 'info',
+              });
               const { passwordHash, ...userProfile } = dynamicAccount;
               return { user: userProfile, error: null };
             }
-            return { user: null, error: 'Incorrect password. Please try again.' };
+
+            const failResult = RateLimiter.recordFailure(normalizedEmail);
+            SecurityAudit.logEvent({
+              category: 'security_events',
+              action: 'AUTH_FAILED_BAD_PASSWORD',
+              targetEntity: `User: @${dynamicAccount.username}`,
+              details: 'Invalid password attempt',
+              role: 'unauthenticated',
+              severity: 'warning',
+            });
+
+            if (failResult.isLocked) {
+              return {
+                user: null,
+                error: `Too many failed attempts. Account locked for ${failResult.remainingSeconds} seconds.`,
+                isLocked: true,
+                remainingSeconds: failResult.remainingSeconds,
+              };
+            }
+
+            return { 
+              user: null, 
+              error: `Incorrect password. ${failResult.remainingAttempts} attempt(s) remaining before temporary lockout.` 
+            };
           }
         }
       } catch (e) {
@@ -161,11 +227,39 @@ export function authenticateUser(email: string, password: string): { user: UserP
       }
     }
 
+    const failResult = RateLimiter.recordFailure(normalizedEmail);
+    SecurityAudit.logEvent({
+      category: 'security_events',
+      action: 'AUTH_FAILED_UNKNOWN_ACCOUNT',
+      targetEntity: `Email: ${normalizedEmail}`,
+      details: 'Attempted sign in to non-existent account',
+      role: 'unauthenticated',
+      severity: 'warning',
+    });
+
+    if (failResult.isLocked) {
+      return {
+        user: null,
+        error: `Too many failed attempts. Account locked for ${failResult.remainingSeconds} seconds.`,
+        isLocked: true,
+        remainingSeconds: failResult.remainingSeconds,
+      };
+    }
+
     return { user: null, error: 'Account not found. Please check your email or create a new account.' };
   }
 
   // Check account status first
   if (account.status === 'suspended' || account.status === 'banned') {
+    SecurityAudit.logEvent({
+      category: 'security_events',
+      action: 'BLOCKED_USER_LOGIN_ATTEMPT',
+      targetEntity: `User: @${account.username}`,
+      details: 'Suspended account attempted login',
+      user: account.fullName,
+      role: account.role,
+      severity: 'warning',
+    });
     return { user: null, error: 'Your account has been suspended or banned. Please contact support.' };
   }
 
@@ -179,8 +273,42 @@ export function authenticateUser(email: string, password: string): { user: UserP
     password !== 'ModPass123!' &&
     password !== 'SuperPass123!'
   ) {
-    return { user: null, error: 'Incorrect password. Please try again.' };
+    const failResult = RateLimiter.recordFailure(normalizedEmail);
+    SecurityAudit.logEvent({
+      category: 'security_events',
+      action: 'AUTH_FAILED_BAD_PASSWORD',
+      targetEntity: `User: @${account.username}`,
+      details: 'Invalid password provided for system account',
+      role: 'unauthenticated',
+      severity: 'warning',
+    });
+
+    if (failResult.isLocked) {
+      return {
+        user: null,
+        error: `Too many failed attempts. Account locked for ${failResult.remainingSeconds} seconds.`,
+        isLocked: true,
+        remainingSeconds: failResult.remainingSeconds,
+      };
+    }
+
+    return { 
+      user: null, 
+      error: `Incorrect password. ${failResult.remainingAttempts} attempt(s) remaining before temporary lockout.` 
+    };
   }
+
+  // Clear rate limits on success
+  RateLimiter.recordSuccess(normalizedEmail);
+  SecurityAudit.logEvent({
+    category: 'login_activity',
+    action: 'USER_LOGIN',
+    targetEntity: `User: @${account.username}`,
+    details: 'Successful user authentication session initialized',
+    user: account.fullName,
+    role: account.role,
+    severity: 'info',
+  });
 
   const { passwordHash, ...userProfile } = account;
   return { user: userProfile, error: null };
@@ -199,25 +327,44 @@ export function registerAccount(
 ): UserProfile {
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Strictly forbid administrative roles during public registration
+  // 1. Strictly forbid administrative roles during public registration
   if (role === 'admin' || role === 'super_admin' || role === 'moderator') {
     throw new Error('Administrative roles cannot be registered through public signup.');
   }
 
-  // Prevent overriding fixed system test accounts
+  // 2. Validate email structure
+  if (!InputSanitizer.isValidEmail(normalizedEmail)) {
+    throw new Error('Please provide a valid email address.');
+  }
+
+  // 3. Validate username
+  const userValidation = InputSanitizer.validateUsername(username);
+  if (!userValidation.isValid) {
+    throw new Error(userValidation.error || 'Invalid username provided.');
+  }
+
+  // 4. Validate password strength
+  const passEval = PasswordSecurity.evaluate(password);
+  if (passEval.score < 2) {
+    throw new Error(passEval.feedback[0] || 'Password is too weak. Must be at least 8 characters with numbers and symbols.');
+  }
+
+  // 5. Prevent overriding fixed system test accounts
   if (AUTH_ACCOUNTS[normalizedEmail]) {
     throw new Error('An account with this email address is already registered.');
   }
 
   const safeRole: UserRole = role === 'creator' ? 'creator' : 'member';
+  const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const cleanFullName = InputSanitizer.sanitizeString(fullName);
   
   // Set default status to 'active' and initialize onboarding flow
   const newUser: AuthUser = {
     id: `user-${Date.now()}`,
     email: normalizedEmail,
-    fullName: fullName.trim(),
-    username: username.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''),
-    avatarUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${username.trim()}`,
+    fullName: cleanFullName,
+    username: cleanUsername,
+    avatarUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${cleanUsername}`,
     bio: `${safeRole === 'creator' ? 'Creator & Educator' : 'Community Member'} on CreatorPulse.`,
     role: safeRole,
     isVerified: false,
@@ -247,6 +394,12 @@ export function registerAccount(
         throw new Error('An account with this email address is already registered.');
       }
 
+      // Check if username is already claimed
+      const usernameTaken = Object.values(dynamicUsers).some(u => u.username.toLowerCase() === cleanUsername);
+      if (usernameTaken) {
+        throw new Error(`Username @${cleanUsername} is already taken.`);
+      }
+
       dynamicUsers[normalizedEmail] = newUser;
       localStorage.setItem('creatorpulse_registered_users', JSON.stringify(dynamicUsers));
     } catch (e) {
@@ -255,6 +408,62 @@ export function registerAccount(
     }
   }
 
+  SecurityAudit.logEvent({
+    category: 'admin_actions',
+    action: 'USER_REGISTERED',
+    targetEntity: `User: @${cleanUsername}`,
+    details: `New account registered under role "${safeRole}"`,
+    user: cleanFullName,
+    role: safeRole,
+    severity: 'success',
+  });
+
   const { passwordHash, ...userProfile } = newUser;
   return userProfile;
 }
+
+/**
+ * Resets a user's password in the local test or dynamic accounts database.
+ */
+export function resetUserPassword(email: string, newPassword: string): { success: boolean; error?: string } {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Validate password strength
+  const passEval = PasswordSecurity.evaluate(newPassword);
+  if (passEval.score < 2) {
+    return { success: false, error: passEval.feedback[0] || 'Password does not meet security criteria.' };
+  }
+
+  // 1. Update in system accounts if present
+  if (AUTH_ACCOUNTS[normalizedEmail]) {
+    AUTH_ACCOUNTS[normalizedEmail].passwordHash = newPassword;
+  }
+
+  // 2. Update in dynamic registered accounts
+  if (typeof window !== 'undefined') {
+    try {
+      const dynamicUsersRaw = localStorage.getItem('creatorpulse_registered_users');
+      if (dynamicUsersRaw) {
+        const dynamicUsers: Record<string, AuthUser> = JSON.parse(dynamicUsersRaw);
+        if (dynamicUsers[normalizedEmail]) {
+          dynamicUsers[normalizedEmail].passwordHash = newPassword;
+          localStorage.setItem('creatorpulse_registered_users', JSON.stringify(dynamicUsers));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to update dynamic user password', e);
+    }
+  }
+
+  SecurityAudit.logEvent({
+    category: 'security_events',
+    action: 'PASSWORD_RESET_COMPLETED',
+    targetEntity: `Account: ${normalizedEmail}`,
+    details: 'User password reset completed and verified successfully',
+    role: 'unauthenticated',
+    severity: 'info',
+  });
+
+  return { success: true };
+}
+

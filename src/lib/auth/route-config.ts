@@ -28,6 +28,7 @@ export const ROUTE_RULES: RouteRule[] = [
 
   // 2. Explicit public routes (accessible without login)
   { pattern: '/admin/login', access: 'public', exact: true }, // Dedicated Admin Auth Gate
+  { pattern: '/feed', access: 'public' },          // Community Feed (publicly viewable)
   { pattern: '/c', access: 'public' },             // Creator public profile (/c/[username])
   { pattern: '/p', access: 'public' },             // Dynamic CMS pages (/p/[slug])
   { pattern: '/explore', access: 'public' },       // Public discovery page
@@ -42,7 +43,6 @@ export const ROUTE_RULES: RouteRule[] = [
 
   // 4. Authenticated app routes
   { pattern: '/onboarding', access: 'authenticated' },
-  { pattern: '/feed', access: 'authenticated' },
   { pattern: '/messages', access: 'authenticated' },
   { pattern: '/notifications', access: 'authenticated' },
   { pattern: '/saved', access: 'authenticated' },
@@ -130,4 +130,39 @@ export function getRoleDefaultDestination(role: UserRole): string {
     default:
       return '/feed';
   }
+}
+
+/**
+ * Sanitizes a redirect URL to prevent Open Redirect vulnerabilities.
+ * Ensures the target is a safe relative path within the platform domain.
+ */
+export function sanitizeRedirectUrl(target: string | null | undefined, fallback: string = '/feed'): string {
+  if (!target) return fallback;
+  
+  const trimmed = target.trim();
+  
+  // Disallow protocol schemes (http:, https:, javascript:, data:, etc.) or protocol-relative URLs (//)
+  if (trimmed.startsWith('//') || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+    return fallback;
+  }
+  
+  // Must start with a leading slash
+  if (!trimmed.startsWith('/')) {
+    return fallback;
+  }
+
+  // Prevent redirect loops targeting auth entrypoints
+  if (
+    trimmed === '/auth/login' ||
+    trimmed === '/auth/signup' ||
+    trimmed === '/login' ||
+    trimmed === '/signup' ||
+    trimmed === '/admin/login' ||
+    trimmed.startsWith('/auth/login?') ||
+    trimmed.startsWith('/login?')
+  ) {
+    return fallback;
+  }
+
+  return trimmed;
 }

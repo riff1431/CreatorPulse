@@ -1,11 +1,10 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Heart, Sparkles, DollarSign, Wallet, 
   CreditCard, CheckCircle2, ShieldCheck, Gift, Flame
 } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar } from './Avatar';
 
 interface TipModalProps {
   isOpen: boolean;
@@ -32,8 +31,13 @@ export function TipModal({
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card'>('wallet');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
 
   const currentAmount = customAmount ? parseFloat(customAmount) || 0 : selectedAmount;
   const walletBalance = 240.50;
@@ -54,14 +58,17 @@ export function TipModal({
     }, 900);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200" onClick={onClose}>
       <div 
-        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative"
+        className="w-full max-w-md bg-white dark:bg-[#150D1E] rounded-t-[32px] sm:rounded-3xl border border-[#F3DCE8] dark:border-[#3A2A4C] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200 relative max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="sm:hidden w-10 h-1.5 bg-[#E4E4E7] dark:bg-[#3A2A4C] rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+
         {/* Top Header Background */}
-        <div className="relative p-6 pb-4 bg-gradient-to-br from-[#FFF1F7] via-[#FCE7F3] to-[#FFF1F7] dark:from-[#24152F] dark:via-[#1C1026] dark:to-[#24152F] border-b border-[#FBCFE8]/60 dark:border-[#4C1D3B]/60">
+        <div className="relative p-5 sm:p-6 pb-4 bg-gradient-to-br from-[#FFF1F7] via-[#FCE7F3] to-[#FFF1F7] dark:from-[#24152F] dark:via-[#1C1026] dark:to-[#24152F] border-b border-[#FBCFE8]/60 dark:border-[#4C1D3B]/60 shrink-0">
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full text-[#71717A] dark:text-[#D4B8D0] hover:text-[#18181B] dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10 transition-colors"
@@ -240,6 +247,8 @@ export function TipModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+

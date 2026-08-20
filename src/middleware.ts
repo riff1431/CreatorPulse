@@ -51,10 +51,10 @@ function resolveUserIdentity(request: NextRequest, sessionCookie: string | undef
 }
 
 // ==========================================================================
-// Next.js 16 Proxy / Middleware
+// Next.js 16 Proxy
 // Server-side boundary interceptor using centralized Route Configuration.
 // ==========================================================================
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // 1. Instantly pass static files, Next.js assets, API routes, and favicon
@@ -192,8 +192,6 @@ export async function proxy(request: NextRequest) {
 
   return response;
 }
-
-export const middleware = proxy;
 
 export const config = {
   matcher: [

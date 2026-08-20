@@ -199,7 +199,7 @@ export const CreatorSidebar: React.FC = () => {
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/40 shrink-0 sticky top-16 h-[calc(100vh-64px)] transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r border-[#F3DCE8] bg-white/40 shrink-0 h-full overflow-hidden transition-all duration-300 ${
           collapsed ? 'w-18' : 'w-60'
         }`}
       >

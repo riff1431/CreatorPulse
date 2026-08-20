@@ -23,4 +23,6 @@ export * from './StoryBar';
 export * from './CreatorHeader';
 export * from './CreatorSidebar';
 export * from './UserNavDropdown';
-
+export * from './NotificationsModal';
+export * from './MessagesModal';
+export * from './PostDetailModal';

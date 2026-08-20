@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
 import { UserRole } from '@/lib/supabase/store';
 import { getPostLoginDestination } from '@/lib/auth/redirect-utils';
+import { PasswordSecurity, RateLimiter, InputSanitizer } from '@/lib/auth/security';
 
 export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'login' | 'signup' }) {
   const router = useRouter();
@@ -78,57 +79,31 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
     setIsUsernameManuallyEdited(false);
   };
 
-  // Real-time Password Strength & Suggestion Evaluation
+  // Rate Limit Lockout Timer State
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Countdown timer for lockout
+  React.useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutSeconds]);
+
+  // Real-time Password Strength & Suggestion Evaluation via Centralized Security Engine
   const evaluatePasswordStrength = (pass: string) => {
-    if (!pass) return { score: 0, label: '', color: '', tips: [] };
-
-    const checks = {
-      length: pass.length >= 8,
-      hasUpper: /[A-Z]/.test(pass),
-      hasNumber: /[0-9]/.test(pass),
-      hasSpecial: /[^A-Za-z0-9]/.test(pass),
-    };
-
-    let score = 0;
-    if (pass.length >= 6) score++;
-    if (checks.length) score++;
-    if (checks.hasUpper && checks.hasNumber) score++;
-    if (checks.hasSpecial) score++;
-
-    let label = 'Weak';
-    let color = 'bg-rose-500 text-rose-500';
-    let tips: string[] = [];
-
-    if (!checks.length) tips.push('Min 8 chars');
-    if (!checks.hasUpper) tips.push('Add uppercase (A-Z)');
-    if (!checks.hasNumber) tips.push('Add a number (0-9)');
-    if (!checks.hasSpecial) tips.push('Add a symbol (!@#$)');
-
-    if (score === 2) {
-      label = 'Fair';
-      color = 'bg-amber-500 text-amber-500';
-    } else if (score === 3) {
-      label = 'Good';
-      color = 'bg-blue-500 text-blue-500';
-    } else if (score >= 4) {
-      label = 'Strong';
-      color = 'bg-emerald-500 text-emerald-500';
-    }
-
-    return { score, label, color, tips, checks };
+    return PasswordSecurity.evaluate(pass);
   };
 
   const handleGenerateStrongPassword = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const nums = '0123456789';
-    const symbols = '!@#$%^&*';
-    
-    let pass = '';
-    for (let i = 0; i < 4; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    for (let i = 0; i < 2; i++) pass += nums.charAt(Math.floor(Math.random() * nums.length));
-    for (let i = 0; i < 2; i++) pass += symbols.charAt(Math.floor(Math.random() * symbols.length));
-    for (let i = 0; i < 4; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-
+    const pass = PasswordSecurity.generateStrongPassword();
     setSignupPassword(pass);
     setShowPassword(true);
   };
@@ -203,6 +178,12 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (lockoutSeconds > 0) {
+      setErrorMessage(`Account temporarily locked. Please wait ${lockoutSeconds} seconds.`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     if (!email.trim() || !password) {
@@ -214,7 +195,12 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
     const result = await login(email, password, rememberMe);
 
     if (!result.success) {
-      setErrorMessage(result.error || 'Invalid credentials');
+      if (result.isLocked && result.remainingSeconds) {
+        setLockoutSeconds(result.remainingSeconds);
+        setErrorMessage(`Too many failed attempts. Login locked for ${result.remainingSeconds}s.`);
+      } else {
+        setErrorMessage(result.error || 'Invalid credentials');
+      }
       setIsSubmitting(false);
       return;
     }
@@ -234,14 +220,16 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
       return;
     }
 
-    if (username.length < 3) {
-      setErrorMessage('Username must be at least 3 characters long.');
+    const usernameCheck = InputSanitizer.validateUsername(username);
+    if (!usernameCheck.isValid) {
+      setErrorMessage(usernameCheck.error || 'Invalid username.');
       setIsSubmitting(false);
       return;
     }
 
-    if (signupPassword.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    const passEval = PasswordSecurity.evaluate(signupPassword);
+    if (passEval.score < 2) {
+      setErrorMessage(passEval.feedback[0] || 'Password does not meet minimum security requirements.');
       setIsSubmitting(false);
       return;
     }
@@ -403,6 +391,19 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
           </button>
         </div>
 
+        {/* Lockout Warning Banner */}
+        {lockoutSeconds > 0 && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-400 flex items-center gap-3 animate-pulse">
+            <Ban size={18} className="shrink-0 text-rose-500" />
+            <div>
+              <p className="font-bold text-rose-300">Brute-Force Rate Limit Active</p>
+              <p className="text-[11px] text-rose-400/90">
+                Too many failed attempts. Try again in <span className="font-mono font-bold text-white bg-rose-900/60 px-1.5 py-0.5 rounded">{lockoutSeconds}s</span>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Reason Alert */}
         {reasonAlert && (
           <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2.5">
@@ -522,16 +523,16 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                 <span className="text-slate-600 dark:text-slate-400 font-medium text-[11px] sm:text-xs">Remember Me</span>
               </label>
               <Link href="/auth/forgot-password" className="text-[var(--color-primary,#EC4899)] hover:text-[#DB2777] font-semibold text-[11px] sm:text-xs hover:underline">
-                Forget Password
+                Forgot Password?
               </Link>
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || lockoutSeconds > 0}
               className="w-full py-3 px-6 rounded-full bg-gradient-to-r from-[var(--color-primary,#EC4899)] to-[#F43F5E] hover:from-[#DB2777] hover:to-[#E11D48] active:scale-[0.99] text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-lg shadow-pink-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
             >
-              <span>{isSubmitting ? 'Logging in...' : 'Log In'}</span>
+              <span>{isSubmitting ? 'Logging in...' : lockoutSeconds > 0 ? `Locked (${lockoutSeconds}s)` : 'Log In'}</span>
               <ArrowRight size={16} />
             </button>
           </form>
@@ -559,7 +560,6 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
 
               {/* Segmented Control with Smooth Sliding Active Indicator */}
               <div className="relative grid grid-cols-2 gap-1 bg-pink-50/80 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-pink-100 dark:border-slate-700/80 shadow-inner select-none overflow-hidden">
-                {/* Smooth Animated Sliding Backdrop Indicator */}
                 <div
                   className={`absolute inset-y-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-gradient-to-r ${
                     role === 'member'
@@ -719,6 +719,12 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                 className="w-full bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700/80 rounded-full px-4 py-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[var(--color-primary,#EC4899)] focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-pink-500/20 transition-all shadow-2xs"
                 required
               />
+              {InputSanitizer.isDisposableEmail(signupEmail) && (
+                <p className="text-[10px] text-amber-500 dark:text-amber-400 font-semibold px-1 pt-0.5 flex items-center gap-1">
+                  <AlertCircle size={11} />
+                  <span>Temporary burner email detected. Account recovery links may be lost.</span>
+                </p>
+              )}
             </div>
 
             {/* Smooth Expandable Creator Category Accordion Animation */}
@@ -751,7 +757,7 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                   type={showPassword ? 'text' : 'password'}
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  placeholder="•••••••• (Min 6 characters)"
+                  placeholder="•••••••• (Min 8 characters)"
                   className="w-full bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700/80 rounded-full pl-4 pr-10 py-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[var(--color-primary,#EC4899)] focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-pink-500/20 transition-all shadow-2xs"
                   required
                 />
@@ -765,14 +771,14 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                 </button>
               </div>
 
-              {/* Real-Time Password Strength & Suggestions */}
+              {/* Real-Time Password Strength & Criteria Checklist */}
               {signupPassword.length > 0 && (() => {
-                const { score, label, color, tips } = evaluatePasswordStrength(signupPassword);
+                const { score, label, color, criteria, feedback } = evaluatePasswordStrength(signupPassword);
                 return (
-                  <div className="space-y-1 pt-1 px-1 transition-all">
+                  <div className="space-y-1.5 pt-1 px-1 transition-all">
                     <div className="flex items-center justify-between text-[10px] font-bold">
-                      <span className="text-slate-500 dark:text-slate-400">Strength:</span>
-                      <span className={color.split(' ')[1]}>{label}</span>
+                      <span className="text-slate-500 dark:text-slate-400">Security Strength:</span>
+                      <span className={color}>{label}</span>
                     </div>
 
                     {/* Strength Progress Bars */}
@@ -783,10 +789,26 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                       <div className={`h-1 rounded-full transition-all ${score >= 4 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`} />
                     </div>
 
-                    {/* Real-time Suggestions / Tips */}
-                    {tips.length > 0 && (
+                    {/* Criteria Checklist Pills */}
+                    <div className="grid grid-cols-2 gap-1 pt-1 text-[10px]">
+                      <span className={`flex items-center gap-1 font-medium ${criteria.minLength ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {criteria.minLength ? '✓' : '○'} 8+ Characters
+                      </span>
+                      <span className={`flex items-center gap-1 font-medium ${criteria.hasUpper && criteria.hasLower ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {criteria.hasUpper && criteria.hasLower ? '✓' : '○'} Upper & Lowercase
+                      </span>
+                      <span className={`flex items-center gap-1 font-medium ${criteria.hasNumber ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {criteria.hasNumber ? '✓' : '○'} Numeric Digit
+                      </span>
+                      <span className={`flex items-center gap-1 font-medium ${criteria.hasSpecial ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {criteria.hasSpecial ? '✓' : '○'} Special Symbol
+                      </span>
+                    </div>
+
+                    {/* Real-time Feedback */}
+                    {feedback.length > 0 && score < 3 && (
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium pt-0.5">
-                        <span className="text-pink-500 font-bold">💡 Suggestions:</span> {tips.join(' • ')}
+                        <span className="text-pink-500 font-bold">💡 Tip:</span> {feedback[0]}
                       </p>
                     )}
                   </div>
@@ -800,11 +822,7 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
               className="w-full py-2.5 px-5 rounded-full bg-gradient-to-r from-[var(--color-primary,#EC4899)] to-[#F43F5E] hover:from-[#DB2777] hover:to-[#E11D48] active:scale-[0.99] text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-md shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1 group"
             >
               <span>
-                {isSubmitting
-                  ? 'Creating Account...'
-                  : role === 'creator'
-                  ? 'Create Account'
-                  : 'Create Account'}
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
               </span>
               <ArrowRight size={15} />
             </button>
@@ -876,13 +894,20 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
           )}
         </div>
 
-        {/* Dedicated Staff Gateway Link */}
-        <div className="text-center pt-1.5 border-t border-dashed border-slate-200 dark:border-slate-800">
+        {/* Security Trust Badges & Dedicated Staff Gateway Link */}
+        <div className="pt-1.5 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap text-[10px] text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-emerald-500 font-semibold">
+              <Shield size={11} className="shrink-0" />
+              <span>256-Bit SSL</span>
+            </span>
+            <span className="text-slate-600 dark:text-slate-700">•</span>
+            <span className="text-slate-400">Rate-Shield Active</span>
+          </div>
           <Link 
             href="/admin/login"
-            className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-400 hover:text-[var(--color-primary,#EC4899)] font-medium transition-colors bg-slate-50 dark:bg-slate-900/50 px-3 py-1 rounded-full border border-slate-200/80 dark:border-slate-800 hover:border-pink-300 shadow-2xs"
+            className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-400 hover:text-[var(--color-primary,#EC4899)] font-medium transition-colors bg-slate-50 dark:bg-slate-900/50 px-2.5 py-0.5 rounded-full border border-slate-200/80 dark:border-slate-800 hover:border-pink-300 shadow-2xs"
           >
-            <Shield size={11} className="text-slate-400" />
             <span>Staff Portal →</span>
           </Link>
         </div>

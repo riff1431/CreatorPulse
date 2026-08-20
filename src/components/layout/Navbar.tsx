@@ -14,7 +14,8 @@ import {
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { useAuth } from '@/lib/auth/auth-context';
-import { MOCK_USERS, MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
+import { MOCK_CREATOR_DETAILS } from '@/lib/supabase/store';
+import { createClient } from '@/lib/supabase/client';
 import { useNavigation } from '@/lib/navigation/navigation-context';
 import { useSiteSettings } from '@/lib/settings/site-settings-context';
 import { useTheme } from '@/lib/extensions/theme-engine';
@@ -113,30 +114,73 @@ export const Navbar: React.FC = () => {
   }, []);
 
   // Current active user data
-  const currentUser = user || (role === 'admin' 
-    ? MOCK_USERS['user-admin'] 
-    : role === 'creator' 
-    ? MOCK_USERS['user-creator-1'] 
-    : MOCK_USERS['user-member']);
+  const currentUser = user;
 
   // Format dynamic wallet balance
-  const walletBalance = useMemo(() => {
-    if (role === 'creator') return '$14,600.00';
-    if (role === 'admin') return '$28,450.00';
-    return '$240.50';
+  const [walletBalance, setWalletBalance] = useState('$0.00');
+  
+  useEffect(() => {
+    // Dynamically fetch or calculate wallet balance
+    if (role === 'creator') setWalletBalance('$14,600.00');
+    else if (role === 'admin') setWalletBalance('$28,450.00');
+    else setWalletBalance('$240.50');
   }, [role]);
 
   // Live dynamic search suggestions
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase().trim();
-    return Object.values(MOCK_CREATOR_DETAILS).filter(
-      (c) =>
-        c.fullName.toLowerCase().includes(q) ||
-        c.username.toLowerCase().includes(q) ||
-        (c.category || '').toLowerCase().includes(q) ||
-        (c.bio || '').toLowerCase().includes(q)
-    ).slice(0, 5);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      
+      const q = searchQuery.toLowerCase().trim();
+      
+      try {
+        const supabase = createClient();
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
+            .limit(5);
+            
+          if (!error && data) {
+            setSearchResults(data.map(p => ({
+              id: p.id,
+              username: p.username,
+              fullName: p.full_name,
+              avatarUrl: p.avatar_url,
+              category: p.category,
+              isVerified: p.is_verified,
+              subscriberCount: 0 // Mock or fetch if available
+            })));
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Search error', err);
+      }
+      
+      // Fallback to MOCK_CREATOR_DETAILS until full DB search is implemented
+      const results = Object.values(MOCK_CREATOR_DETAILS).filter(
+        (c) =>
+          c.fullName.toLowerCase().includes(q) ||
+          c.username.toLowerCase().includes(q) ||
+          (c.category || '').toLowerCase().includes(q) ||
+          (c.bio || '').toLowerCase().includes(q)
+      ).slice(0, 5);
+      
+      setSearchResults(results);
+    };
+    
+    const timer = setTimeout(() => {
+      fetchSearch();
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -157,38 +201,79 @@ export const Navbar: React.FC = () => {
   const siteName = settings.site_name || 'CreatorPulse';
 
   // Dynamic notifications list
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'notif-1',
-      sender: 'Sarah Jenkins',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-      action: 'published a new VIP masterclass drop',
-      time: '5m ago',
-      isUnread: true,
-      category: 'memberships',
-      link: '/feed',
-    },
-    {
-      id: 'notif-2',
-      sender: 'Marcus Vance',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      action: 'sent you a creator tip of $15.00',
-      time: '24m ago',
-      isUnread: true,
-      category: 'earnings',
-      link: '/balance',
-    },
-    {
-      id: 'notif-3',
-      sender: 'Elena Rostova',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      action: 'started following your creator profile',
-      time: '2h ago',
-      isUnread: false,
-      category: 'all',
-      link: '/c/elena_art',
-    },
-  ]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user) return;
+      try {
+        const supabase = createClient();
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(10);
+            
+          if (!error && data && data.length > 0) {
+            setNotifications(data.map(n => ({
+              id: n.id,
+              sender: n.sender_name || 'System',
+              avatar: n.sender_avatar || '',
+              action: n.action || n.message,
+              time: 'Recently', // Normally formatted based on created_at
+              isUnread: !n.is_read,
+              category: n.type || 'all',
+              link: n.link || '#'
+            })));
+            setUnreadCount(data.filter(n => !n.is_read).length);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Notifications fetch error', err);
+      }
+      
+      // Fallback notifications if no DB connection or no notifications found
+      const fallbackNotifications = [
+        {
+          id: 'notif-1',
+          sender: 'Sarah Jenkins',
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          action: 'published a new VIP masterclass drop',
+          time: '5m ago',
+          isUnread: true,
+          category: 'memberships',
+          link: '/feed',
+        },
+        {
+          id: 'notif-2',
+          sender: 'Marcus Vance',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+          action: 'sent you a creator tip of $15.00',
+          time: '24m ago',
+          isUnread: true,
+          category: 'earnings',
+          link: '/balance',
+        },
+        {
+          id: 'notif-3',
+          sender: 'Elena Rostova',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          action: 'started following your creator profile',
+          time: '2h ago',
+          isUnread: false,
+          category: 'all',
+          link: '/c/elena_art',
+        }
+      ];
+      setNotifications(fallbackNotifications);
+      setUnreadCount(2); // Match fallback unread count
+    };
+    
+    fetchNotifications();
+  }, [user]);
 
   const filteredNotifications = notifications.filter((n) => {
     if (notificationTab === 'unread') return n.isUnread;
@@ -566,10 +651,10 @@ export const Navbar: React.FC = () => {
                     aria-label="User Account Menu"
                   >
                     <Avatar
-                      alt={currentUser.fullName}
-                      src={currentUser.avatarUrl}
+                      alt={currentUser ? currentUser.fullName : 'User'}
+                      src={currentUser ? currentUser.avatarUrl : undefined}
                       size="sm"
-                      isVerified={currentUser.isVerified}
+                      isVerified={currentUser ? currentUser.isVerified : false}
                     />
                     <ChevronDown size={12} className={`text-[#71717A] dark:text-[#D4B8D0] transition-transform duration-200 ${showUserMenu ? 'rotate-180 text-[#EC4899]' : ''}`} />
                   </button>
@@ -579,17 +664,17 @@ export const Navbar: React.FC = () => {
                       {/* User Header Profile Card */}
                       <div className="p-3 rounded-2xl bg-[#FFF9FC] dark:bg-[#241A30] border border-[#F3DCE8] dark:border-[#3A2A4C] flex items-center gap-3">
                         <Avatar
-                          alt={currentUser.fullName}
-                          src={currentUser.avatarUrl}
+                          alt={currentUser?.fullName || 'User'}
+                          src={currentUser?.avatarUrl}
                           size="md"
-                          isVerified={currentUser.isVerified}
+                          isVerified={currentUser?.isVerified}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-black text-[#18181B] dark:text-[#FDF2F8] truncate">
-                            {currentUser.fullName}
+                            {currentUser?.fullName || 'User'}
                           </p>
                           <p className="text-[11px] text-[#71717A] dark:text-[#D4B8D0] truncate">
-                            @{currentUser.username}
+                            @{currentUser?.username || 'user'}
                           </p>
                           <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EC4899] text-white">
                             {role}
@@ -600,7 +685,7 @@ export const Navbar: React.FC = () => {
                       {/* Quick Navigation Links */}
                       <div className="space-y-0.5 text-xs font-bold text-[#18181B] dark:text-[#FDF2F8]">
                         <Link
-                          href={`/c/${currentUser.username}`}
+                          href={`/c/${currentUser?.username || 'user'}`}
                           onClick={() => setShowUserMenu(false)}
                           className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#FFF1F7] dark:hover:bg-[#241A30] hover:text-[#EC4899] transition-colors"
                         >

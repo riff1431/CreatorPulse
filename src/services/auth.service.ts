@@ -1,12 +1,24 @@
 import { UserProfile, UserRole, MOCK_USERS } from '@/lib/supabase/store';
-import { AUTH_ACCOUNTS, authenticateUser } from '@/lib/auth/users';
+import { AUTH_ACCOUNTS, authenticateUser, resetUserPassword } from '@/lib/auth/users';
+import { RateLimiter, PasswordSecurity, InputSanitizer } from '@/lib/auth/security';
 import { APP_CONFIG } from '@/config/app.config';
 
 export class AuthService {
-  static async validateCredentials(email: string, password: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+  static async validateCredentials(email: string, password: string): Promise<{ 
+    success: boolean; 
+    user?: UserProfile; 
+    error?: string;
+    isLocked?: boolean;
+    remainingSeconds?: number;
+  }> {
     const result = authenticateUser(email, password);
     if (!result.user) {
-      return { success: false, error: result.error || 'Invalid email or password' };
+      return { 
+        success: false, 
+        error: result.error || 'Invalid email or password',
+        isLocked: result.isLocked,
+        remainingSeconds: result.remainingSeconds,
+      };
     }
 
     if (result.user.status === 'suspended' || result.user.status === 'banned') {
@@ -14,6 +26,30 @@ export class AuthService {
     }
 
     return { success: true, user: result.user };
+  }
+
+  static checkLockoutStatus(email: string) {
+    return RateLimiter.checkLockout(email);
+  }
+
+  static evaluatePassword(password: string) {
+    return PasswordSecurity.evaluate(password);
+  }
+
+  static generateStrongPassword() {
+    return PasswordSecurity.generateStrongPassword();
+  }
+
+  static resetPassword(email: string, newPass: string) {
+    return resetUserPassword(email, newPass);
+  }
+
+  static isValidEmail(email: string) {
+    return InputSanitizer.isValidEmail(email);
+  }
+
+  static isDisposableEmail(email: string) {
+    return InputSanitizer.isDisposableEmail(email);
   }
 
   static getRedirectPathForRole(role: UserRole): string {
@@ -45,3 +81,4 @@ export class AuthService {
     }));
   }
 }
+

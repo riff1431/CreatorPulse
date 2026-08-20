@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Star, Wallet, Bookmark, Heart, Sparkles, 
@@ -19,6 +19,7 @@ import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/lib/auth/auth-context';
 import { TipModal } from '../components/TipModal';
 import { ProfileCompletionWidget } from '../components/ProfileCompletionWidget';
+import { getStoredSubscriptions, MemberSubscription } from '@/lib/memberships/entitlement-service';
 
 interface SubscribedCreator {
   id: string;
@@ -68,6 +69,45 @@ export function MemberDashboardPage() {
   const [subscriptions, setSubscriptions] = useState<SubscribedCreator[]>(INITIAL_SUBSCRIPTIONS);
   const [selectedCreatorForTip, setSelectedCreatorForTip] = useState<SubscribedCreator | null>(null);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
+
+  useEffect(() => {
+    const loadDynamicSubscriptions = () => {
+      const stored = getStoredSubscriptions();
+      const currentUserId = user?.id || 'user-member-1';
+      const userSubs = stored.filter((s) => s.userId === currentUserId && s.status === 'active');
+      if (userSubs.length > 0) {
+        const formatted: SubscribedCreator[] = userSubs.map((s) => {
+          const now = Date.now();
+          const end = new Date(s.currentPeriodEnd).getTime();
+          const daysLeft = Math.max(1, Math.round((end - now) / 86400000));
+          return {
+            id: s.id,
+            name: s.creatorName,
+            username: s.creatorUsername,
+            avatar: s.creatorAvatar,
+            tierName: s.tierName,
+            price: s.amount,
+            renewsInDays: daysLeft,
+            status: 'active',
+            perks: Object.entries(s.entitlements)
+              .filter(([_, val]) => !!val)
+              .map(([k]) => k.replace(/^can_/, '').replace(/^has_/, '').replace(/_/g, ' ')),
+          };
+        });
+        setSubscriptions(formatted);
+      } else {
+        setSubscriptions(INITIAL_SUBSCRIPTIONS);
+      }
+    };
+
+    loadDynamicSubscriptions();
+    window.addEventListener('creatorpulse_subscriptions_updated', loadDynamicSubscriptions);
+    window.addEventListener('storage', loadDynamicSubscriptions);
+    return () => {
+      window.removeEventListener('creatorpulse_subscriptions_updated', loadDynamicSubscriptions);
+      window.removeEventListener('storage', loadDynamicSubscriptions);
+    };
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-[#FFF9FC] dark:bg-[#0B0612] text-[#18181B] dark:text-[#FDF2F8] flex flex-col selection:bg-[#FCE7F3] selection:text-[#DB2777]">

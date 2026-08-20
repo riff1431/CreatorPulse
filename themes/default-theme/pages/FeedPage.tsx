@@ -17,6 +17,8 @@ import { WelcomeModal } from '../components/WelcomeModal';
 import { GuidedTour } from '../components/GuidedTour';
 import { FirstActionsWidget } from '../components/FirstActionsWidget';
 import { UserNavDropdown } from '../components/UserNavDropdown';
+import { NotificationsModal, getStoredNotificationsUnreadCount } from '../components/NotificationsModal';
+import { MessagesModal, getStoredMessagesUnreadCount } from '../components/MessagesModal';
 
 import { Post } from '@/lib/supabase/store';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -144,12 +146,57 @@ export function FeedPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [feedFilter, setFeedFilter] = useState<'all' | 'for_you' | 'preferred'>('for_you');
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showMessagesModal, setShowMessagesModal] = useState(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(3);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(3);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostImageUrl, setNewPostImageUrl] = useState('');
   const [newPostLocation, setNewPostLocation] = useState('New York, US');
   const feedGridRef = useRef<HTMLDivElement>(null);
+
+  // Initialize and listen to dynamic unread counts across storage and custom events
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUnreadNotificationsCount(getStoredNotificationsUnreadCount());
+      setUnreadMessagesCount(getStoredMessagesUnreadCount());
+
+      const handleNotifUpdate = (e: Event) => {
+        const customEvent = e as CustomEvent<{ unreadCount?: number }>;
+        if (customEvent.detail && typeof customEvent.detail.unreadCount === 'number') {
+          setUnreadNotificationsCount(customEvent.detail.unreadCount);
+        } else {
+          setUnreadNotificationsCount(getStoredNotificationsUnreadCount());
+        }
+      };
+
+      const handleMessagesUpdate = (e: Event) => {
+        const customEvent = e as CustomEvent<{ unreadCount?: number }>;
+        if (customEvent.detail && typeof customEvent.detail.unreadCount === 'number') {
+          setUnreadMessagesCount(customEvent.detail.unreadCount);
+        } else {
+          setUnreadMessagesCount(getStoredMessagesUnreadCount());
+        }
+      };
+
+      const handleStorage = () => {
+        setUnreadNotificationsCount(getStoredNotificationsUnreadCount());
+        setUnreadMessagesCount(getStoredMessagesUnreadCount());
+      };
+
+      window.addEventListener('creatorpulse_notifications_updated', handleNotifUpdate);
+      window.addEventListener('creatorpulse_messages_updated', handleMessagesUpdate);
+      window.addEventListener('storage', handleStorage);
+
+      return () => {
+        window.removeEventListener('creatorpulse_notifications_updated', handleNotifUpdate);
+        window.removeEventListener('creatorpulse_messages_updated', handleMessagesUpdate);
+        window.removeEventListener('storage', handleStorage);
+      };
+    }
+  }, []);
 
   // Check FTUE welcome trigger
   useEffect(() => {
@@ -281,24 +328,30 @@ export function FeedPage() {
           {/* Right Action Icons & CTA Button */}
           <div className="flex items-center justify-end gap-3 shrink-0">
             {/* Notification Bell */}
-            <Link
-              href="/notifications"
-              className="relative p-2.5 rounded-full text-[#18181B] dark:text-[#FDF2F8] hover:bg-[#FFF1F7] dark:hover:bg-[#22152E] transition-colors"
+            <button
+              onClick={() => setShowNotificationsModal(true)}
+              className="relative p-2.5 rounded-full text-[#18181B] dark:text-[#FDF2F8] hover:bg-[#FFF1F7] dark:hover:bg-[#22152E] transition-colors cursor-pointer"
               title="Notifications"
+              aria-label="Open notifications modal"
             >
               <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#EC4899] ring-2 ring-white dark:ring-[#150D1E] animate-pulse" />
-            </Link>
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#EC4899] ring-2 ring-white dark:ring-[#150D1E] animate-pulse" />
+              )}
+            </button>
 
             {/* Direct Messages Icon */}
-            <Link
-              href="/messages"
-              className="relative p-2.5 rounded-full text-[#18181B] dark:text-[#FDF2F8] hover:bg-[#FFF1F7] dark:hover:bg-[#22152E] transition-colors"
+            <button
+              onClick={() => setShowMessagesModal(true)}
+              className="relative p-2.5 rounded-full text-[#18181B] dark:text-[#FDF2F8] hover:bg-[#FFF1F7] dark:hover:bg-[#22152E] transition-colors cursor-pointer"
               title="Direct Messages"
+              aria-label="Open direct messages modal"
             >
               <MessageSquare size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF8A00] ring-2 ring-white dark:ring-[#150D1E]" />
-            </Link>
+              {unreadMessagesCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF8A00] ring-2 ring-white dark:ring-[#150D1E]" />
+              )}
+            </button>
 
             {/* + Create a post Button (Vibrant Orange-Pink Gradient Pill) */}
             <button
@@ -482,6 +535,21 @@ export function FeedPage() {
           </div>
         </div>
       )}
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        isOpen={showNotificationsModal}
+        onClose={() => setShowNotificationsModal(false)}
+        onOpenMessages={() => setShowMessagesModal(true)}
+        onUnreadCountChange={setUnreadNotificationsCount}
+      />
+
+      {/* Direct Messages Modal */}
+      <MessagesModal
+        isOpen={showMessagesModal}
+        onClose={() => setShowMessagesModal(false)}
+        onUnreadCountChange={setUnreadMessagesCount}
+      />
     </MainLayout>
   );
 }

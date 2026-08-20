@@ -5,7 +5,12 @@ import { APP_CONFIG } from '@/config/app.config';
  */
 export function isGuestOnlyRoute(pathname: string): boolean {
   if (!pathname) return false;
-  return pathname === '/' || pathname.startsWith('/auth');
+  return (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname.startsWith('/auth')
+  );
 }
 
 /**

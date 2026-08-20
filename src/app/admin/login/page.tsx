@@ -159,9 +159,11 @@ function AdminLoginForm() {
       if (!isAdminRole) {
         // Clear local cookies and state without route push to preserve error alert
         if (typeof document !== 'undefined') {
-          document.cookie = 'creatorpulse_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure';
-          document.cookie = 'creatorpulse_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure';
-          document.cookie = 'creatorpulse_user_profile=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure';
+          const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+          const secureFlag = isHttps ? '; Secure' : '';
+          document.cookie = `creatorpulse_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
+          document.cookie = `creatorpulse_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
+          document.cookie = `creatorpulse_user_profile=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
         }
         if (typeof localStorage !== 'undefined') {
           localStorage.removeItem('creatorpulse_auth_user');

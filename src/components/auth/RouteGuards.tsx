@@ -3,10 +3,10 @@
 import React, { ReactNode, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
-import { RouteAccess, getRouteAccess, isRoleAllowed, getRoleDefaultDestination } from '@/lib/auth/route-config';
+import { RouteAccess, getRouteAccess, isRoleAllowed, getRoleDefaultDestination, sanitizeRedirectUrl } from '@/lib/auth/route-config';
 
 // Premium spinner layout to prevent redirect flicker during hydration
-export const FullPageLoading = ({ delayMs = 400 }: { delayMs?: number }) => {
+export const FullPageLoading = ({ delayMs = 250 }: { delayMs?: number }) => {
   const [show, setShow] = React.useState(false);
 
   React.useEffect(() => {
@@ -17,9 +17,9 @@ export const FullPageLoading = ({ delayMs = 400 }: { delayMs?: number }) => {
   if (!show) return null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFF9FC] p-8 space-y-3">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFF9FC] dark:bg-[#0B0612] p-8 space-y-3 transition-colors">
       <div className="w-12 h-12 rounded-full border-4 border-[#EC4899]/30 border-t-[#EC4899] animate-spin"></div>
-      <p className="text-xs text-[#71717A] font-extrabold tracking-wider uppercase">Loading security context...</p>
+      <p className="text-xs text-[#71717A] dark:text-[#D4B8D0] font-extrabold tracking-wider uppercase">Loading security context...</p>
     </div>
   );
 };
@@ -43,7 +43,10 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ access, children }) => {
     // 1. Account blockage check
     if (isAuthenticated && user && (user.status === 'suspended' || user.status === 'banned')) {
       const isTargetingAdmin = pathname.startsWith('/admin');
-      router.replace(isTargetingAdmin ? '/admin/login?reason=blocked' : '/auth/login?reason=blocked');
+      const blockUrl = isTargetingAdmin ? '/admin/login?reason=blocked' : '/auth/login?reason=blocked';
+      if (pathname !== '/auth/login' && pathname !== '/admin/login') {
+        router.replace(blockUrl);
+      }
       return;
     }
 
@@ -57,14 +60,18 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ access, children }) => {
       access !== 'public' &&
       access !== 'guest'
     ) {
-      router.replace('/onboarding');
+      if (pathname !== '/onboarding') {
+        router.replace('/onboarding');
+      }
       return;
     }
 
     // If user is already onboarded and visits /onboarding, redirect to home
     if (isAuthenticated && user && user.isOnboarded === true && pathname === '/onboarding') {
       const destination = getRoleDefaultDestination(role);
-      router.replace(destination);
+      if (pathname !== destination) {
+        router.replace(destination);
+      }
       return;
     }
 
@@ -72,10 +79,14 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ access, children }) => {
     if (access === 'guest') {
       if (isAuthenticated) {
         if (user && user.isOnboarded === false && (role === 'member' || role === 'creator')) {
-          router.replace('/onboarding');
+          if (pathname !== '/onboarding') {
+            router.replace('/onboarding');
+          }
         } else {
           const destination = getRoleDefaultDestination(role);
-          router.replace(destination);
+          if (pathname !== destination) {
+            router.replace(destination);
+          }
         }
       }
       return;
@@ -89,15 +100,21 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ access, children }) => {
     // 5. Protected route checks (authenticated, creator, moderator, admin, super_admin)
     if (!isAuthenticated) {
       const isTargetingAdmin = pathname.startsWith('/admin');
+      const safeRedirect = sanitizeRedirectUrl(pathname);
       const loginUrl = isTargetingAdmin 
-        ? `/admin/login?redirect=${encodeURIComponent(pathname)}`
-        : `/auth/login?redirect=${encodeURIComponent(pathname)}`;
-      router.replace(loginUrl);
+        ? `/admin/login?redirect=${encodeURIComponent(safeRedirect)}`
+        : `/auth/login?redirect=${encodeURIComponent(safeRedirect)}`;
+      if (pathname !== '/auth/login' && pathname !== '/admin/login') {
+        router.replace(loginUrl);
+      }
       return;
     }
 
     if (!isRoleAllowed(access, role)) {
-      router.replace(`/403?required=${access}&from=${encodeURIComponent(pathname)}`);
+      const forbiddenUrl = `/403?required=${access}&from=${encodeURIComponent(pathname)}`;
+      if (pathname !== '/403') {
+        router.replace(forbiddenUrl);
+      }
     }
   }, [isLoading, isAuthenticated, role, user, access, pathname, router]);
 
